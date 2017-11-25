@@ -37,6 +37,9 @@
 
 void VisibilityNotifier::_enter_camera(Camera *p_camera) {
 
+	if(Engine::get_singleton()->is_editor_hint())
+		return;
+
 	ERR_FAIL_COND(cameras.has(p_camera));
 	cameras.insert(p_camera);
 	if (cameras.size() == 1) {
@@ -48,6 +51,9 @@ void VisibilityNotifier::_enter_camera(Camera *p_camera) {
 }
 
 void VisibilityNotifier::_exit_camera(Camera *p_camera) {
+
+	if(Engine::get_singleton()->is_editor_hint())
+		return;
 
 	ERR_FAIL_COND(!cameras.has(p_camera));
 	cameras.erase(p_camera);
