@@ -1111,39 +1111,42 @@ Error ArrayMesh::lightmap_unwrap(const Transform &p_base_transform, float p_texe
 		for (int j = 0; j < vc; j++) {
 
 			Vector3 v = p_base_transform.xform(r[j]);
+			Vector3 n = p_base_transform.basis.xform(rn[j]).normalized();
 
 			vertices[(j + vertex_ofs) * 3 + 0] = v.x;
 			vertices[(j + vertex_ofs) * 3 + 1] = v.y;
 			vertices[(j + vertex_ofs) * 3 + 2] = v.z;
-			normals[(j + vertex_ofs) * 3 + 0] = rn[j].x;
-			normals[(j + vertex_ofs) * 3 + 1] = rn[j].y;
-			normals[(j + vertex_ofs) * 3 + 2] = rn[j].z;
+			normals[(j + vertex_ofs) * 3 + 0] = n.x;
+			normals[(j + vertex_ofs) * 3 + 1] = n.y;
+			normals[(j + vertex_ofs) * 3 + 2] = n.z;
 			uv_index[j + vertex_ofs] = Pair<int, int>(i, j);
 		}
 
 		PoolVector<int> rindices = arrays[Mesh::ARRAY_INDEX];
 		int ic = rindices.size();
-		int index_ofs = indices.size();
 
 		if (ic == 0) {
-			indices.resize(index_ofs + vc);
-			face_materials.resize((index_ofs + vc) / 3);
-			for (int j = 0; j < vc; j++) {
-				indices[index_ofs + j] = vertex_ofs + j;
-			}
+
 			for (int j = 0; j < vc / 3; j++) {
-				face_materials[(index_ofs / 3) + j] = i;
+				if (Face3(r[j * 3 + 0], r[j * 3 + 1], r[j * 3 + 2]).is_degenerate())
+					continue;
+
+				indices.push_back(vertex_ofs + j * 3 + 0);
+				indices.push_back(vertex_ofs + j * 3 + 1);
+				indices.push_back(vertex_ofs + j * 3 + 2);
+				face_materials.push_back(i);
 			}
 
 		} else {
 			PoolVector<int>::Read ri = rindices.read();
-			indices.resize(index_ofs + ic);
-			face_materials.resize((index_ofs + ic) / 3);
-			for (int j = 0; j < ic; j++) {
-				indices[index_ofs + j] = vertex_ofs + ri[j];
-			}
+
 			for (int j = 0; j < ic / 3; j++) {
-				face_materials[(index_ofs / 3) + j] = i;
+				if (Face3(r[ri[j * 3 + 0]], r[ri[j * 3 + 1]], r[ri[j * 3 + 2]]).is_degenerate())
+					continue;
+				indices.push_back(vertex_ofs + ri[j * 3 + 0]);
+				indices.push_back(vertex_ofs + ri[j * 3 + 1]);
+				indices.push_back(vertex_ofs + ri[j * 3 + 2]);
+				face_materials.push_back(i);
 			}
 		}
 

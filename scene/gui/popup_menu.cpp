@@ -42,24 +42,6 @@ String PopupMenu::_get_accel_text(int p_item) const {
 	else if (items[p_item].accel)
 		return keycode_get_string(items[p_item].accel);
 	return String();
-
-	/*
-	String atxt;
-	if (p_accel&KEY_MASK_SHIFT)
-		atxt+="Shift+";
-	if (p_accel&KEY_MASK_ALT)
-		atxt+="Alt+";
-	if (p_accel&KEY_MASK_CTRL)
-		atxt+="Ctrl+";
-	if (p_accel&KEY_MASK_META)
-		atxt+="Meta+";
-
-	p_accel&=KEY_CODE_MASK;
-
-	atxt+=String::chr(p_accel).to_upper();
-
-	return atxt;
-*/
 }
 
 Size2 PopupMenu::get_minimum_size() const {
@@ -136,7 +118,6 @@ int PopupMenu::_get_mouse_over(const Point2 &p_over) const {
 
 	Ref<Font> font = get_font("font");
 	int vseparation = get_constant("vseparation");
-	//int hseparation = get_constant("hseparation");
 	float font_h = font->get_height();
 
 	for (int i = 0; i < items.size(); i++) {
@@ -221,7 +202,11 @@ void PopupMenu::_gui_input(const Ref<InputEvent> &p_event) {
 
 			case KEY_DOWN: {
 
-				for (int i = mouse_over + 1; i < items.size(); i++) {
+				int search_from = mouse_over + 1;
+				if (search_from >= items.size())
+					search_from = 0;
+
+				for (int i = search_from; i < items.size(); i++) {
 
 					if (i < 0 || i >= items.size())
 						continue;
@@ -236,7 +221,11 @@ void PopupMenu::_gui_input(const Ref<InputEvent> &p_event) {
 			} break;
 			case KEY_UP: {
 
-				for (int i = mouse_over - 1; i >= 0; i--) {
+				int search_from = mouse_over - 1;
+				if (search_from < 0)
+					search_from = items.size() - 1;
+
+				for (int i = search_from; i >= 0; i--) {
 
 					if (i < 0 || i >= items.size())
 						continue;
@@ -249,10 +238,35 @@ void PopupMenu::_gui_input(const Ref<InputEvent> &p_event) {
 					}
 				}
 			} break;
+
+			case KEY_LEFT: {
+
+				Node *n = get_parent();
+				if (!n)
+					break;
+
+				PopupMenu *pm = Object::cast_to<PopupMenu>(n);
+				if (!pm)
+					break;
+
+				hide();
+			} break;
+
+			case KEY_RIGHT: {
+
+				if (mouse_over >= 0 && mouse_over < items.size() && !items[mouse_over].separator && items[mouse_over].submenu != "" && submenu_over != mouse_over)
+					_activate_submenu(mouse_over);
+			} break;
+
 			case KEY_ENTER:
 			case KEY_KP_ENTER: {
 
 				if (mouse_over >= 0 && mouse_over < items.size() && !items[mouse_over].separator) {
+
+					if (items[mouse_over].submenu != "" && submenu_over != mouse_over) {
+						_activate_submenu(mouse_over);
+						break;
+					}
 
 					activate_item(mouse_over);
 				}
@@ -499,6 +513,13 @@ void PopupMenu::_notification(int p_what) {
 			grab_focus();
 		} break;
 		case NOTIFICATION_MOUSE_EXIT: {
+
+			if (mouse_over >= 0 && (items[mouse_over].submenu == "" || submenu_over != -1)) {
+				mouse_over = -1;
+				update();
+			}
+		} break;
+		case NOTIFICATION_POPUP_HIDE: {
 
 			if (mouse_over >= 0) {
 				mouse_over = -1;
@@ -1217,6 +1238,7 @@ void PopupMenu::set_invalidate_click_until_motion() {
 PopupMenu::PopupMenu() {
 
 	mouse_over = -1;
+	submenu_over = -1;
 
 	set_focus_mode(FOCUS_ALL);
 	set_as_toplevel(true);
