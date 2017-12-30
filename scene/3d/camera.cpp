@@ -70,6 +70,9 @@ void Camera::_validate_property(PropertyInfo &p_property) const {
 
 void Camera::_update_camera() {
 
+	if (!is_inside_tree())
+		return;
+
 	Transform tr = get_camera_transform();
 	tr.origin += tr.basis.get_axis(1) * v_offset;
 	tr.origin += tr.basis.get_axis(0) * h_offset;
@@ -81,7 +84,7 @@ void Camera::_update_camera() {
 		get_viewport()->_camera_transform_changed_notify();
 	*/
 
-	if (!is_inside_tree() || get_tree()->is_node_being_edited(this) || !is_current())
+	if (get_tree()->is_node_being_edited(this) || !is_current())
 		return;
 
 	get_viewport()->_camera_transform_changed_notify();
@@ -407,15 +410,6 @@ Camera::KeepAspect Camera::get_keep_aspect_mode() const {
 	return keep_aspect;
 }
 
-void Camera::set_vaspect(bool p_vaspect) {
-	set_keep_aspect_mode(p_vaspect ? KEEP_WIDTH : KEEP_HEIGHT);
-	_update_camera_mode();
-}
-
-bool Camera::get_vaspect() const {
-	return keep_aspect == KEEP_HEIGHT;
-}
-
 void Camera::set_doppler_tracking(DopplerTracking p_tracking) {
 
 	if (doppler_tracking == p_tracking)
@@ -468,14 +462,11 @@ void Camera::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_environment"), &Camera::get_environment);
 	ClassDB::bind_method(D_METHOD("set_keep_aspect_mode", "mode"), &Camera::set_keep_aspect_mode);
 	ClassDB::bind_method(D_METHOD("get_keep_aspect_mode"), &Camera::get_keep_aspect_mode);
-	ClassDB::bind_method(D_METHOD("set_vaspect"), &Camera::set_vaspect);
-	ClassDB::bind_method(D_METHOD("get_vaspect"), &Camera::get_vaspect);
 	ClassDB::bind_method(D_METHOD("set_doppler_tracking", "mode"), &Camera::set_doppler_tracking);
 	ClassDB::bind_method(D_METHOD("get_doppler_tracking"), &Camera::get_doppler_tracking);
 	//ClassDB::bind_method(D_METHOD("_camera_make_current"),&Camera::_camera_make_current );
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "keep_aspect", PROPERTY_HINT_ENUM, "Keep Width,Keep Height"), "set_keep_aspect_mode", "get_keep_aspect_mode");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "vaspect"), "set_vaspect", "get_vaspect");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "cull_mask", PROPERTY_HINT_LAYERS_3D_RENDER), "set_cull_mask", "get_cull_mask");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "environment", PROPERTY_HINT_RESOURCE_TYPE, "Environment"), "set_environment", "get_environment");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "h_offset"), "set_h_offset", "get_h_offset");

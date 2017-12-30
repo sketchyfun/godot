@@ -200,6 +200,9 @@ static ResourceFormatLoaderDynamicFont *resource_loader_dynamic_font = NULL;
 
 static ResourceFormatLoaderStreamTexture *resource_loader_stream_texture = NULL;
 
+static ResourceFormatSaverShader *resource_saver_shader = NULL;
+static ResourceFormatLoaderShader *resource_loader_shader = NULL;
+
 void register_scene_types() {
 
 	SceneStringNames::create();
@@ -542,6 +545,8 @@ void register_scene_types() {
 	ClassDB::register_class<DynamicFontData>();
 	ClassDB::register_class<DynamicFont>();
 
+	DynamicFont::initialize_dynamic_fonts();
+
 	ClassDB::register_virtual_class<StyleBox>();
 	ClassDB::register_class<StyleBoxEmpty>();
 	ClassDB::register_class<StyleBoxTexture>();
@@ -605,6 +610,12 @@ void register_scene_types() {
 	resource_loader_text = memnew(ResourceFormatLoaderText);
 	ResourceLoader::add_resource_format_loader(resource_loader_text, true);
 
+	resource_saver_shader = memnew(ResourceFormatSaverShader);
+	ResourceSaver::add_resource_format_saver(resource_saver_shader, true);
+
+	resource_loader_shader = memnew(ResourceFormatLoaderShader);
+	ResourceLoader::add_resource_format_loader(resource_loader_shader, true);
+
 	for (int i = 0; i < 20; i++) {
 		GLOBAL_DEF("layer_names/2d_render/layer_" + itos(i + 1), "");
 		GLOBAL_DEF("layer_names/2d_physics/layer_" + itos(i + 1), "");
@@ -621,11 +632,20 @@ void unregister_scene_types() {
 	memdelete(resource_loader_stream_texture);
 	memdelete(resource_loader_theme);
 
+	DynamicFont::finish_dynamic_fonts();
+
 	if (resource_saver_text) {
 		memdelete(resource_saver_text);
 	}
 	if (resource_loader_text) {
 		memdelete(resource_loader_text);
+	}
+
+	if (resource_saver_shader) {
+		memdelete(resource_saver_shader);
+	}
+	if (resource_loader_shader) {
+		memdelete(resource_loader_shader);
 	}
 
 	SpatialMaterial::finish_shaders();

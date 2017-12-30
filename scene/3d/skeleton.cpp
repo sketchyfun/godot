@@ -153,6 +153,24 @@ void Skeleton::_notification(int p_what) {
 		case NOTIFICATION_EXIT_WORLD: {
 
 		} break;
+		case NOTIFICATION_TRANSFORM_CHANGED: {
+
+			if (dirty)
+				break; //will be eventually updated
+
+			//if moved, just update transforms
+			VisualServer *vs = VisualServer::get_singleton();
+			Bone *bonesptr = &bones[0];
+			int len = bones.size();
+			Transform global_transform = get_global_transform();
+			Transform global_transform_inverse = global_transform.affine_inverse();
+
+			for (int i = 0; i < len; i++) {
+
+				Bone &b = bonesptr[i];
+				vs->skeleton_bone_set_transform(skeleton, i, global_transform * (b.transform_final * global_transform_inverse));
+			}
+		} break;
 		case NOTIFICATION_UPDATE_SKELETON: {
 
 			VisualServer *vs = VisualServer::get_singleton();
@@ -179,6 +197,9 @@ void Skeleton::_notification(int p_what) {
 
 				rest_global_inverse_dirty = false;
 			}
+
+			Transform global_transform = get_global_transform();
+			Transform global_transform_inverse = global_transform.affine_inverse();
 
 			for (int i = 0; i < len; i++) {
 
@@ -239,7 +260,8 @@ void Skeleton::_notification(int p_what) {
 					}
 				}
 
-				vs->skeleton_bone_set_transform(skeleton, i, b.pose_global * b.rest_global_inverse);
+				b.transform_final = b.pose_global * b.rest_global_inverse;
+				vs->skeleton_bone_set_transform(skeleton, i, global_transform * (b.transform_final * global_transform_inverse));
 
 				for (List<uint32_t>::Element *E = b.nodes_bound.front(); E; E = E->next()) {
 
@@ -543,6 +565,7 @@ Skeleton::Skeleton() {
 	rest_global_inverse_dirty = true;
 	dirty = false;
 	skeleton = VisualServer::get_singleton()->skeleton_create();
+	set_notify_transform(true);
 }
 
 Skeleton::~Skeleton() {

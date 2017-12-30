@@ -109,7 +109,6 @@ private:
 	float idle_process_time;
 	bool accept_quit;
 	bool quit_on_go_back;
-	uint32_t last_id;
 
 #ifdef DEBUG_ENABLED
 	bool debug_collisions_hint;
@@ -122,12 +121,15 @@ private:
 	bool _quit;
 	bool initialized;
 	bool input_handled;
+
 	Size2 last_screen_size;
 	StringName tree_changed_name;
 	StringName node_added_name;
 	StringName node_removed_name;
 
+	bool use_font_oversampling;
 	int64_t current_frame;
+	int64_t current_event;
 	int node_count;
 
 #ifdef TOOLS_ENABLED
@@ -323,7 +325,7 @@ public:
 		NOTIFICATION_TRANSFORM_CHANGED = 29
 	};
 
-	enum CallGroupFlags {
+	enum GroupCallFlags {
 		GROUP_CALL_DEFAULT = 0,
 		GROUP_CALL_REVERSE = 1,
 		GROUP_CALL_REALTIME = 2,
@@ -332,8 +334,6 @@ public:
 	};
 
 	_FORCE_INLINE_ Viewport *get_root() const { return root; }
-
-	uint32_t get_last_event_id() const;
 
 	void call_group_flags(uint32_t p_call_flags, const StringName &p_group, const StringName &p_function, VARIANT_ARG_LIST);
 	void notify_group_flags(uint32_t p_call_flags, const StringName &p_group, int p_notification);
@@ -410,6 +410,7 @@ public:
 	int get_collision_debug_contact_count() { return collision_debug_contacts; }
 
 	int64_t get_frame() const;
+	int64_t get_event_count() const;
 
 	int get_node_count() const;
 
@@ -419,6 +420,9 @@ public:
 	bool has_group(const StringName &p_identifier) const;
 
 	void set_screen_stretch(StretchMode p_mode, StretchAspect p_aspect, const Size2 p_minsize, real_t p_shrink = 1);
+
+	void set_use_font_oversampling(bool p_oversampling);
+	bool is_using_font_oversampling() const;
 
 	//void change_scene(const String& p_path);
 	//Node *get_loaded_scene();
@@ -462,6 +466,6 @@ public:
 
 VARIANT_ENUM_CAST(SceneTree::StretchMode);
 VARIANT_ENUM_CAST(SceneTree::StretchAspect);
-VARIANT_ENUM_CAST(SceneTree::CallGroupFlags);
+VARIANT_ENUM_CAST(SceneTree::GroupCallFlags);
 
 #endif
