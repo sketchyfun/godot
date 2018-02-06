@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "packed_scene.h"
 
 #include "core/core_string_names.h"
@@ -234,6 +235,7 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 										if (p_edit_state == GEN_EDIT_STATE_MAIN) {
 											//for the main scene, use the resource as is
 											res->configure_for_local_scene(base, resources_local_to_scene);
+											resources_local_to_scene[res] = res;
 
 										} else {
 											//for instances, a copy must be made
@@ -243,9 +245,6 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 											res = local_dupe;
 											value = local_dupe;
 										}
-
-										//this here may reference nodes not iniialized so this line is commented and used after loading all nodes
-										//res->setup_local_to_scene();
 									}
 									//must make a copy, because this res is local to scene
 								}
@@ -1120,7 +1119,7 @@ void SceneState::set_bundled_scene(const Dictionary &p_dictionary) {
 			uint32_t name_index = r[idx++];
 			nd.name = name_index & ((1 << NAME_INDEX_BITS) - 1);
 			nd.index = (name_index >> NAME_INDEX_BITS);
-			nd.index--; //0 is invaild, stored as 1
+			nd.index--; //0 is invalid, stored as 1
 			nd.instance = r[idx++];
 			nd.properties.resize(r[idx++]);
 			for (int j = 0; j < nd.properties.size(); j++) {
@@ -1213,7 +1212,7 @@ Dictionary SceneState::get_bundled_scene() const {
 		rnodes.push_back(nd.owner);
 		rnodes.push_back(nd.type);
 		uint32_t name_index = nd.name;
-		if (nd.index < (1 << (32 - NAME_INDEX_BITS)) - 1) { //save if less than 16k childs
+		if (nd.index < (1 << (32 - NAME_INDEX_BITS)) - 1) { //save if less than 16k children
 			name_index |= uint32_t(nd.index + 1) << NAME_INDEX_BITS; //for backwards compatibility, index 0 is no index
 		}
 		rnodes.push_back(name_index);

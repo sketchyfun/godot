@@ -1,13 +1,12 @@
 /*************************************************************************/
-/*  body_bullet.cpp                                                      */
-/*  Author: AndreaCatania                                                */
+/*  rigid_body_bullet.cpp                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,17 +29,24 @@
 /*************************************************************************/
 
 #include "rigid_body_bullet.h"
-#include "BulletCollision/CollisionDispatch/btGhostObject.h"
-#include "BulletCollision/CollisionShapes/btConvexPointCloudShape.h"
-#include "BulletDynamics/Dynamics/btRigidBody.h"
-#include "btBulletCollisionCommon.h"
+
 #include "btRayShape.h"
 #include "bullet_physics_server.h"
 #include "bullet_types_converter.h"
 #include "bullet_utilities.h"
 #include "godot_motion_state.h"
 #include "joint_bullet.h"
+
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <BulletCollision/CollisionShapes/btConvexPointCloudShape.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
+#include <btBulletCollisionCommon.h>
+
 #include <assert.h>
+
+/**
+	@author AndreaCatania
+*/
 
 BulletPhysicsDirectBodyState *BulletPhysicsDirectBodyState::singleton = NULL;
 
@@ -198,48 +204,27 @@ void RigidBodyBullet::KinematicUtilities::copyAllOwnerShapes() {
 
 	const CollisionObjectBullet::ShapeWrapper *shape_wrapper;
 
-	btVector3 owner_body_scale(owner->get_bt_body_scale());
+	btVector3 owner_scale(owner->get_bt_body_scale());
 
 	for (int i = shapes_count - 1; 0 <= i; --i) {
 		shape_wrapper = &shapes_wrappers[i];
 		if (!shape_wrapper->active) {
 			continue;
 		}
+
 		shapes[i].transform = shape_wrapper->transform;
-
-		btConvexShape *&kin_shape_ref = shapes[i].shape;
-
+		shapes[i].transform.getOrigin() *= owner_scale;
 		switch (shape_wrapper->shape->get_type()) {
-			case PhysicsServer::SHAPE_SPHERE: {
-				SphereShapeBullet *sphere = static_cast<SphereShapeBullet *>(shape_wrapper->shape);
-				kin_shape_ref = ShapeBullet::create_shape_sphere(sphere->get_radius() * owner_body_scale[0] + safe_margin);
-				break;
-			}
-			case PhysicsServer::SHAPE_BOX: {
-				BoxShapeBullet *box = static_cast<BoxShapeBullet *>(shape_wrapper->shape);
-				kin_shape_ref = ShapeBullet::create_shape_box((box->get_half_extents() * owner_body_scale) + btVector3(safe_margin, safe_margin, safe_margin));
-				break;
-			}
-			case PhysicsServer::SHAPE_CAPSULE: {
-				CapsuleShapeBullet *capsule = static_cast<CapsuleShapeBullet *>(shape_wrapper->shape);
-
-				kin_shape_ref = ShapeBullet::create_shape_capsule(capsule->get_radius() * owner_body_scale[0] + safe_margin, capsule->get_height() * owner_body_scale[1] + safe_margin);
-				break;
-			}
-			case PhysicsServer::SHAPE_CONVEX_POLYGON: {
-				ConvexPolygonShapeBullet *godot_convex = static_cast<ConvexPolygonShapeBullet *>(shape_wrapper->shape);
-				kin_shape_ref = ShapeBullet::create_shape_convex(godot_convex->vertices);
-				kin_shape_ref->setLocalScaling(owner_body_scale + btVector3(safe_margin, safe_margin, safe_margin));
-				break;
-			}
+			case PhysicsServer::SHAPE_SPHERE:
+			case PhysicsServer::SHAPE_BOX:
+			case PhysicsServer::SHAPE_CAPSULE:
+			case PhysicsServer::SHAPE_CONVEX_POLYGON:
 			case PhysicsServer::SHAPE_RAY: {
-				RayShapeBullet *godot_ray = static_cast<RayShapeBullet *>(shape_wrapper->shape);
-				kin_shape_ref = ShapeBullet::create_shape_ray(godot_ray->length * owner_body_scale[1] + safe_margin);
-				break;
-			}
+				shapes[i].shape = static_cast<btConvexShape *>(shape_wrapper->shape->create_bt_shape(owner_scale * shape_wrapper->scale, safe_margin));
+			} break;
 			default:
 				WARN_PRINT("This shape is not supported to be kinematic!");
-				kin_shape_ref = NULL;
+				shapes[i].shape = NULL;
 		}
 	}
 }
@@ -705,7 +690,7 @@ void RigidBodyBullet::set_continuous_collision_detection(bool p_enable) {
 		/// Calculate using the rule writte below the CCD swept sphere radius
 		///     CCD works on an embedded sphere of radius, make sure this radius
 		///     is embedded inside the convex objects, preferably smaller:
-		///     for an object of dimentions 1 meter, try 0.2
+		///     for an object of dimensions 1 meter, try 0.2
 		btVector3 center;
 		btScalar radius;
 		btBody->getCollisionShape()->getBoundingSphere(center, radius);
@@ -970,7 +955,8 @@ void RigidBodyBullet::_internal_set_mass(real_t p_mass) {
 	const bool isDynamic = p_mass != 0.f;
 	if (isDynamic) {
 
-		ERR_FAIL_COND(PhysicsServer::BODY_MODE_RIGID != mode && PhysicsServer::BODY_MODE_CHARACTER != mode);
+		if (PhysicsServer::BODY_MODE_RIGID != mode && PhysicsServer::BODY_MODE_CHARACTER != mode)
+			return;
 
 		m_isStatic = false;
 		compoundShape->calculateLocalInertia(p_mass, localInertia);
@@ -990,7 +976,8 @@ void RigidBodyBullet::_internal_set_mass(real_t p_mass) {
 		}
 	} else {
 
-		ERR_FAIL_COND(PhysicsServer::BODY_MODE_STATIC != mode && PhysicsServer::BODY_MODE_KINEMATIC != mode);
+		if (PhysicsServer::BODY_MODE_STATIC != mode && PhysicsServer::BODY_MODE_KINEMATIC != mode)
+			return;
 
 		m_isStatic = true;
 		if (PhysicsServer::BODY_MODE_STATIC == mode) {

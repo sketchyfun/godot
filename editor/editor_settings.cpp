@@ -3,10 +3,10 @@
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http:/www.godotengine.org                          */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "editor_settings.h"
 
 #include "core/io/compression.h"
@@ -53,7 +54,18 @@ Ref<EditorSettings> EditorSettings::singleton = NULL;
 
 // Properties
 
-bool EditorSettings::_set(const StringName &p_name, const Variant &p_value, bool p_emit_signal) {
+bool EditorSettings::_set(const StringName &p_name, const Variant &p_value) {
+
+	_THREAD_SAFE_METHOD_
+
+	bool changed = _set_only(p_name, p_value);
+	if (changed) {
+		emit_signal("settings_changed");
+	}
+	return true;
+}
+
+bool EditorSettings::_set_only(const StringName &p_name, const Variant &p_value) {
 
 	_THREAD_SAFE_METHOD_
 
@@ -72,26 +84,36 @@ bool EditorSettings::_set(const StringName &p_name, const Variant &p_value, bool
 			add_shortcut(name, sc);
 		}
 
-		return true;
+		return false;
 	}
 
+	bool changed = false;
+
 	if (p_value.get_type() == Variant::NIL) {
-		props.erase(p_name);
+		if (props.has(p_name)) {
+			props.erase(p_name);
+			changed = true;
+		}
 	} else {
-		if (props.has(p_name))
-			props[p_name].variant = p_value;
-		else
+		if (props.has(p_name)) {
+			if (p_value != props[p_name].variant) {
+				props[p_name].variant = p_value;
+				changed = true;
+			}
+		} else {
 			props[p_name] = VariantContainer(p_value, last_order++);
+			changed = true;
+		}
 
 		if (save_changed_setting) {
-			props[p_name].save = true;
+			if (props[p_name].save != true) {
+				props[p_name].save = true;
+				changed = true;
+			}
 		}
 	}
 
-	if (p_emit_signal) {
-		emit_signal("settings_changed");
-	}
-	return true;
+	return changed;
 }
 
 bool EditorSettings::_get(const StringName &p_name, Variant &r_ret) const {
@@ -191,7 +213,7 @@ void EditorSettings::_get_property_list(List<PropertyInfo> *p_list) const {
 		p_list->push_back(pi);
 	}
 
-	p_list->push_back(PropertyInfo(Variant::ARRAY, "shortcuts", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR)); //do not edit
+	p_list->push_back(PropertyInfo(Variant::ARRAY, "shortcuts", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL)); //do not edit
 }
 
 void EditorSettings::_add_property_info_bind(const Dictionary &p_info) {
@@ -259,12 +281,14 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("interface/editor/hidpi_mode", 0);
 	hints["interface/editor/hidpi_mode"] = PropertyInfo(Variant::INT, "interface/editor/hidpi_mode", PROPERTY_HINT_ENUM, "Auto,VeryLoDPI,LoDPI,MidDPI,HiDPI", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
 	_initial_set("interface/scene_tabs/show_script_button", false);
-	_initial_set("interface/editor/font_size", 14);
-	hints["interface/editor/font_size"] = PropertyInfo(Variant::INT, "interface/editor/font_size", PROPERTY_HINT_RANGE, "10,40,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
-	_initial_set("interface/editor/source_font_size", 14);
-	hints["interface/editor/source_font_size"] = PropertyInfo(Variant::INT, "interface/editor/source_font_size", PROPERTY_HINT_RANGE, "8,96,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
-	_initial_set("interface/editor/custom_font", "");
-	hints["interface/editor/custom_font"] = PropertyInfo(Variant::STRING, "interface/editor/custom_font", PROPERTY_HINT_GLOBAL_FILE, "*.font,*.tres,*.res", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
+	_initial_set("interface/editor/main_font_size", 14);
+	hints["interface/editor/main_font_size"] = PropertyInfo(Variant::INT, "interface/editor/main_font_size", PROPERTY_HINT_RANGE, "10,40,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
+	_initial_set("interface/editor/code_font_size", 14);
+	hints["interface/editor/code_font_size"] = PropertyInfo(Variant::INT, "interface/editor/code_font_size", PROPERTY_HINT_RANGE, "8,96,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
+	_initial_set("interface/editor/main_font", "");
+	hints["interface/editor/main_font"] = PropertyInfo(Variant::STRING, "interface/editor/main_font", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
+	_initial_set("interface/editor/code_font", "");
+	hints["interface/editor/code_font"] = PropertyInfo(Variant::STRING, "interface/editor/code_font", PROPERTY_HINT_GLOBAL_FILE, "*.ttf,*.otf", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED);
 	_initial_set("interface/editor/dim_editor_on_dialog_popup", true);
 	_initial_set("interface/editor/dim_amount", 0.6f);
 	hints["interface/editor/dim_amount"] = PropertyInfo(Variant::REAL, "interface/editor/dim_amount", PROPERTY_HINT_RANGE, "0,1,0.01", PROPERTY_USAGE_DEFAULT);
@@ -310,7 +334,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("interface/scene_tabs/show_script_button", false);
 
 	_initial_set("text_editor/theme/color_theme", "Adaptive");
-	hints["text_editor/theme/color_theme"] = PropertyInfo(Variant::STRING, "text_editor/theme/color_theme", PROPERTY_HINT_ENUM, "Adaptive,Default");
+	hints["text_editor/theme/color_theme"] = PropertyInfo(Variant::STRING, "text_editor/theme/color_theme", PROPERTY_HINT_ENUM, "Adaptive,Default,Custom");
 
 	_initial_set("text_editor/theme/line_spacing", 4);
 
@@ -353,13 +377,13 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	hints["text_editor/cursor/caret_blink_speed"] = PropertyInfo(Variant::REAL, "text_editor/cursor/caret_blink_speed", PROPERTY_HINT_RANGE, "0.1, 10, 0.1");
 	_initial_set("text_editor/cursor/right_click_moves_caret", true);
 
-	_initial_set("text_editor/theme/font", "");
-	hints["text_editor/theme/font"] = PropertyInfo(Variant::STRING, "text_editor/theme/font", PROPERTY_HINT_GLOBAL_FILE, "*.font,*.tres,*.res");
 	_initial_set("text_editor/completion/auto_brace_complete", false);
+	_initial_set("text_editor/completion/put_callhint_tooltip_below_current_line", true);
+	_initial_set("text_editor/completion/callhint_tooltip_offset", Vector2());
 	_initial_set("text_editor/files/restore_scripts_on_load", true);
 	_initial_set("text_editor/completion/complete_file_paths", true);
 	_initial_set("text_editor/files/maximum_recent_files", 20);
-	hints["text_editor/files/maximum_recent_files"] = PropertyInfo(Variant::INT, "text_editor/files/maximum_recent_files", PROPERTY_HINT_RANGE, "1, 200, 0");
+	hints["text_editor/files/maximum_recent_files"] = PropertyInfo(Variant::INT, "text_editor/files/maximum_recent_files", PROPERTY_HINT_RANGE, "1, 200, 1");
 
 	_initial_set("docks/scene_tree/start_create_dialog_fully_expanded", false);
 	_initial_set("docks/scene_tree/draw_relationship_lines", false);
@@ -489,6 +513,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("filesystem/resources/auto_reload_modified_images", true);
 
 	_initial_set("filesystem/import/automatic_reimport_on_sources_changed", true);
+	_initial_set("filesystem/on_save/safe_save_on_backup_then_rename", true);
 
 	if (p_extra_config.is_valid()) {
 
@@ -968,7 +993,7 @@ void EditorSettings::raise_order(const String &p_setting) {
 	props[p_setting].order = ++last_order;
 }
 
-void EditorSettings::set_initial_value(const StringName &p_setting, const Variant &p_value) {
+void EditorSettings::set_initial_value(const StringName &p_setting, const Variant &p_value, bool p_update_current) {
 
 	_THREAD_SAFE_METHOD_
 
@@ -976,6 +1001,9 @@ void EditorSettings::set_initial_value(const StringName &p_setting, const Varian
 		return;
 	props[p_setting].initial = p_value;
 	props[p_setting].has_default_value = true;
+	if (p_update_current) {
+		set(p_setting, p_value);
+	}
 }
 
 Variant _EDITOR_DEF(const String &p_setting, const Variant &p_default) {
@@ -1141,13 +1169,13 @@ void EditorSettings::load_favorites() {
 }
 
 void EditorSettings::list_text_editor_themes() {
-	String themes = "Adaptive,Default";
+	String themes = "Adaptive,Default,Custom";
 	DirAccess *d = DirAccess::open(get_text_editor_themes_dir());
 	if (d) {
 		d->list_dir_begin();
 		String file = d->get_next();
 		while (file != String()) {
-			if (file.get_extension() == "tet" && file.get_basename().to_lower() != "default" && file.get_basename().to_lower() != "adaptive") {
+			if (file.get_extension() == "tet" && file.get_basename().to_lower() != "default" && file.get_basename().to_lower() != "adaptive" && file.get_basename().to_lower() != "custom") {
 				themes += "," + file.get_basename();
 			}
 			file = d->get_next();
@@ -1159,9 +1187,11 @@ void EditorSettings::list_text_editor_themes() {
 }
 
 void EditorSettings::load_text_editor_theme() {
-	if (get("text_editor/theme/color_theme") == "Default" || get("text_editor/theme/color_theme") == "Adaptive") {
-		_load_default_text_editor_theme(); // sorry for "Settings changed" console spam
-		return;
+	if (get("text_editor/theme/color_theme") == "Default" || get("text_editor/theme/color_theme") == "Adaptive" || get("text_editor/theme/color_theme") == "Custom") {
+		if (get("text_editor/theme/color_theme") == "Default") {
+			_load_default_text_editor_theme();
+		}
+		return; // sorry for "Settings changed" console spam
 	}
 
 	String theme_path = get_text_editor_themes_dir().plus_file((String)get("text_editor/theme/color_theme") + ".tet");
@@ -1216,7 +1246,7 @@ bool EditorSettings::save_text_editor_theme() {
 
 	String p_file = get("text_editor/theme/color_theme");
 
-	if (p_file.get_file().to_lower() == "default" || p_file.get_file().to_lower() == "adaptive") {
+	if (p_file.get_file().to_lower() == "default" || p_file.get_file().to_lower() == "adaptive" || p_file.get_file().to_lower() == "custom") {
 		return false;
 	}
 	String theme_path = get_text_editor_themes_dir().plus_file(p_file + ".tet");
@@ -1228,7 +1258,7 @@ bool EditorSettings::save_text_editor_theme_as(String p_file) {
 		p_file += ".tet";
 	}
 
-	if (p_file.get_file().to_lower() == "default.tet" || p_file.get_file().to_lower() == "adaptive.tet") {
+	if (p_file.get_file().to_lower() == "default.tet" || p_file.get_file().to_lower() == "adaptive.tet" || p_file.get_file().to_lower() == "custom.tet") {
 		return false;
 	}
 	if (_save_text_editor_theme(p_file)) {
@@ -1316,7 +1346,43 @@ Ref<ShortCut> ED_GET_SHORTCUT(const String &p_path) {
 	return sc;
 }
 
+struct ShortCutMapping {
+	const char *path;
+	uint32_t keycode;
+};
+
 Ref<ShortCut> ED_SHORTCUT(const String &p_path, const String &p_name, uint32_t p_keycode) {
+
+#ifdef OSX_ENABLED
+	static const ShortCutMapping macos_mappings[] = {
+		{ "editor/play", KEY_MASK_CMD | KEY_B },
+		{ "editor/play_scene", KEY_MASK_CMD | KEY_R },
+		{ "editor/pause_scene", KEY_MASK_CMD | KEY_MASK_CTRL | KEY_Y },
+		{ "editor/stop", KEY_MASK_CMD | KEY_PERIOD },
+		{ "editor/play_custom_scene", KEY_MASK_SHIFT | KEY_MASK_CMD | KEY_R },
+		{ "editor/editor_2d", KEY_MASK_ALT | KEY_1 },
+		{ "editor/editor_3d", KEY_MASK_ALT | KEY_2 },
+		{ "editor/editor_script", KEY_MASK_ALT | KEY_3 },
+		{ "editor/editor_help", KEY_MASK_ALT | KEY_SPACE },
+		{ "editor/fullscreen_mode", KEY_MASK_CMD | KEY_MASK_CTRL | KEY_F },
+		{ "editor/distraction_free_mode", KEY_MASK_CMD | KEY_MASK_CTRL | KEY_D },
+		{ "script_text_editor/contextual_help", KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_SPACE },
+		{ "script_text_editor/find_next", KEY_MASK_CMD | KEY_G },
+		{ "script_text_editor/find_previous", KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_G },
+		{ "script_text_editor/toggle_breakpoint", KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_B }
+	};
+
+	if (p_keycode == KEY_DELETE) {
+		p_keycode = KEY_MASK_CMD | KEY_BACKSPACE;
+	} else {
+		for (int i = 0; i < sizeof(macos_mappings) / sizeof(ShortCutMapping); i++) {
+			if (p_path == macos_mappings[i].path) {
+				p_keycode = macos_mappings[i].keycode;
+				break;
+			}
+		}
+	}
+#endif
 
 	Ref<InputEventKey> ie;
 	if (p_keycode) {
@@ -1371,7 +1437,7 @@ void EditorSettings::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_setting", "name", "value"), &EditorSettings::set_setting);
 	ClassDB::bind_method(D_METHOD("get_setting", "name"), &EditorSettings::get_setting);
 	ClassDB::bind_method(D_METHOD("erase", "property"), &EditorSettings::erase);
-	ClassDB::bind_method(D_METHOD("set_initial_value", "name", "value"), &EditorSettings::set_initial_value);
+	ClassDB::bind_method(D_METHOD("set_initial_value", "name", "value", "update_current"), &EditorSettings::set_initial_value);
 	ClassDB::bind_method(D_METHOD("property_can_revert", "name"), &EditorSettings::property_can_revert);
 	ClassDB::bind_method(D_METHOD("property_get_revert", "name"), &EditorSettings::property_get_revert);
 	ClassDB::bind_method(D_METHOD("add_property_info", "info"), &EditorSettings::_add_property_info_bind);

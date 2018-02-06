@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "scene_format_text.h"
 #include "core/io/resource_format_binary.h"
 #include "os/dir_access.h"
@@ -1311,6 +1312,8 @@ Error ResourceFormatLoaderText::rename_dependencies(const String &p_path, const 
 	return ria->rename_dependencies(f, p_path, p_map);
 }
 
+ResourceFormatLoaderText *ResourceFormatLoaderText::singleton = NULL;
+
 Error ResourceFormatLoaderText::convert_file_to_binary(const String &p_src_path, const String &p_dst_path) {
 
 	Error err;
@@ -1410,7 +1413,7 @@ void ResourceFormatSaverTextInstance::_find_resources(const Variant &p_variant, 
 				I = I->next();
 			}
 
-			resource_set.insert(res); //saved after, so the childs it needs are available when loaded
+			resource_set.insert(res); //saved after, so the children it needs are available when loaded
 			saved_resources.push_back(res);
 
 		} break;

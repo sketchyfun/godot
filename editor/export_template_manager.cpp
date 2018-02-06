@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,8 +27,11 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "export_template_manager.h"
 
+#include "core/os/input.h"
+#include "core/os/keyboard.h"
 #include "editor_node.h"
 #include "editor_scale.h"
 #include "io/json.h"
@@ -250,7 +253,7 @@ void ExportTemplateManager::_install_from_file(const String &p_file, bool p_use_
 	DirAccess *d = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	Error err = d->make_dir_recursive(template_path);
 	if (err != OK) {
-		EditorNode::get_singleton()->show_warning(TTR("Error creating path for templates:\n") + template_path);
+		EditorNode::get_singleton()->show_warning(TTR("Error creating path for templates:") + "\n" + template_path);
 		unzClose(pkg);
 		return;
 	}
@@ -421,6 +424,11 @@ void ExportTemplateManager::_http_download_templates_completed(int p_status, int
 
 void ExportTemplateManager::_begin_template_download(const String &p_url) {
 
+	if (Input::get_singleton()->is_key_pressed(KEY_SHIFT)) {
+		OS::get_singleton()->shell_open(p_url);
+		return;
+	}
+
 	for (int i = 0; i < template_list->get_child_count(); i++) {
 		BaseButton *b = Object::cast_to<BaseButton>(template_list->get_child(0));
 		if (b) {
@@ -575,7 +583,7 @@ ExportTemplateManager::ExportTemplateManager() {
 	template_downloader->add_child(vbc);
 	ScrollContainer *sc = memnew(ScrollContainer);
 	sc->set_custom_minimum_size(Size2(400, 200) * EDSCALE);
-	vbc->add_margin_child(TTR("Select mirror from list: "), sc);
+	vbc->add_margin_child(TTR("Select mirror from list: (Shift+Click: Open in Browser)"), sc);
 	template_list = memnew(VBoxContainer);
 	sc->add_child(template_list);
 	sc->set_enable_v_scroll(true);

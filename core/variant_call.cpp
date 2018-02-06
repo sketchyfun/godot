@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "variant.h"
 
 #include "core_string_names.h"
@@ -101,9 +102,10 @@ struct _VariantCall {
 				const Variant *newargs[VARIANT_ARG_MAX];
 				for (int i = 0; i < p_argcount; i++)
 					newargs[i] = p_args[i];
-				int defargcount = def_argcount;
+				// fill in any remaining parameters with defaults
+				int first_default_arg = arg_count - def_argcount;
 				for (int i = p_argcount; i < arg_count; i++)
-					newargs[i] = &default_args[defargcount - (i - p_argcount) - 1]; //default arguments
+					newargs[i] = &default_args[i - first_default_arg];
 #ifdef DEBUG_ENABLED
 				if (!verify_arguments(newargs, r_error))
 					return;
@@ -1537,7 +1539,7 @@ void register_variant_methods() {
 	ADDFUNC0R(VECTOR3, BOOL, Vector3, is_normalized, varray());
 	ADDFUNC0R(VECTOR3, VECTOR3, Vector3, normalized, varray());
 	ADDFUNC0R(VECTOR3, VECTOR3, Vector3, inverse, varray());
-	ADDFUNC1R(VECTOR3, VECTOR3, Vector3, snapped, REAL, "by", varray());
+	ADDFUNC1R(VECTOR3, VECTOR3, Vector3, snapped, VECTOR3, "by", varray());
 	ADDFUNC2R(VECTOR3, VECTOR3, Vector3, rotated, VECTOR3, "axis", REAL, "phi", varray());
 	ADDFUNC2R(VECTOR3, VECTOR3, Vector3, linear_interpolate, VECTOR3, "b", REAL, "t", varray());
 	ADDFUNC4R(VECTOR3, VECTOR3, Vector3, cubic_interpolate, VECTOR3, "b", VECTOR3, "pre_a", VECTOR3, "post_b", REAL, "t", varray());
@@ -1746,10 +1748,10 @@ void register_variant_methods() {
 	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, rotated, REAL, "phi", varray());
 	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, scaled, VECTOR2, "scale", varray());
 	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, translated, VECTOR2, "offset", varray());
-	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, xform, NIL, "v", varray());
-	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, xform_inv, NIL, "v", varray());
-	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, basis_xform, NIL, "v", varray());
-	ADDFUNC1R(TRANSFORM2D, TRANSFORM2D, Transform2D, basis_xform_inv, NIL, "v", varray());
+	ADDFUNC1R(TRANSFORM2D, NIL, Transform2D, xform, NIL, "v", varray());
+	ADDFUNC1R(TRANSFORM2D, NIL, Transform2D, xform_inv, NIL, "v", varray());
+	ADDFUNC1R(TRANSFORM2D, VECTOR2, Transform2D, basis_xform, VECTOR2, "v", varray());
+	ADDFUNC1R(TRANSFORM2D, VECTOR2, Transform2D, basis_xform_inv, VECTOR2, "v", varray());
 	ADDFUNC2R(TRANSFORM2D, TRANSFORM2D, Transform2D, interpolate_with, TRANSFORM2D, "transform", REAL, "weight", varray());
 
 	ADDFUNC0R(BASIS, BASIS, Basis, inverse, varray());

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "canvas_item.h"
 #include "core/method_bind_ext.gen.inc"
 #include "message_queue.h"
@@ -100,7 +101,7 @@ void CanvasItemMaterial::_update_shader() {
 		case LIGHT_MODE_UNSHADED: code += ",unshaded"; break;
 		case LIGHT_MODE_LIGHT_ONLY: code += ",light_only"; break;
 	}
-	code += ";\n"; //thats it.
+	code += ";\n"; //that's it.
 
 	ShaderData shader_data;
 	shader_data.shader = VS::get_singleton()->shader_create();
@@ -1058,9 +1059,9 @@ void CanvasItem::_bind_methods() {
 	ADD_GROUP("Material", "");
 	ADD_PROPERTYNZ(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial,CanvasItemMaterial"), "set_material", "get_material");
 	ADD_PROPERTYNZ(PropertyInfo(Variant::BOOL, "use_parent_material"), "set_use_parent_material", "get_use_parent_material");
-	//exporting these two things doesn't really make much sense i think
-	//ADD_PROPERTY( PropertyInfo(Variant::BOOL,"transform/toplevel"), "set_as_toplevel","is_set_as_toplevel") ;
-	//ADD_PROPERTY(PropertyInfo(Variant::BOOL,"transform/notify"),"set_transform_notify","is_transform_notify_enabled");
+	//exporting these things doesn't really make much sense i think
+	// ADD_PROPERTY(PropertyInfo(Variant::BOOL, "toplevel", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_as_toplevel", "is_set_as_toplevel");
+	// ADD_PROPERTY(PropertyInfo(Variant::BOOL,"transform/notify"),"set_transform_notify","is_transform_notify_enabled");
 
 	ADD_SIGNAL(MethodInfo("draw"));
 	ADD_SIGNAL(MethodInfo("visibility_changed"));

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "grid_map.h"
 #include "message_queue.h"
 #include "scene/3d/light.h"
@@ -42,28 +43,7 @@ bool GridMap::_set(const StringName &p_name, const Variant &p_value) {
 
 	String name = p_name;
 
-	if (name == "theme") {
-
-		set_theme(p_value);
-	} else if (name == "cell_size") {
-		if (p_value.get_type() == Variant::INT || p_value.get_type() == Variant::REAL) {
-			//compatibility
-			float cs = p_value;
-			set_cell_size(Vector3(cs, cs, cs));
-		} else {
-			set_cell_size(p_value);
-		}
-	} else if (name == "cell_octant_size") {
-		set_octant_size(p_value);
-	} else if (name == "cell_center_x") {
-		set_center_x(p_value);
-	} else if (name == "cell_center_y") {
-		set_center_y(p_value);
-	} else if (name == "cell_center_z") {
-		set_center_z(p_value);
-	} else if (name == "cell_scale") {
-		set_cell_scale(p_value);
-		/*	} else if (name=="cells") {
+	/*	} else if (name=="cells") {
 		PoolVector<int> cells = p_value;
 		int amount=cells.size();
 		PoolVector<int>::Read r = cells.read();
@@ -80,7 +60,7 @@ bool GridMap::_set(const StringName &p_name, const Variant &p_value) {
 
 		}
 		_recreate_octant_data();*/
-	} else if (name == "data") {
+	if (name == "data") {
 
 		Dictionary d = p_value;
 
@@ -133,21 +113,7 @@ bool GridMap::_get(const StringName &p_name, Variant &r_ret) const {
 
 	String name = p_name;
 
-	if (name == "theme") {
-		r_ret = get_theme();
-	} else if (name == "cell_size") {
-		r_ret = get_cell_size();
-	} else if (name == "cell_octant_size") {
-		r_ret = get_octant_size();
-	} else if (name == "cell_center_x") {
-		r_ret = get_center_x();
-	} else if (name == "cell_center_y") {
-		r_ret = get_center_y();
-	} else if (name == "cell_center_z") {
-		r_ret = get_center_z();
-	} else if (name == "cell_scale") {
-		r_ret = cell_scale;
-	} else if (name == "data") {
+	if (name == "data") {
 
 		Dictionary d;
 
@@ -183,19 +149,63 @@ bool GridMap::_get(const StringName &p_name, Variant &r_ret) const {
 
 void GridMap::_get_property_list(List<PropertyInfo> *p_list) const {
 
-	p_list->push_back(PropertyInfo(Variant::OBJECT, "theme", PROPERTY_HINT_RESOURCE_TYPE, "MeshLibrary"));
-	p_list->push_back(PropertyInfo(Variant::NIL, "Cell", PROPERTY_HINT_NONE, "cell_", PROPERTY_USAGE_GROUP));
-	p_list->push_back(PropertyInfo(Variant::VECTOR3, "cell_size"));
-	p_list->push_back(PropertyInfo(Variant::INT, "cell_octant_size", PROPERTY_HINT_RANGE, "1,1024,1"));
-	p_list->push_back(PropertyInfo(Variant::BOOL, "cell_center_x"));
-	p_list->push_back(PropertyInfo(Variant::BOOL, "cell_center_y"));
-	p_list->push_back(PropertyInfo(Variant::BOOL, "cell_center_z"));
-	p_list->push_back(PropertyInfo(Variant::REAL, "cell_scale"));
 	if (baked_meshes.size()) {
 		p_list->push_back(PropertyInfo(Variant::ARRAY, "baked_meshes", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE));
 	}
 
 	p_list->push_back(PropertyInfo(Variant::DICTIONARY, "data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE));
+}
+
+void GridMap::set_collision_layer(uint32_t p_layer) {
+
+	collision_layer = p_layer;
+	_reset_physic_bodies_collision_filters();
+}
+
+uint32_t GridMap::get_collision_layer() const {
+
+	return collision_layer;
+}
+
+void GridMap::set_collision_mask(uint32_t p_mask) {
+
+	collision_mask = p_mask;
+	_reset_physic_bodies_collision_filters();
+}
+
+uint32_t GridMap::get_collision_mask() const {
+
+	return collision_mask;
+}
+
+void GridMap::set_collision_mask_bit(int p_bit, bool p_value) {
+
+	uint32_t mask = get_collision_mask();
+	if (p_value)
+		mask |= 1 << p_bit;
+	else
+		mask &= ~(1 << p_bit);
+	set_collision_mask(mask);
+}
+
+bool GridMap::get_collision_mask_bit(int p_bit) const {
+
+	return get_collision_mask() & (1 << p_bit);
+}
+
+void GridMap::set_collision_layer_bit(int p_bit, bool p_value) {
+
+	uint32_t mask = get_collision_layer();
+	if (p_value)
+		mask |= 1 << p_bit;
+	else
+		mask &= ~(1 << p_bit);
+	set_collision_layer(mask);
+}
+
+bool GridMap::get_collision_layer_bit(int p_bit) const {
+
+	return get_collision_layer() & (1 << p_bit);
 }
 
 void GridMap::set_theme(const Ref<MeshLibrary> &p_theme) {
@@ -311,6 +321,8 @@ void GridMap::set_cell_item(int p_x, int p_y, int p_z, int p_item, int p_rot) {
 		g->dirty = true;
 		g->static_body = PhysicsServer::get_singleton()->body_create(PhysicsServer::BODY_MODE_STATIC);
 		PhysicsServer::get_singleton()->body_attach_object_instance_id(g->static_body, get_instance_id());
+		PhysicsServer::get_singleton()->body_set_collision_layer(g->static_body, collision_layer);
+		PhysicsServer::get_singleton()->body_set_collision_mask(g->static_body, collision_mask);
 		SceneTree *st = SceneTree::get_singleton();
 
 		if (st && st->is_debugging_collisions_hint()) {
@@ -575,6 +587,13 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 	return false;
 }
 
+void GridMap::_reset_physic_bodies_collision_filters() {
+	for (Map<OctantKey, Octant *>::Element *E = octant_map.front(); E; E = E->next()) {
+		PhysicsServer::get_singleton()->body_set_collision_layer(E->get()->static_body, collision_layer);
+		PhysicsServer::get_singleton()->body_set_collision_mask(E->get()->static_body, collision_mask);
+	}
+}
+
 void GridMap::_octant_enter_world(const OctantKey &p_key) {
 
 	ERR_FAIL_COND(!octant_map.has(p_key));
@@ -815,11 +834,26 @@ void GridMap::_update_octants_callback() {
 
 void GridMap::_bind_methods() {
 
+	ClassDB::bind_method(D_METHOD("set_collision_layer", "layer"), &GridMap::set_collision_layer);
+	ClassDB::bind_method(D_METHOD("get_collision_layer"), &GridMap::get_collision_layer);
+
+	ClassDB::bind_method(D_METHOD("set_collision_mask", "mask"), &GridMap::set_collision_mask);
+	ClassDB::bind_method(D_METHOD("get_collision_mask"), &GridMap::get_collision_mask);
+
+	ClassDB::bind_method(D_METHOD("set_collision_mask_bit", "bit", "value"), &GridMap::set_collision_mask_bit);
+	ClassDB::bind_method(D_METHOD("get_collision_mask_bit", "bit"), &GridMap::get_collision_mask_bit);
+
+	ClassDB::bind_method(D_METHOD("set_collision_layer_bit", "bit", "value"), &GridMap::set_collision_layer_bit);
+	ClassDB::bind_method(D_METHOD("get_collision_layer_bit", "bit"), &GridMap::get_collision_layer_bit);
+
 	ClassDB::bind_method(D_METHOD("set_theme", "theme"), &GridMap::set_theme);
 	ClassDB::bind_method(D_METHOD("get_theme"), &GridMap::get_theme);
 
 	ClassDB::bind_method(D_METHOD("set_cell_size", "size"), &GridMap::set_cell_size);
 	ClassDB::bind_method(D_METHOD("get_cell_size"), &GridMap::get_cell_size);
+
+	ClassDB::bind_method(D_METHOD("set_cell_scale", "scale"), &GridMap::set_cell_scale);
+	ClassDB::bind_method(D_METHOD("get_cell_scale"), &GridMap::get_cell_scale);
 
 	ClassDB::bind_method(D_METHOD("set_octant_size", "size"), &GridMap::set_octant_size);
 	ClassDB::bind_method(D_METHOD("get_octant_size"), &GridMap::get_octant_size);
@@ -854,6 +888,18 @@ void GridMap::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("clear_baked_meshes"), &GridMap::clear_baked_meshes);
 	ClassDB::bind_method(D_METHOD("make_baked_meshes", "gen_lightmap_uv", "lightmap_uv_texel_size"), &GridMap::make_baked_meshes, DEFVAL(false), DEFVAL(0.1));
+
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "theme", PROPERTY_HINT_RESOURCE_TYPE, "MeshLibrary"), "set_theme", "get_theme");
+	ADD_GROUP("Cell", "cell_");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "cell_size"), "set_cell_size", "get_cell_size");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "cell_octant_size", PROPERTY_HINT_RANGE, "1,1024,1"), "set_octant_size", "get_octant_size");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cell_center_x"), "set_center_x", "get_center_x");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cell_center_y"), "set_center_y", "get_center_y");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cell_center_z"), "set_center_z", "get_center_z");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "cell_scale"), "set_cell_scale", "get_cell_scale");
+	ADD_GROUP("Collision", "collision_");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
 	BIND_CONSTANT(INVALID_CELL_ITEM);
 }
@@ -1066,6 +1112,9 @@ RID GridMap::get_bake_mesh_instance(int p_idx) {
 }
 
 GridMap::GridMap() {
+
+	collision_layer = 1;
+	collision_mask = 1;
 
 	cell_size = Vector3(2, 2, 2);
 	octant_size = 8;

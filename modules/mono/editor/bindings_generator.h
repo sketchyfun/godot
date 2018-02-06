@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef BINDINGS_GENERATOR_H
 #define BINDINGS_GENERATOR_H
 
@@ -145,7 +146,7 @@ class BindingsGenerator {
 		}
 
 		MethodInterface() {
-			return_type = NameCache::get_singleton().type_void;
+			return_type = BindingsGenerator::get_singleton()->name_cache.type_void;
 			is_vararg = false;
 			is_virtual = false;
 			requires_object_call = false;
@@ -428,10 +429,11 @@ class BindingsGenerator {
 
 	static bool verbose_output;
 
+	OrderedHashMap<StringName, TypeInterface> obj_types;
+
 	Map<StringName, TypeInterface> placeholder_types;
 	Map<StringName, TypeInterface> builtin_types;
 	Map<StringName, TypeInterface> enum_types;
-	Map<StringName, TypeInterface> obj_types;
 
 	List<EnumInterface> global_enums;
 	List<ConstantInterface> global_constants;
@@ -439,6 +441,7 @@ class BindingsGenerator {
 	Map<StringName, String> extra_members;
 
 	List<InternalCall> method_icalls;
+	List<InternalCall> builtin_method_icalls;
 	Map<const MethodInterface *, const InternalCall *> method_icalls_map;
 
 	List<const InternalCall *> generated_icall_funcs;
@@ -469,16 +472,11 @@ class BindingsGenerator {
 			enum_Error = StaticCString::create("Error");
 		}
 
-		static NameCache &get_singleton() {
-			static NameCache singleton;
-			return singleton;
-		}
-
 		NameCache(const NameCache &);
 		NameCache &operator=(const NameCache &);
 	};
 
-	const NameCache &name_cache;
+	NameCache name_cache;
 
 	const List<InternalCall>::Element *find_icall_by_name(const String &p_name, const List<InternalCall> &p_list) {
 		const List<InternalCall>::Element *it = p_list.front();
@@ -506,8 +504,8 @@ class BindingsGenerator {
 	const TypeInterface *_get_type_by_name_or_null(const StringName &p_cname);
 	const TypeInterface *_get_type_by_name_or_placeholder(const StringName &p_cname);
 
-	void _default_argument_from_variant(const Variant &p_var, ArgumentInterface &r_iarg);
-	void _populate_builtin_type(TypeInterface &r_type, Variant::Type vtype);
+	void _default_argument_from_variant(const Variant &p_val, ArgumentInterface &r_iarg);
+	void _populate_builtin_type(TypeInterface &r_itype, Variant::Type vtype);
 
 	void _populate_object_type_interfaces();
 	void _populate_builtin_type_interfaces();
@@ -516,27 +514,35 @@ class BindingsGenerator {
 
 	Error _generate_cs_type(const TypeInterface &itype, const String &p_output_file);
 
-	Error _generate_cs_property(const TypeInterface &p_itype, const PropertyInterface &p_prop_doc, List<String> &p_output);
+	Error _generate_cs_property(const TypeInterface &p_itype, const PropertyInterface &p_iprop, List<String> &p_output);
 	Error _generate_cs_method(const TypeInterface &p_itype, const MethodInterface &p_imethod, int &p_method_bind_count, List<String> &p_output);
 
 	void _generate_global_constants(List<String> &p_output);
 
 	Error _generate_glue_method(const TypeInterface &p_itype, const MethodInterface &p_imethod, List<String> &p_output);
 
-	Error _save_file(const String &path, const List<String> &content);
+	Error _save_file(const String &p_path, const List<String> &p_content);
 
-	BindingsGenerator();
+	BindingsGenerator() {}
 
 	BindingsGenerator(const BindingsGenerator &);
 	BindingsGenerator &operator=(const BindingsGenerator &);
+
+	friend class CSharpLanguage;
+	static BindingsGenerator *singleton;
 
 public:
 	Error generate_cs_core_project(const String &p_output_dir, bool p_verbose_output = true);
 	Error generate_cs_editor_project(const String &p_output_dir, const String &p_core_dll_path, bool p_verbose_output = true);
 	Error generate_glue(const String &p_output_dir);
 
-	static BindingsGenerator &get_singleton() {
-		static BindingsGenerator singleton;
+	void initialize();
+
+	_FORCE_INLINE_ static BindingsGenerator *get_singleton() {
+		if (!singleton) {
+			singleton = memnew(BindingsGenerator);
+			singleton->initialize();
+		}
 		return singleton;
 	}
 

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef OBJECT_H
 #define OBJECT_H
 
@@ -85,6 +86,7 @@ enum PropertyHint {
 	PROPERTY_HINT_PROPERTY_OF_SCRIPT, ///< a property of a script & base
 	PROPERTY_HINT_OBJECT_TOO_BIG, ///< object is too big to send
 	PROPERTY_HINT_MAX,
+	// When updating PropertyHint, also sync the hardcoded list in VisualScriptEditorVariableEdit
 };
 
 enum PropertyUsageFlags {
@@ -110,10 +112,11 @@ enum PropertyUsageFlags {
 	PROPERTY_USAGE_CLASS_IS_ENUM = 1 << 18,
 	PROPERTY_USAGE_NIL_IS_VARIANT = 1 << 19,
 	PROPERTY_USAGE_INTERNAL = 1 << 20,
+	PROPERTY_USAGE_DO_NOT_SHARE_ON_DUPLICATE = 1 << 21, // If the object is duplicated also this property will be duplicated
 
 	PROPERTY_USAGE_DEFAULT = PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_NETWORK,
 	PROPERTY_USAGE_DEFAULT_INTL = PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_NETWORK | PROPERTY_USAGE_INTERNATIONALIZED,
-	PROPERTY_USAGE_NOEDITOR = PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_NETWORK | PROPERTY_USAGE_INTERNAL,
+	PROPERTY_USAGE_NOEDITOR = PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_NETWORK,
 };
 
 #define ADD_SIGNAL(m_signal) ClassDB::add_signal(get_class_static(), m_signal)

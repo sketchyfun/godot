@@ -1,13 +1,12 @@
 /*************************************************************************/
 /*  shape_bullet.cpp                                                     */
-/*  Author: AndreaCatania                                                */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
-/*                    http://www.godotengine.org                         */
+/*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,18 +29,30 @@
 /*************************************************************************/
 
 #include "shape_bullet.h"
-#include "BulletCollision/CollisionShapes/btConvexPointCloudShape.h"
-#include "BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
-#include "btBulletCollisionCommon.h"
+
 #include "btRayShape.h"
 #include "bullet_physics_server.h"
 #include "bullet_types_converter.h"
 #include "bullet_utilities.h"
 #include "shape_owner_bullet.h"
 
+#include <BulletCollision/CollisionShapes/btConvexPointCloudShape.h>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
+#include <btBulletCollisionCommon.h>
+
+/**
+	@author AndreaCatania
+*/
+
 ShapeBullet::ShapeBullet() {}
 
 ShapeBullet::~ShapeBullet() {}
+
+btCollisionShape *ShapeBullet::create_bt_shape(const Vector3 &p_implicit_scale, real_t p_margin) {
+	btVector3 s;
+	G_TO_B(p_implicit_scale, s);
+	return create_bt_shape(s, p_margin);
+}
 
 btCollisionShape *ShapeBullet::prepare(btCollisionShape *p_btShape) const {
 	p_btShape->setUserPointer(const_cast<ShapeBullet *>(this));
@@ -66,7 +77,7 @@ void ShapeBullet::add_owner(ShapeOwnerBullet *p_owner) {
 
 void ShapeBullet::remove_owner(ShapeOwnerBullet *p_owner, bool p_permanentlyFromThisBody) {
 	Map<ShapeOwnerBullet *, int>::Element *E = owners.find(p_owner);
-	ERR_FAIL_COND(!E);
+	if (!E) return;
 	E->get()--;
 	if (p_permanentlyFromThisBody || 0 >= E->get()) {
 		owners.erase(E);
@@ -150,7 +161,7 @@ void PlaneShapeBullet::setup(const Plane &p_plane) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *PlaneShapeBullet::create_bt_shape() {
+btCollisionShape *PlaneShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
 	btVector3 btPlaneNormal;
 	G_TO_B(plane.normal, btPlaneNormal);
 	return prepare(PlaneShapeBullet::create_shape_plane(btPlaneNormal, plane.d));
@@ -178,8 +189,8 @@ void SphereShapeBullet::setup(real_t p_radius) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *SphereShapeBullet::create_bt_shape() {
-	return prepare(ShapeBullet::create_shape_sphere(radius));
+btCollisionShape *SphereShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
+	return prepare(ShapeBullet::create_shape_sphere(radius * p_implicit_scale[0] + p_margin));
 }
 
 /* Box */
@@ -205,8 +216,8 @@ void BoxShapeBullet::setup(const Vector3 &p_half_extents) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *BoxShapeBullet::create_bt_shape() {
-	return prepare(ShapeBullet::create_shape_box(half_extents));
+btCollisionShape *BoxShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
+	return prepare(ShapeBullet::create_shape_box((half_extents * p_implicit_scale) + btVector3(p_margin, p_margin, p_margin)));
 }
 
 /* Capsule */
@@ -238,8 +249,8 @@ void CapsuleShapeBullet::setup(real_t p_height, real_t p_radius) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *CapsuleShapeBullet::create_bt_shape() {
-	return prepare(ShapeBullet::create_shape_capsule(radius, height));
+btCollisionShape *CapsuleShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
+	return prepare(ShapeBullet::create_shape_capsule(radius * p_implicit_scale[0] + p_margin, height * p_implicit_scale[1] + p_margin));
 }
 
 /* Convex polygon */
@@ -271,7 +282,7 @@ PhysicsServer::ShapeType ConvexPolygonShapeBullet::get_type() const {
 }
 
 void ConvexPolygonShapeBullet::setup(const Vector<Vector3> &p_vertices) {
-	// Make a copy of verticies
+	// Make a copy of vertices
 	const int n_of_vertices = p_vertices.size();
 	vertices.resize(n_of_vertices);
 	for (int i = n_of_vertices - 1; 0 <= i; --i) {
@@ -280,8 +291,12 @@ void ConvexPolygonShapeBullet::setup(const Vector<Vector3> &p_vertices) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *ConvexPolygonShapeBullet::create_bt_shape() {
-	return prepare(ShapeBullet::create_shape_convex(vertices));
+btCollisionShape *ConvexPolygonShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
+	btCollisionShape *cs(ShapeBullet::create_shape_convex(vertices));
+	cs->setLocalScaling(p_implicit_scale);
+	prepare(cs);
+	cs->setMargin(p_margin);
+	return cs;
 }
 
 /* Concave polygon */
@@ -349,13 +364,15 @@ void ConcavePolygonShapeBullet::setup(PoolVector<Vector3> p_faces) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *ConcavePolygonShapeBullet::create_bt_shape() {
+btCollisionShape *ConcavePolygonShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
 	btCollisionShape *cs = ShapeBullet::create_shape_concave(meshShape);
-	if (!cs) {
+	if (!cs)
 		// This is necessary since if 0 faces the creation of concave return NULL
 		cs = ShapeBullet::create_shape_empty();
-	}
-	return prepare(cs);
+	cs->setLocalScaling(p_implicit_scale);
+	prepare(cs);
+	cs->setMargin(p_margin);
+	return cs;
 }
 
 /* Height map shape */
@@ -407,8 +424,12 @@ void HeightMapShapeBullet::setup(PoolVector<real_t> &p_heights, int p_width, int
 	notifyShapeChanged();
 }
 
-btCollisionShape *HeightMapShapeBullet::create_bt_shape() {
-	return prepare(ShapeBullet::create_shape_height_field(heights, width, depth, cell_size));
+btCollisionShape *HeightMapShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
+	btCollisionShape *cs(ShapeBullet::create_shape_height_field(heights, width, depth, cell_size));
+	cs->setLocalScaling(p_implicit_scale);
+	prepare(cs);
+	cs->setMargin(p_margin);
+	return cs;
 }
 
 /* Ray shape */
@@ -433,6 +454,6 @@ void RayShapeBullet::setup(real_t p_length) {
 	notifyShapeChanged();
 }
 
-btCollisionShape *RayShapeBullet::create_bt_shape() {
-	return prepare(ShapeBullet::create_shape_ray(length));
+btCollisionShape *RayShapeBullet::create_bt_shape(const btVector3 &p_implicit_scale, real_t p_margin) {
+	return prepare(ShapeBullet::create_shape_ray(length * p_implicit_scale[1] + p_margin));
 }

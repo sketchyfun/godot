@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "editor_help.h"
 
 #include "doc_data_compressed.gen.h"
@@ -36,6 +37,8 @@
 #include "os/keyboard.h"
 
 #define CONTRIBUTE_URL "http://docs.godotengine.org/en/latest/community/contributing/updating_the_class_reference.html"
+#define CONTRIBUTE2_URL "https://github.com/godotengine/godot-docs"
+#define REQUEST_URL "https://github.com/godotengine/godot-docs/issues/new"
 
 void EditorHelpSearch::popup() {
 
@@ -613,7 +616,7 @@ void EditorHelp::_class_desc_input(const Ref<InputEvent> &p_input) {
 
 	Ref<InputEventMouseButton> mb = p_input;
 
-	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == 1) {
+	if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == 1 && !mb->is_doubleclick()) {
 		class_desc->set_selection_enabled(false);
 		class_desc->set_selection_enabled(true);
 	}
@@ -1289,6 +1292,46 @@ Error EditorHelp::_goto_desc(const String &p_class, int p_vscr) {
 		class_desc->add_newline();
 	}
 
+	{
+
+		class_desc->push_color(title_color);
+		class_desc->push_font(doc_title_font);
+		class_desc->add_text(TTR("Online Tutorials:"));
+		class_desc->pop();
+		class_desc->pop();
+		class_desc->push_indent(1);
+
+		class_desc->push_font(doc_code_font);
+
+		class_desc->add_newline();
+		//	class_desc->add_newline();
+
+		Vector<String> tutorials = cd.tutorials.split_spaces();
+		if (tutorials.size() != 0) {
+
+			for (int i = 0; i < tutorials.size(); i++) {
+				String link = tutorials[i];
+				String linktxt = link;
+				int seppos = linktxt.find("//");
+				if (seppos != -1) {
+					linktxt = link.right(seppos + 2);
+				}
+
+				class_desc->push_color(symbol_color);
+				class_desc->append_bbcode("[url=" + link + "]" + linktxt + "[/url]");
+				class_desc->pop();
+				class_desc->add_newline();
+			}
+		} else {
+			class_desc->push_color(comment_color);
+			class_desc->append_bbcode(TTR("There are currently no tutorials for this class, you can [color=$color][url=$url]contribute one[/url][/color] or [color=$color][url=$url2]request one[/url][/color].").replace("$url2", REQUEST_URL).replace("$url", CONTRIBUTE2_URL).replace("$color", link_color_text));
+			class_desc->pop();
+		}
+		class_desc->pop();
+		class_desc->pop();
+		class_desc->add_newline();
+		class_desc->add_newline();
+	}
 	if (property_descr) {
 
 		section_line.push_back(Pair<String, int>(TTR("Properties"), class_desc->get_line_count() - 2));

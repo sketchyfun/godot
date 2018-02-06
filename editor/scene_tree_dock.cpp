@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "scene_tree_dock.h"
 
 #include "core/io/resource_saver.h"
@@ -236,13 +237,20 @@ void SceneTreeDock::_replace_with_branch_scene(const String &p_file, Node *base)
 
 	Node *parent = base->get_parent();
 	int pos = base->get_index();
-	memdelete(base);
+	parent->remove_child(base);
 	parent->add_child(instanced_scene);
 	parent->move_child(instanced_scene, pos);
 	instanced_scene->set_owner(edited_scene);
 	editor_selection->clear();
 	editor_selection->add_node(instanced_scene);
 	scene_tree->set_selected(instanced_scene);
+
+	// Delete the node as late as possible because before another one is selected
+	// an editor plugin could be referencing it to do something with it before
+	// switching to another (or to none); and since some steps of changing the
+	// editor state are deferred, the safest thing is to do this is as the last
+	// step of this function and also by enqueing instead of memdelete()-ing it here
+	base->queue_delete();
 }
 
 bool SceneTreeDock::_cyclical_dependency_exists(const String &p_target_scene_path, Node *p_desired_node) {
@@ -307,7 +315,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 		} break;
 		case TOOL_REPLACE: {
 
-			create_dialog->popup_create(false);
+			create_dialog->popup_create(false, true);
 		} break;
 		case TOOL_ATTACH_SCRIPT: {
 
@@ -342,8 +350,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 			if (existing.is_valid()) {
 				const RefPtr empty;
 				selected->set_script(empty);
-				button_create_script->show();
-				button_clear_script->hide();
+				_update_script_button();
 			}
 
 		} break;
@@ -417,7 +424,6 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 			if (editor_selection->is_selected(edited_scene)) {
 
 				current_option = -1;
-				//accept->get_cancel()->hide();
 				accept->get_ok()->set_text(TTR("I see.."));
 				accept->set_text(TTR("This operation can't be done on the tree root."));
 				accept->popup_centered_minsize();
@@ -1204,8 +1210,7 @@ void SceneTreeDock::_script_created(Ref<Script> p_script) {
 		return;
 	selected->set_script(p_script.get_ref_ptr());
 	editor->push_item(p_script.operator->());
-	button_create_script->hide();
-	button_clear_script->show();
+	_update_script_button();
 }
 
 void SceneTreeDock::_delete_confirm() {
@@ -1285,17 +1290,15 @@ void SceneTreeDock::_delete_confirm() {
 		editor->get_viewport_control()->update();
 
 	editor->push_item(NULL);
+
+	// Fixes the EditorHistory from still offering deleted notes
+	EditorHistory *editor_history = EditorNode::get_singleton()->get_editor_history();
+	editor_history->cleanup_history();
+	EditorNode::get_singleton()->call("_prepare_history");
 }
 
-void SceneTreeDock::_selection_changed() {
-
-	int selection_size = EditorNode::get_singleton()->get_editor_selection()->get_selection().size();
-	if (selection_size > 1) {
-		//automatically turn on multi-edit
-		_tool_selected(TOOL_MULTI_EDIT);
-	}
-
-	if (selection_size == 1) {
+void SceneTreeDock::_update_script_button() {
+	if (EditorNode::get_singleton()->get_editor_selection()->get_selection().size() == 1) {
 		if (EditorNode::get_singleton()->get_editor_selection()->get_selection().front()->key()->get_script().is_null()) {
 			button_create_script->show();
 			button_clear_script->hide();
@@ -1307,6 +1310,16 @@ void SceneTreeDock::_selection_changed() {
 		button_create_script->hide();
 		button_clear_script->hide();
 	}
+}
+
+void SceneTreeDock::_selection_changed() {
+
+	int selection_size = EditorNode::get_singleton()->get_editor_selection()->get_selection().size();
+	if (selection_size > 1) {
+		//automatically turn on multi-edit
+		_tool_selected(TOOL_MULTI_EDIT);
+	}
+	_update_script_button();
 }
 
 void SceneTreeDock::_create() {
@@ -1643,6 +1656,7 @@ void SceneTreeDock::_script_dropped(String p_file, NodePath p_to) {
 	Node *n = get_node(p_to);
 	if (n) {
 		n->set_script(scr.get_ref_ptr());
+		_update_script_button();
 	}
 }
 
@@ -2052,6 +2066,7 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	menu->connect("id_pressed", this, "_tool_selected");
 	menu_subresources = memnew(PopupMenu);
 	menu_subresources->set_name("Sub-Resources");
+	menu_subresources->connect("id_pressed", this, "_tool_selected");
 	menu->add_child(menu_subresources);
 	first_enter = true;
 	restore_script_editor_on_drag = false;

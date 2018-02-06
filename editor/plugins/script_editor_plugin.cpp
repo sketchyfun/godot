@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "script_editor_plugin.h"
 
 #include "core/io/resource_loader.h"
@@ -312,24 +313,22 @@ void ScriptEditor::_goto_script_line2(int p_line) {
 
 void ScriptEditor::_goto_script_line(REF p_script, int p_line) {
 
-	editor->push_item(p_script.ptr());
+	Ref<Script> script = Object::cast_to<Script>(*p_script);
+	if (!script.is_null() && script->get_path().is_resource_file()) {
+		if (edit(p_script, p_line, 0)) {
+			editor->push_item(p_script.ptr());
 
-	if (bool(EditorSettings::get_singleton()->get("text_editor/external/use_external_editor"))) {
+			int selected = tab_container->get_current_tab();
+			if (selected < 0 || selected >= tab_container->get_child_count())
+				return;
 
-		Ref<Script> script = Object::cast_to<Script>(*p_script);
-		if (!script.is_null() && script->get_path().is_resource_file())
-			edit(p_script, p_line, 0);
+			ScriptEditorBase *current = Object::cast_to<ScriptEditorBase>(tab_container->get_child(selected));
+			if (!current)
+				return;
+
+			current->goto_line(p_line, true);
+		}
 	}
-
-	int selected = tab_container->get_current_tab();
-	if (selected < 0 || selected >= tab_container->get_child_count())
-		return;
-
-	ScriptEditorBase *current = Object::cast_to<ScriptEditorBase>(tab_container->get_child(selected));
-	if (!current)
-		return;
-
-	current->goto_line(p_line, true);
 }
 
 void ScriptEditor::_update_history_arrows() {
@@ -513,7 +512,6 @@ void ScriptEditor::_close_tab(int p_idx, bool p_save) {
 		if (p_save) {
 			apply_scripts();
 		}
-		current->clear_edit_menu();
 		notify_script_close(current->get_edited_script());
 	} else {
 		EditorHelp *help = Object::cast_to<EditorHelp>(tab_container->get_child(selected));
@@ -539,6 +537,9 @@ void ScriptEditor::_close_tab(int p_idx, bool p_save) {
 	}
 
 	int idx = tab_container->get_current_tab();
+	if (current) {
+		current->clear_edit_menu();
+	}
 	memdelete(tselected);
 	if (idx >= tab_container->get_child_count())
 		idx = tab_container->get_child_count() - 1;
@@ -635,7 +636,7 @@ void ScriptEditor::_close_all_tabs() {
 }
 
 void ScriptEditor::_ask_close_current_unsaved_tab(ScriptEditorBase *current) {
-	erase_tab_confirm->set_text(TTR("Close and save changes?\n\"") + current->get_name() + "\"");
+	erase_tab_confirm->set_text(TTR("Close and save changes?") + "\n\"" + current->get_name() + "\"");
 	erase_tab_confirm->popup_centered_minsize();
 }
 
@@ -1026,6 +1027,15 @@ void ScriptEditor::_menu_option(int p_option) {
 			} break;
 			case FILE_COPY_PATH: {
 				_copy_script_path();
+			} break;
+			case SHOW_IN_FILE_SYSTEM: {
+				ScriptEditorBase *se = Object::cast_to<ScriptEditorBase>(tab_container->get_child(tab_container->get_current_tab()));
+				Ref<Script> script = se->get_edited_script();
+				FileSystemDock *file_system_dock = EditorNode::get_singleton()->get_filesystem_dock();
+				file_system_dock->navigate_to_path(script->get_path());
+				// Ensure that the FileSystem dock is visible.
+				TabContainer *tab_container = (TabContainer *)file_system_dock->get_parent_control();
+				tab_container->set_current_tab(file_system_dock->get_position_in_parent());
 			} break;
 			case CLOSE_DOCS: {
 				_close_docs_tab();
@@ -1662,10 +1672,14 @@ bool ScriptEditor::edit(const Ref<Script> &p_script, int p_line, int p_col, bool
 
 	bool open_dominant = EditorSettings::get_singleton()->get("text_editor/files/open_dominant_script_on_scene_change");
 
+	const bool should_open = open_dominant || !EditorNode::get_singleton()->is_changing_scene();
+
 	if (p_script->get_language()->overrides_external_editor()) {
-		Error err = p_script->get_language()->open_in_external_editor(p_script, p_line >= 0 ? p_line : 0, p_col);
-		if (err != OK)
-			ERR_PRINT("Couldn't open script in the overridden external text editor");
+		if (should_open) {
+			Error err = p_script->get_language()->open_in_external_editor(p_script, p_line >= 0 ? p_line : 0, p_col);
+			if (err != OK)
+				ERR_PRINT("Couldn't open script in the overridden external text editor");
+		}
 		return false;
 	}
 
@@ -1716,7 +1730,7 @@ bool ScriptEditor::edit(const Ref<Script> &p_script, int p_line, int p_col, bool
 
 		if (se->get_edited_script() == p_script) {
 
-			if (open_dominant || !EditorNode::get_singleton()->is_changing_scene()) {
+			if (should_open) {
 				if (tab_container->get_current_tab() != i) {
 					_go_to_tab(i);
 					script_list->select(script_list->find_metadata(i));
@@ -2164,7 +2178,7 @@ void ScriptEditor::_make_script_list_context_menu() {
 		context_menu->add_separator();
 		context_menu->add_shortcut(ED_GET_SHORTCUT("script_editor/copy_path"), FILE_COPY_PATH);
 		context_menu->add_shortcut(ED_GET_SHORTCUT("script_editor/reload_script_soft"), FILE_TOOL_RELOAD_SOFT);
-
+		context_menu->add_shortcut(ED_GET_SHORTCUT("script_editor/show_in_file_system"), SHOW_IN_FILE_SYSTEM);
 		Ref<Script> scr = se->get_edited_script();
 		if (!scr.is_null() && scr->is_tool()) {
 			context_menu->add_separator();
@@ -2613,6 +2627,7 @@ ScriptEditor::ScriptEditor(EditorNode *p_editor) {
 	file_menu->get_popup()->add_separator();
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/reload_script_soft", TTR("Soft Reload Script"), KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_R), FILE_TOOL_RELOAD_SOFT);
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/copy_path", TTR("Copy Script Path")), FILE_COPY_PATH);
+	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/show_in_file_system", TTR("Show In File System")), SHOW_IN_FILE_SYSTEM);
 	file_menu->get_popup()->add_separator();
 
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/history_previous", TTR("History Prev"), KEY_MASK_ALT | KEY_LEFT), WINDOW_PREV);

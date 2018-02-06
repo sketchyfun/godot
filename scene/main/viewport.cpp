@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "viewport.h"
 
 #include "os/input.h"
@@ -195,8 +196,6 @@ void Viewport::_update_stretch_transform() {
 
 	if (size_override_stretch && size_override) {
 
-		//print_line("sive override size "+size_override_size);
-		//print_line("rect size "+size);
 		stretch_transform = Transform2D();
 		Size2 scale = size / (size_override_size + size_override_margin * 2);
 		stretch_transform.scale(scale);
@@ -208,114 +207,6 @@ void Viewport::_update_stretch_transform() {
 	}
 
 	_update_global_transform();
-}
-
-void Viewport::_update_rect() {
-
-	if (!is_inside_tree())
-		return;
-
-	/*if (!render_target && parent_control) {
-
-		Control *c = parent_control;
-
-		rect.pos=Point2();
-		rect.size=c->get_size();
-	}*/
-	/*
-	VisualServer::ViewportRect vr;
-	vr.x=rect.pos.x;
-	vr.y=rect.pos.y;
-
-	if (render_target) {
-		vr.x=0;
-		vr.y=0;
-	}
-	vr.width=rect.size.width;
-	vr.height=rect.size.height;
-
-	VisualServer::get_singleton()->viewport_set_rect(viewport,vr);
-	last_vp_rect=rect;
-
-	if (canvas_item.is_valid()) {
-		VisualServer::get_singleton()->canvas_item_set_custom_rect(canvas_item,true,rect);
-	}
-
-	emit_signal("size_changed");
-	texture->emit_changed();
-*/
-}
-
-void Viewport::_parent_resized() {
-
-	_update_rect();
-}
-
-void Viewport::_parent_draw() {
-}
-
-void Viewport::_parent_visibility_changed() {
-
-	/*
-	if (parent_control) {
-
-		Control *c = parent_control;
-		VisualServer::get_singleton()->canvas_item_set_visible(canvas_item,c->is_visible_in_tree());
-
-		_update_listener();
-		_update_listener_2d();
-	}
-*/
-}
-
-void Viewport::_vp_enter_tree() {
-
-	/*	if (parent_control) {
-
-		Control *cparent=parent_control;
-		RID parent_ci = cparent->get_canvas_item();
-		ERR_FAIL_COND(!parent_ci.is_valid());
-		canvas_item = VisualServer::get_singleton()->canvas_item_create();
-
-		VisualServer::get_singleton()->canvas_item_set_parent(canvas_item,parent_ci);
-		VisualServer::get_singleton()->canvas_item_set_visible(canvas_item,false);
-		//VisualServer::get_singleton()->canvas_item_attach_viewport(canvas_item,viewport);
-		parent_control->connect("resized",this,"_parent_resized");
-		parent_control->connect("visibility_changed",this,"_parent_visibility_changed");
-	} else if (!parent){
-
-		//VisualServer::get_singleton()->viewport_attach_to_screen(viewport,0);
-
-	}
-*/
-}
-
-void Viewport::_vp_exit_tree() {
-
-	/*
-	if (parent_control) {
-
-		parent_control->disconnect("resized",this,"_parent_resized");
-	}
-
-	if (parent_control) {
-
-		parent_control->disconnect("visibility_changed",this,"_parent_visibility_changed");
-	}
-
-	if (canvas_item.is_valid()) {
-
-		VisualServer::get_singleton()->free(canvas_item);
-		canvas_item=RID();
-
-	}
-
-	if (!parent) {
-
-		VisualServer::get_singleton()->viewport_detach(viewport);
-
-	}
-*/
 }
 
 void Viewport::update_worlds() {
@@ -375,7 +266,6 @@ void Viewport::_notification(int p_what) {
 
 			_update_listener();
 			_update_listener_2d();
-			_update_rect();
 
 			find_world_2d()->_register_viewport(this, Rect2());
 
@@ -434,11 +324,6 @@ void Viewport::_notification(int p_what) {
 			_gui_cancel_tooltip();
 			if (world_2d.is_valid())
 				world_2d->_remove_viewport(this);
-
-			/*
-			if (!render_target)
-				_vp_exit_tree();
-			*/
 
 			VisualServer::get_singleton()->viewport_set_scenario(viewport, RID());
 			//			SpatialSoundServer::get_singleton()->listener_set_space(internal_listener, RID());
@@ -678,6 +563,20 @@ void Viewport::_notification(int p_what) {
 			}
 
 		} break;
+		case SceneTree::NOTIFICATION_WM_FOCUS_OUT: {
+			if (gui.mouse_focus) {
+				//if mouse is being pressed, send a release event
+				Ref<InputEventMouseButton> mb;
+				mb.instance();
+				mb->set_position(gui.mouse_focus->get_local_mouse_position());
+				mb->set_global_position(gui.mouse_focus->get_local_mouse_position());
+				mb->set_button_index(gui.mouse_focus_button);
+				mb->set_pressed(false);
+				Control *c = gui.mouse_focus;
+				gui.mouse_focus = NULL;
+				c->call_multilevel(SceneStringNames::get_singleton()->_gui_input, mb);
+			}
+		} break;
 	}
 }
 
@@ -703,7 +602,6 @@ void Viewport::set_size(const Size2 &p_size) {
 	size = p_size.floor();
 	VS::get_singleton()->viewport_set_size(viewport, size.width, size.height);
 
-	_update_rect();
 	_update_stretch_transform();
 
 	emit_signal("size_changed");
@@ -1152,7 +1050,7 @@ void Viewport::set_size_override(bool p_enable, const Size2 &p_size, const Vecto
 		size_override_size = p_size;
 	}
 	size_override_margin = p_margin;
-	_update_rect();
+
 	_update_stretch_transform();
 	emit_signal("size_changed");
 }
@@ -1171,9 +1069,6 @@ void Viewport::set_size_override_stretch(bool p_enable) {
 		return;
 
 	size_override_stretch = p_enable;
-	if (size_override) {
-		_update_rect();
-	}
 
 	_update_stretch_transform();
 }
@@ -2030,6 +1925,8 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 	Ref<InputEventGesture> gesture_event = p_event;
 	if (gesture_event.is_valid()) {
 
+		_gui_cancel_tooltip();
+
 		Size2 pos = gesture_event->get_position();
 
 		Control *over = _gui_find_control(pos);
@@ -2374,12 +2271,9 @@ List<Control *>::Element *Viewport::_gui_show_modal(Control *p_control) {
 		mb->set_global_position(gui.mouse_focus->get_local_mouse_position());
 		mb->set_button_index(gui.mouse_focus_button);
 		mb->set_pressed(false);
-		gui.mouse_focus->call_multilevel(SceneStringNames::get_singleton()->_gui_input, mb);
-
-		//if (gui.mouse_over == gui.mouse_focus) {
-		//	gui.mouse_focus->notification(Control::NOTIFICATION_MOUSE_EXIT);
-		//}
+		Control *c = gui.mouse_focus;
 		gui.mouse_focus = NULL;
+		c->call_multilevel(SceneStringNames::get_singleton()->_gui_input, mb);
 	}
 
 	return gui.modal_stack.back();
@@ -2670,9 +2564,6 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_transparent_background", "enable"), &Viewport::set_transparent_background);
 	ClassDB::bind_method(D_METHOD("has_transparent_background"), &Viewport::has_transparent_background);
 
-	ClassDB::bind_method(D_METHOD("_parent_visibility_changed"), &Viewport::_parent_visibility_changed);
-
-	ClassDB::bind_method(D_METHOD("_parent_resized"), &Viewport::_parent_resized);
 	ClassDB::bind_method(D_METHOD("_vp_input"), &Viewport::_vp_input);
 	ClassDB::bind_method(D_METHOD("_vp_input_text", "text"), &Viewport::_vp_input_text);
 	ClassDB::bind_method(D_METHOD("_vp_unhandled_input"), &Viewport::_vp_unhandled_input);
@@ -2758,7 +2649,7 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "own_world"), "set_use_own_world", "is_using_own_world");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world", PROPERTY_HINT_RESOURCE_TYPE, "World"), "set_world", "get_world");
-	//ADD_PROPERTY( PropertyInfo(Variant::OBJECT,"world_2d",PROPERTY_HINT_RESOURCE_TYPE,"World2D"), "set_world_2d", "get_world_2d") ;
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world_2d", PROPERTY_HINT_RESOURCE_TYPE, "World2D", 0), "set_world_2d", "get_world_2d");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transparent_bg"), "set_transparent_background", "has_transparent_background");
 	ADD_GROUP("Rendering", "");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "msaa", PROPERTY_HINT_ENUM, "Disabled,2x,4x,8x,16x"), "set_msaa", "get_msaa");
@@ -2784,6 +2675,8 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTYI(PropertyInfo(Variant::INT, "shadow_atlas_quad_1", PROPERTY_HINT_ENUM, "Disabled,1 Shadow,4 Shadows,16 Shadows,64 Shadows,256 Shadows,1024 Shadows"), "set_shadow_atlas_quadrant_subdiv", "get_shadow_atlas_quadrant_subdiv", 1);
 	ADD_PROPERTYI(PropertyInfo(Variant::INT, "shadow_atlas_quad_2", PROPERTY_HINT_ENUM, "Disabled,1 Shadow,4 Shadows,16 Shadows,64 Shadows,256 Shadows,1024 Shadows"), "set_shadow_atlas_quadrant_subdiv", "get_shadow_atlas_quadrant_subdiv", 2);
 	ADD_PROPERTYI(PropertyInfo(Variant::INT, "shadow_atlas_quad_3", PROPERTY_HINT_ENUM, "Disabled,1 Shadow,4 Shadows,16 Shadows,64 Shadows,256 Shadows,1024 Shadows"), "set_shadow_atlas_quadrant_subdiv", "get_shadow_atlas_quadrant_subdiv", 3);
+	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "canvas_transform", PROPERTY_HINT_NONE, "", 0), "set_canvas_transform", "get_canvas_transform");
+	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "global_canvas_transform", PROPERTY_HINT_NONE, "", 0), "set_global_canvas_transform", "get_global_canvas_transform");
 
 	ADD_SIGNAL(MethodInfo("size_changed"));
 

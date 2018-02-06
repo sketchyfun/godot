@@ -5,7 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -26,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef VISUAL_SERVER_WRAP_MT_H
 #define VISUAL_SERVER_WRAP_MT_H
 
@@ -392,7 +394,7 @@ public:
 	FUNC2(viewport_set_hdr, RID, bool)
 	FUNC2(viewport_set_usage, RID, ViewportUsage)
 
-	//this passes directly to avoid stalling, but it's pretty dangerous, so dont call after freeing a viewport
+	//this passes directly to avoid stalling, but it's pretty dangerous, so don't call after freeing a viewport
 	virtual int viewport_get_render_info(RID p_viewport, ViewportRenderInfo p_info) {
 		return visual_server->viewport_get_render_info(p_viewport, p_info);
 	}
@@ -503,7 +505,7 @@ public:
 	FUNC2(canvas_item_add_set_transform, RID, const Transform2D &)
 	FUNC2(canvas_item_add_clip_ignore, RID, bool)
 	FUNC2(canvas_item_set_sort_children_by_y, RID, bool)
-	FUNC2(canvas_item_set_z, RID, int)
+	FUNC2(canvas_item_set_z_index, RID, int)
 	FUNC2(canvas_item_set_z_as_relative_to_parent, RID, bool)
 	FUNC3(canvas_item_set_copy_to_backbuffer, RID, bool, const Rect2 &)
 

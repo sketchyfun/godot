@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "animation.h"
 
 #include "geometry.h"
@@ -35,13 +36,7 @@ bool Animation::_set(const StringName &p_name, const Variant &p_value) {
 
 	String name = p_name;
 
-	if (name == "length")
-		set_length(p_value);
-	else if (name == "loop")
-		set_loop(p_value);
-	else if (name == "step")
-		set_step(p_value);
-	else if (name.begins_with("tracks/")) {
+	if (name.begins_with("tracks/")) {
 
 		int track = name.get_slicec('/', 1).to_int();
 		String what = name.get_slicec('/', 2);
@@ -383,20 +378,15 @@ bool Animation::_get(const StringName &p_name, Variant &r_ret) const {
 }
 
 void Animation::_get_property_list(List<PropertyInfo> *p_list) const {
-
-	p_list->push_back(PropertyInfo(Variant::REAL, "length", PROPERTY_HINT_RANGE, "0.001,99999,0.001"));
-	p_list->push_back(PropertyInfo(Variant::BOOL, "loop"));
-	p_list->push_back(PropertyInfo(Variant::REAL, "step", PROPERTY_HINT_RANGE, "0,4096,0.001"));
-
 	for (int i = 0; i < tracks.size(); i++) {
 
-		p_list->push_back(PropertyInfo(Variant::STRING, "tracks/" + itos(i) + "/type", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
-		p_list->push_back(PropertyInfo(Variant::NODE_PATH, "tracks/" + itos(i) + "/path", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
-		p_list->push_back(PropertyInfo(Variant::INT, "tracks/" + itos(i) + "/interp", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
-		p_list->push_back(PropertyInfo(Variant::BOOL, "tracks/" + itos(i) + "/loop_wrap", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
-		p_list->push_back(PropertyInfo(Variant::BOOL, "tracks/" + itos(i) + "/imported", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
-		p_list->push_back(PropertyInfo(Variant::BOOL, "tracks/" + itos(i) + "/enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
-		p_list->push_back(PropertyInfo(Variant::ARRAY, "tracks/" + itos(i) + "/keys", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR));
+		p_list->push_back(PropertyInfo(Variant::STRING, "tracks/" + itos(i) + "/type", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::NODE_PATH, "tracks/" + itos(i) + "/path", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::INT, "tracks/" + itos(i) + "/interp", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::BOOL, "tracks/" + itos(i) + "/loop_wrap", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::BOOL, "tracks/" + itos(i) + "/imported", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::BOOL, "tracks/" + itos(i) + "/enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
+		p_list->push_back(PropertyInfo(Variant::ARRAY, "tracks/" + itos(i) + "/keys", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
 	}
 }
 
@@ -1613,19 +1603,19 @@ float Animation::get_step() const {
 	return step;
 }
 
-void Animation::copy_track(int src_track, Ref<Animation> p_to_animation) {
+void Animation::copy_track(int p_track, Ref<Animation> p_to_animation) {
 	ERR_FAIL_COND(p_to_animation.is_null());
-	ERR_FAIL_INDEX(src_track, get_track_count());
+	ERR_FAIL_INDEX(p_track, get_track_count());
 	int dst_track = p_to_animation->get_track_count();
-	p_to_animation->add_track(track_get_type(src_track));
+	p_to_animation->add_track(track_get_type(p_track));
 
-	p_to_animation->track_set_path(dst_track, track_get_path(src_track));
-	p_to_animation->track_set_imported(dst_track, track_is_imported(src_track));
-	p_to_animation->track_set_enabled(dst_track, track_is_enabled(src_track));
-	p_to_animation->track_set_interpolation_type(dst_track, track_get_interpolation_type(src_track));
-	p_to_animation->track_set_interpolation_loop_wrap(dst_track, track_get_interpolation_loop_wrap(src_track));
-	for (int i = 0; i < track_get_key_count(src_track); i++) {
-		p_to_animation->track_insert_key(dst_track, track_get_key_time(src_track, i), track_get_key_value(src_track, i), track_get_key_transition(src_track, i));
+	p_to_animation->track_set_path(dst_track, track_get_path(p_track));
+	p_to_animation->track_set_imported(dst_track, track_is_imported(p_track));
+	p_to_animation->track_set_enabled(dst_track, track_is_enabled(p_track));
+	p_to_animation->track_set_interpolation_type(dst_track, track_get_interpolation_type(p_track));
+	p_to_animation->track_set_interpolation_loop_wrap(dst_track, track_get_interpolation_loop_wrap(p_track));
+	for (int i = 0; i < track_get_key_count(p_track); i++) {
+		p_to_animation->track_insert_key(dst_track, track_get_key_time(p_track, i), track_get_key_value(p_track, i), track_get_key_transition(p_track, i));
 	}
 }
 
@@ -1688,6 +1678,10 @@ void Animation::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("clear"), &Animation::clear);
 	ClassDB::bind_method(D_METHOD("copy_track", "track", "to_animation"), &Animation::copy_track);
+
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "length", PROPERTY_HINT_RANGE, "0.001,99999,0.001"), "set_length", "get_length");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "loop"), "set_loop", "has_loop");
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "step", PROPERTY_HINT_RANGE, "0,4096,0.001"), "set_step", "get_step");
 
 	BIND_ENUM_CONSTANT(TYPE_VALUE);
 	BIND_ENUM_CONSTANT(TYPE_TRANSFORM);

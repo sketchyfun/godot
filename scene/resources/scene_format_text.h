@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifndef SCENE_FORMAT_TEXT_H
 #define SCENE_FORMAT_TEXT_H
 
@@ -127,7 +128,9 @@ public:
 };
 
 class ResourceFormatLoaderText : public ResourceFormatLoader {
+
 public:
+	static ResourceFormatLoaderText *singleton;
 	virtual Ref<ResourceInteractiveLoader> load_interactive(const String &p_path, const String &p_original_path = "", Error *r_error = NULL);
 	virtual void get_recognized_extensions_for_type(const String &p_type, List<String> *p_extensions) const;
 	virtual void get_recognized_extensions(List<String> *p_extensions) const;
@@ -137,6 +140,8 @@ public:
 	virtual Error rename_dependencies(const String &p_path, const Map<String, String> &p_map);
 
 	static Error convert_file_to_binary(const String &p_src_path, const String &p_dst_path);
+
+	ResourceFormatLoaderText() { singleton = this; }
 };
 
 class ResourceFormatSaverTextInstance {

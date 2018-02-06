@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "animation_editor.h"
 
 #include "editor/plugins/animation_player_editor_plugin.h"
@@ -1533,7 +1534,7 @@ void AnimationKeyEditor::_track_editor_draw() {
 			for (Map<SelectedKey, KeyInfo>::Element *E = selection.front(); E; E = E->next()) {
 
 				int idx = E->key().track;
-				int i = idx - v_scroll->get_value();
+				int i = idx - (int)v_scroll->get_value();
 				if (i < 0 || i >= fit)
 					continue;
 				int y = h + i * h + sep;
@@ -3118,12 +3119,12 @@ void AnimationKeyEditor::set_animation(const Ref<Animation> &p_anim) {
 void AnimationKeyEditor::set_root(Node *p_root) {
 
 	if (root)
-		root->disconnect("tree_exited", this, "_root_removed");
+		root->disconnect("tree_exiting", this, "_root_removed");
 
 	root = p_root;
 
 	if (root)
-		root->connect("tree_exited", this, "_root_removed", make_binds(), CONNECT_ONESHOT);
+		root->connect("tree_exiting", this, "_root_removed", make_binds(), CONNECT_ONESHOT);
 }
 
 Node *AnimationKeyEditor::get_root() const {

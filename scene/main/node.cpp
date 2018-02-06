@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "node.h"
 
 #include "core/core_string_names.h"
@@ -183,7 +184,7 @@ void Node::_propagate_ready() {
 }
 
 void Node::_propagate_enter_tree() {
-	// this needs to happen to all childs before any enter_tree
+	// this needs to happen to all children before any enter_tree
 
 	if (data.parent) {
 		data.tree = data.parent->data.tree;
@@ -274,7 +275,7 @@ void Node::_propagate_exit_tree() {
 
 		get_script_instance()->call_multilevel(SceneStringNames::get_singleton()->_exit_tree, NULL, 0);
 	}
-	emit_signal(SceneStringNames::get_singleton()->tree_exited);
+	emit_signal(SceneStringNames::get_singleton()->tree_exiting);
 
 	notification(NOTIFICATION_EXIT_TREE, true);
 	if (data.tree)
@@ -296,6 +297,8 @@ void Node::_propagate_exit_tree() {
 	data.ready_notified = false;
 	data.tree = NULL;
 	data.depth = -1;
+
+	emit_signal(SceneStringNames::get_singleton()->tree_exited);
 }
 
 void Node::move_child(Node *p_child, int p_pos) {
@@ -1199,13 +1202,13 @@ void Node::_validate_child_name(Node *p_child, bool p_force_human_readable) {
 			unique = false;
 		} else {
 			//check if exists
-			Node **childs = data.children.ptrw();
+			Node **children = data.children.ptrw();
 			int cc = data.children.size();
 
 			for (int i = 0; i < cc; i++) {
-				if (childs[i] == p_child)
+				if (children[i] == p_child)
 					continue;
-				if (childs[i]->data.name == p_child->data.name) {
+				if (children[i]->data.name == p_child->data.name) {
 					unique = false;
 					break;
 				}
@@ -1308,7 +1311,7 @@ void Node::_add_child_nocheck(Node *p_child, const StringName &p_name) {
 	}
 
 	/* Notify */
-	//recognize childs created in this node constructor
+	//recognize children created in this node constructor
 	p_child->data.parent_owned = data.in_constructor;
 	add_child_notify(p_child);
 }
@@ -2168,7 +2171,16 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 				value = Array(value).duplicate();
 			}
 
-			current_node->set(name, value);
+			if (E->get().usage & PROPERTY_USAGE_DO_NOT_SHARE_ON_DUPLICATE) {
+
+				Resource *res = Object::cast_to<Resource>(value);
+				if (res) // Duplicate only if it's a resource
+					current_node->set(name, res->duplicate());
+
+			} else {
+
+				current_node->set(name, value);
+			}
 		}
 	}
 
@@ -2880,7 +2892,7 @@ void Node::_bind_methods() {
 #ifdef TOOLS_ENABLED
 	ClassDB::bind_method(D_METHOD("_set_import_path", "import_path"), &Node::set_import_path);
 	ClassDB::bind_method(D_METHOD("_get_import_path"), &Node::get_import_path);
-	ADD_PROPERTYNZ(PropertyInfo(Variant::NODE_PATH, "_import_path", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "_set_import_path", "_get_import_path");
+	ADD_PROPERTYNZ(PropertyInfo(Variant::NODE_PATH, "_import_path", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_import_path", "_get_import_path");
 
 #endif
 
@@ -2942,6 +2954,7 @@ void Node::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("renamed"));
 	ADD_SIGNAL(MethodInfo("tree_entered"));
+	ADD_SIGNAL(MethodInfo("tree_exiting"));
 	ADD_SIGNAL(MethodInfo("tree_exited"));
 
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/process" ),"set_process","is_processing") ;
@@ -2950,7 +2963,10 @@ void Node::_bind_methods() {
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/unhandled_input" ), "set_process_unhandled_input","is_processing_unhandled_input" ) ;
 	ADD_GROUP("Pause", "pause_");
 	ADD_PROPERTYNZ(PropertyInfo(Variant::INT, "pause_mode", PROPERTY_HINT_ENUM, "Inherit,Stop,Process"), "set_pause_mode", "get_pause_mode");
-	ADD_PROPERTYNZ(PropertyInfo(Variant::BOOL, "editor/display_folded", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_display_folded", "is_displayed_folded");
+	ADD_PROPERTYNZ(PropertyInfo(Variant::BOOL, "editor/display_folded", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "set_display_folded", "is_displayed_folded");
+	ADD_PROPERTYNZ(PropertyInfo(Variant::STRING, "name", PROPERTY_HINT_NONE, "", 0), "set_name", "get_name");
+	ADD_PROPERTYNZ(PropertyInfo(Variant::STRING, "filename", PROPERTY_HINT_NONE, "", 0), "set_filename", "get_filename");
+	ADD_PROPERTYNZ(PropertyInfo(Variant::OBJECT, "owner", PROPERTY_HINT_RESOURCE_TYPE, "Node", 0), "set_owner", "get_owner");
 
 	BIND_VMETHOD(MethodInfo("_process", PropertyInfo(Variant::REAL, "delta")));
 	BIND_VMETHOD(MethodInfo("_physics_process", PropertyInfo(Variant::REAL, "delta")));

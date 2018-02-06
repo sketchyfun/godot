@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "editor_sub_scene.h"
 
 #include "scene/gui/margin_container.h"
@@ -120,10 +121,10 @@ void EditorSubScene::_item_multi_selected(Object *p_object, int p_cell, bool p_s
 	}
 }
 
-void EditorSubScene::_remove_selection_child(Node *n) {
-	if (n->get_child_count() > 0) {
-		for (int i = 0; i < n->get_child_count(); i++) {
-			Node *c = n->get_child(i);
+void EditorSubScene::_remove_selection_child(Node *p_node) {
+	if (p_node->get_child_count() > 0) {
+		for (int i = 0; i < p_node->get_child_count(); i++) {
+			Node *c = p_node->get_child(i);
 			List<Node *>::Element *E = selection.find(c);
 			if (E) {
 				selection.move_to_back(E);

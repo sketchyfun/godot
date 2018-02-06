@@ -1,28 +1,28 @@
 # Norwegian Bokmål translation of the Godot Engine editor
-# Copyright (C) 2007-2017 Juan Linietsky, Ariel Manzur
-# Copyright (C) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)
+# Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.
+# Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)
 # This file is distributed under the same license as the Godot source code.
 #
 # Allan Nordhøy <epost@anotheragency.no>, 2017.
 # Anonymous <GentleSaucepan@protonmail.com>, 2017.
 # flesk <eivindkn@gmail.com>, 2017.
 # Jørgen Aarmo Lund <jorgen.aarmo@gmail.com>, 2016.
-# NicolaiF <nico-fre@hotmail.com>, 2017.
+# NicolaiF <nico-fre@hotmail.com>, 2017-2018.
 # Norwegian Disaster <stian.furu.overbye@gmail.com>, 2017.
 # passeride <lukas@passeride.com>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
-"PO-Revision-Date: 2017-12-05 23:48+0000\n"
-"Last-Translator: flesk <eivindkn@gmail.com>\n"
+"PO-Revision-Date: 2018-01-20 08:55+0000\n"
+"Last-Translator: NicolaiF <nico-fre@hotmail.com>\n"
 "Language-Team: Norwegian Bokmål <https://hosted.weblate.org/projects/godot-"
 "engine/godot/nb/>\n"
 "Language: nb\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8-bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2.18-dev\n"
+"X-Generator: Weblate 2.19-dev\n"
 
 #: editor/animation_editor.cpp
 msgid "Disabled"
@@ -205,8 +205,7 @@ msgstr "Lag %d NYE spor og sett inn nøkler?"
 #: editor/editor_audio_buses.cpp editor/plugins/abstract_polygon_2d_editor.cpp
 #: editor/plugins/light_occluder_2d_editor_plugin.cpp
 #: editor/plugins/mesh_instance_editor_plugin.cpp
-#: editor/plugins/particles_editor_plugin.cpp editor/project_manager.cpp
-#: editor/script_create_dialog.cpp
+#: editor/plugins/particles_editor_plugin.cpp editor/script_create_dialog.cpp
 msgid "Create"
 msgstr "Lag"
 
@@ -383,14 +382,6 @@ msgid "Replaced %d occurrence(s)."
 msgstr "Erstattet %d forekomst(er)."
 
 #: editor/code_editor.cpp
-msgid "Replace"
-msgstr "Erstatt"
-
-#: editor/code_editor.cpp
-msgid "Replace All"
-msgstr "Erstatt Alle"
-
-#: editor/code_editor.cpp
 msgid "Match Case"
 msgstr "Match Tilfelle"
 
@@ -399,48 +390,16 @@ msgid "Whole Words"
 msgstr "Hele Ord"
 
 #: editor/code_editor.cpp
+msgid "Replace"
+msgstr "Erstatt"
+
+#: editor/code_editor.cpp
+msgid "Replace All"
+msgstr "Erstatt Alle"
+
+#: editor/code_editor.cpp
 msgid "Selection Only"
 msgstr "Kun Valgte"
-
-#: editor/code_editor.cpp editor/editor_node.cpp
-#: editor/plugins/asset_library_editor_plugin.cpp
-#: editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/script_text_editor.cpp
-#: editor/plugins/shader_editor_plugin.cpp editor/project_settings_editor.cpp
-msgid "Search"
-msgstr "Søk"
-
-#: editor/code_editor.cpp editor/editor_help.cpp
-msgid "Find"
-msgstr "Finn"
-
-#: editor/code_editor.cpp
-msgid "Next"
-msgstr "Neste"
-
-#: editor/code_editor.cpp
-msgid "Not found!"
-msgstr "Ikke funnet!"
-
-#: editor/code_editor.cpp
-msgid "Replace By"
-msgstr "Erstatt Med"
-
-#: editor/code_editor.cpp
-msgid "Case Sensitive"
-msgstr "Forskjell på små og store bokstaver"
-
-#: editor/code_editor.cpp
-msgid "Backwards"
-msgstr "Baklengs"
-
-#: editor/code_editor.cpp
-msgid "Prompt On Replace"
-msgstr "Spør Ved Erstatning"
-
-#: editor/code_editor.cpp
-msgid "Skip"
-msgstr "Hopp Over"
 
 #: editor/code_editor.cpp
 msgid "Zoom In"
@@ -561,6 +520,16 @@ msgstr "Signaler"
 
 #: editor/create_dialog.cpp
 #, fuzzy
+msgid "Change %s Type"
+msgstr "Endre standard type"
+
+#: editor/create_dialog.cpp editor/project_settings_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Change"
+msgstr "Forandre"
+
+#: editor/create_dialog.cpp
+#, fuzzy
 msgid "Create New %s"
 msgstr "Lag Ny"
 
@@ -673,7 +642,8 @@ msgstr ""
 "Fjern dem likevel? (kan ikke angres)"
 
 #: editor/dependency_editor.cpp
-msgid "Cannot remove:\n"
+#, fuzzy
+msgid "Cannot remove:"
 msgstr "Kan ikke fjerne:\n"
 
 #: editor/dependency_editor.cpp
@@ -758,8 +728,9 @@ msgstr "Prosjektgrunnleggere"
 msgid "Lead Developer"
 msgstr "Utviklingsleder"
 
-#: editor/editor_about.cpp editor/project_manager.cpp
-msgid "Project Manager"
+#: editor/editor_about.cpp
+#, fuzzy
+msgid "Project Manager "
 msgstr "Prosjektleder"
 
 #: editor/editor_about.cpp
@@ -848,7 +819,7 @@ msgid "Success!"
 msgstr "Suksess!"
 
 #: editor/editor_asset_installer.cpp
-#: editor/plugins/asset_library_editor_plugin.cpp editor/project_manager.cpp
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Install"
 msgstr "Installer"
 
@@ -937,7 +908,7 @@ msgstr "Fjern Effekt"
 
 #: editor/editor_audio_buses.cpp
 msgid "Audio"
-msgstr ""
+msgstr "Lyd"
 
 #: editor/editor_audio_buses.cpp
 msgid "Add Audio Bus"
@@ -1116,11 +1087,11 @@ msgstr "Oppdaterer scene.."
 
 #: editor/editor_data.cpp
 msgid "[empty]"
-msgstr ""
+msgstr "[tom]"
 
 #: editor/editor_data.cpp
 msgid "[unsaved]"
-msgstr ""
+msgstr "[ulagret]"
 
 #: editor/editor_dir_dialog.cpp
 msgid "Please select a base directory first"
@@ -1160,7 +1131,8 @@ msgid "Packing"
 msgstr "Pakking"
 
 #: editor/editor_export.cpp platform/javascript/export/export.cpp
-msgid "Template file not found:\n"
+#, fuzzy
+msgid "Template file not found:"
 msgstr "Malfil ble ikke funnet:\n"
 
 #: editor/editor_file_dialog.cpp scene/gui/file_dialog.cpp
@@ -1284,7 +1256,7 @@ msgstr ""
 
 #: editor/editor_file_system.cpp
 msgid "(Re)Importing Assets"
-msgstr ""
+msgstr "(Re)Importerer Assets"
 
 #: editor/editor_help.cpp editor/editor_node.cpp
 #: editor/plugins/script_editor_plugin.cpp
@@ -1372,6 +1344,21 @@ msgid "Description"
 msgstr "Beskrivelse"
 
 #: editor/editor_help.cpp
+#, fuzzy
+msgid "Online Tutorials:"
+msgstr "Online Dokumentasjon"
+
+#: editor/editor_help.cpp
+#, fuzzy
+msgid ""
+"There are currently no tutorials for this class, you can [color=$color][url="
+"$url]contribute one[/url][/color] or [color=$color][url=$url2]request one[/"
+"url][/color]."
+msgstr ""
+"Det finnes i øyeblikket ingen beskrivelse av denne metoden. Hjelp til ved å "
+"[colour=$color][url=$url]bidra med en[/url][/color]!"
+
+#: editor/editor_help.cpp
 msgid "Properties"
 msgstr "Egenskaper"
 
@@ -1407,6 +1394,10 @@ msgstr ""
 msgid "Search Text"
 msgstr "Søk Tekst"
 
+#: editor/editor_help.cpp
+msgid "Find"
+msgstr "Finn"
+
 #: editor/editor_log.cpp
 msgid "Output:"
 msgstr "Output:"
@@ -1418,6 +1409,11 @@ msgstr "Output:"
 msgid "Clear"
 msgstr "Tøm"
 
+#: editor/editor_log.cpp
+#, fuzzy
+msgid "Clear Output"
+msgstr "Output"
+
 #: editor/editor_node.cpp editor/plugins/animation_player_editor_plugin.cpp
 msgid "Error saving resource!"
 msgstr "Feil ved lagring av ressurs!"
@@ -1426,8 +1422,8 @@ msgstr "Feil ved lagring av ressurs!"
 msgid "Save Resource As.."
 msgstr "Lagre Ressurs Som.."
 
-#: editor/editor_node.cpp editor/plugins/canvas_item_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
+#: editor/editor_node.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/scene_tree_dock.cpp
 #, fuzzy
 msgid "I see.."
 msgstr "Jeg ser.."
@@ -1482,8 +1478,10 @@ msgid "This operation can't be done without a tree root."
 msgstr "Denne operasjonen kan ikke gjennomføres uten en trerot."
 
 #: editor/editor_node.cpp
+#, fuzzy
 msgid ""
-"Couldn't save scene. Likely dependencies (instances) couldn't be satisfied."
+"Couldn't save scene. Likely dependencies (instances or inheritance) couldn't "
+"be satisfied."
 msgstr ""
 "Kunne ikke lagre scene. Sannsynligvis avhengigheter (instanser) ikke kunne "
 "oppfylles."
@@ -1784,6 +1782,7 @@ msgstr "Kan ikke laste addon-skript fra bane: '%s'."
 msgid ""
 "Unable to load addon script from path: '%s' Base type is not EditorPlugin."
 msgstr ""
+"Kan ikke laste addon skript fra bane: Basistype '%s' er ikke en EditorPlugin."
 
 #: editor/editor_node.cpp
 msgid "Unable to load addon script from path: '%s' Script is not in tool mode."
@@ -2092,13 +2091,20 @@ msgstr "Hjelp"
 msgid "Classes"
 msgstr "Klasser"
 
+#: editor/editor_node.cpp editor/plugins/asset_library_editor_plugin.cpp
+#: editor/plugins/script_editor_plugin.cpp
+#: editor/plugins/script_text_editor.cpp
+#: editor/plugins/shader_editor_plugin.cpp editor/project_settings_editor.cpp
+msgid "Search"
+msgstr "Søk"
+
 #: editor/editor_node.cpp editor/plugins/script_editor_plugin.cpp
 msgid "Online Docs"
 msgstr "Online Dokumentasjon"
 
 #: editor/editor_node.cpp
 msgid "Q&A"
-msgstr ""
+msgstr "Spørsmål og Svar"
 
 #: editor/editor_node.cpp
 msgid "Issue Tracker"
@@ -2482,7 +2488,8 @@ msgid "No version.txt found inside templates."
 msgstr "Ingen version.txt funnet i mal."
 
 #: editor/export_template_manager.cpp
-msgid "Error creating path for templates:\n"
+#, fuzzy
+msgid "Error creating path for templates:"
 msgstr "Feil ved laging av sti for mal:\n"
 
 #: editor/export_template_manager.cpp
@@ -2646,9 +2653,8 @@ msgid "View items as a list"
 msgstr "Vis elementer som liste"
 
 #: editor/filesystem_dock.cpp
-msgid ""
-"\n"
-"Status: Import of file failed. Please fix file and reimport manually."
+#, fuzzy
+msgid "Status: Import of file failed. Please fix file and reimport manually."
 msgstr ""
 "\n"
 "Status: Import av fil feilet. Vennligst reparer filen eller reimporter "
@@ -2660,20 +2666,23 @@ msgid "Cannot move/rename resources root."
 msgstr "Kan ikke flytte/endre navn ressursrot"
 
 #: editor/filesystem_dock.cpp
-msgid "Cannot move a folder into itself.\n"
+#, fuzzy
+msgid "Cannot move a folder into itself."
 msgstr "Kan ikke flytte mappe inn i seg selv.\n"
 
 #: editor/filesystem_dock.cpp
-msgid "Error moving:\n"
+#, fuzzy
+msgid "Error moving:"
 msgstr "Error ved flytting:\n"
 
 #: editor/filesystem_dock.cpp
 #, fuzzy
-msgid "Error duplicating:\n"
+msgid "Error duplicating:"
 msgstr "Feil ved innlasting:"
 
 #: editor/filesystem_dock.cpp
-msgid "Unable to update dependencies:\n"
+#, fuzzy
+msgid "Unable to update dependencies:"
 msgstr "Kan ikke oppdatere av avhengigheter:\n"
 
 #: editor/filesystem_dock.cpp
@@ -3249,7 +3258,7 @@ msgstr "Blend 0:"
 
 #: editor/plugins/animation_tree_editor_plugin.cpp
 msgid "Blend 1:"
-msgstr ""
+msgstr "Blend 1:"
 
 #: editor/plugins/animation_tree_editor_plugin.cpp
 msgid "X-Fade Time (s):"
@@ -3335,6 +3344,11 @@ msgstr "Rediger Node-Filtre"
 #: editor/plugins/animation_tree_editor_plugin.cpp
 msgid "Filters.."
 msgstr "Filtre.."
+
+#: editor/plugins/animation_tree_editor_plugin.cpp
+#, fuzzy
+msgid "AnimationTree"
+msgstr "Animasjon"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Free"
@@ -3505,6 +3519,7 @@ msgid "Bake Lightmaps"
 msgstr ""
 
 #: editor/plugins/camera_editor_plugin.cpp
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Preview"
 msgstr "Forhåndsvis"
 
@@ -3812,6 +3827,14 @@ msgstr "Legg til %s"
 msgid "Adding %s..."
 msgstr "Legger til %s.."
 
+#: editor/plugins/canvas_item_editor_plugin.cpp editor/scene_tree_dock.cpp
+msgid "Ok"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Cannot instantiate multiple nodes without root."
+msgstr ""
+
 #: editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
 msgid "Create Node"
@@ -3821,11 +3844,6 @@ msgstr "Lag Node"
 #: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
 msgid "Error instancing scene from %s"
 msgstr "Error ved instansiering av scene fra %s"
-
-#: editor/plugins/canvas_item_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
-msgid "This operation requires a single selected node."
-msgstr "Denne operasjonen krever én valgt node."
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Change default type"
@@ -4202,7 +4220,7 @@ msgid "Bake!"
 msgstr ""
 
 #: editor/plugins/navigation_mesh_editor_plugin.cpp
-msgid "Bake the navigation mesh.\n"
+msgid "Bake the navigation mesh."
 msgstr ""
 
 #: editor/plugins/navigation_mesh_editor_plugin.cpp
@@ -4595,14 +4613,18 @@ msgstr ""
 msgid "Paste"
 msgstr "Lim inn"
 
+#: editor/plugins/resource_preloader_editor_plugin.cpp
+#, fuzzy
+msgid "ResourcePreloader"
+msgstr "Ressurs"
+
 #: editor/plugins/script_editor_plugin.cpp
 msgid "Clear Recent Files"
 msgstr "Fjern Nylige Filer"
 
 #: editor/plugins/script_editor_plugin.cpp
-msgid ""
-"Close and save changes?\n"
-"\""
+#, fuzzy
+msgid "Close and save changes?"
 msgstr ""
 "Lukk og lagre endringer?\n"
 "\""
@@ -4679,6 +4701,11 @@ msgstr ""
 #, fuzzy
 msgid "Copy Script Path"
 msgstr "Kopier Sti"
+
+#: editor/plugins/script_editor_plugin.cpp
+#, fuzzy
+msgid "Show In File System"
+msgstr "Vis I Filutforsker"
 
 #: editor/plugins/script_editor_plugin.cpp
 msgid "History Prev"
@@ -5114,50 +5141,6 @@ msgid "Rotating %s degrees."
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
-msgid "Bottom View."
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Bottom"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Top View."
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Rear View."
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Rear"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Front View."
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Front"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Left View."
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Left"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Right View."
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Right"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Keying is disabled (no key inserted)."
 msgstr ""
 
@@ -5195,6 +5178,50 @@ msgid "FPS"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
+msgid "Top View."
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Bottom View."
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Bottom"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Left View."
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Left"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Right View."
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Right"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Front View."
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Front"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Rear View."
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Rear"
+msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Align with view"
 msgstr ""
 
@@ -5205,6 +5232,10 @@ msgstr "OK :("
 #: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
 msgid "No parent to instance a child at."
 msgstr "Ingen foreldre å instansere et barn på."
+
+#: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
+msgid "This operation requires a single selected node."
+msgstr "Denne operasjonen krever én valgt node."
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Display Normal"
@@ -5279,16 +5310,13 @@ msgid "Freelook Speed Modifier"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
-msgid "preview"
-msgstr ""
-
-#: editor/plugins/spatial_editor_plugin.cpp
 msgid "XForm Dialog"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
-msgid "Select Mode (Q)\n"
-msgstr ""
+#, fuzzy
+msgid "Select Mode (Q)"
+msgstr "Velg Modus"
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid ""
@@ -5565,8 +5593,16 @@ msgstr "Kopier Noder"
 msgid "Move (After)"
 msgstr ""
 
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+msgid "SpriteFrames"
+msgstr ""
+
 #: editor/plugins/style_box_editor_plugin.cpp
 msgid "StyleBox Preview:"
+msgstr ""
+
+#: editor/plugins/style_box_editor_plugin.cpp
+msgid "StyleBox"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
@@ -5594,14 +5630,17 @@ msgid "Auto Slice"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Offset:"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Step:"
 msgstr ""
 
 #: editor/plugins/texture_region_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Separation:"
 msgstr ""
 
@@ -5740,6 +5779,10 @@ msgstr ""
 msgid "Color"
 msgstr ""
 
+#: editor/plugins/theme_editor_plugin.cpp
+msgid "Theme"
+msgstr ""
+
 #: editor/plugins/tile_map_editor_plugin.cpp
 #, fuzzy
 msgid "Erase Selection"
@@ -5840,6 +5883,31 @@ msgstr ""
 
 #: editor/plugins/tile_set_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Error"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Autotiles"
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid ""
+"Select sub-tile to use as icon, this will be also used on invalid autotile "
+"bindings."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid ""
+"LMB: set bit on.\n"
+"RMB: set bit off."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Select current edited sub-tile."
+msgstr "Velg Gjeldende Mappe"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Select sub-tile to change its priority."
 msgstr ""
 
 #: editor/progress_dialog.cpp scene/gui/dialogs.cpp
@@ -5949,9 +6017,7 @@ msgid "Please choose a 'project.godot' file."
 msgstr ""
 
 #: editor/project_manager.cpp
-msgid ""
-"Your project will be created in a non empty folder (you might want to create "
-"a new folder)."
+msgid "Please choose an empty folder."
 msgstr ""
 
 #: editor/project_manager.cpp
@@ -5960,6 +6026,15 @@ msgstr ""
 
 #: editor/project_manager.cpp
 msgid "Imported Project"
+msgstr ""
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Couldn't create folder."
+msgstr "Kunne ikke opprette mappe."
+
+#: editor/project_manager.cpp
+msgid "There is already a folder in this path with the specified name."
 msgstr ""
 
 #: editor/project_manager.cpp
@@ -6003,12 +6078,27 @@ msgid "Import Existing Project"
 msgstr ""
 
 #: editor/project_manager.cpp
+#, fuzzy
+msgid "Import & Edit"
+msgstr "Importer"
+
+#: editor/project_manager.cpp
 msgid "Create New Project"
 msgstr ""
 
 #: editor/project_manager.cpp
+#, fuzzy
+msgid "Create & Edit"
+msgstr "Opprett skript"
+
+#: editor/project_manager.cpp
 msgid "Install Project:"
 msgstr ""
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Install & Edit"
+msgstr "Installer"
 
 #: editor/project_manager.cpp
 msgid "Project Name:"
@@ -6024,10 +6114,6 @@ msgstr ""
 
 #: editor/project_manager.cpp
 msgid "Browse"
-msgstr ""
-
-#: editor/project_manager.cpp
-msgid "That's a BINGO!"
 msgstr ""
 
 #: editor/project_manager.cpp
@@ -6074,6 +6160,10 @@ msgid ""
 "You are about the scan %s folders for existing Godot projects. Do you "
 "confirm?"
 msgstr ""
+
+#: editor/project_manager.cpp
+msgid "Project Manager"
+msgstr "Prosjektleder"
 
 #: editor/project_manager.cpp
 msgid "Project List"
@@ -6200,11 +6290,6 @@ msgstr ""
 #: editor/project_settings_editor.cpp
 msgid "Button 9"
 msgstr ""
-
-#: editor/project_settings_editor.cpp
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Change"
-msgstr "Forandre"
 
 #: editor/project_settings_editor.cpp
 msgid "Joypad Axis Index:"
@@ -6589,10 +6674,6 @@ msgid "Error loading scene from %s"
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
-msgid "Ok"
-msgstr ""
-
-#: editor/scene_tree_dock.cpp
 msgid ""
 "Cannot instance the scene '%s' because the current scene exists within one "
 "of its nodes."
@@ -6677,8 +6758,9 @@ msgid "Error duplicating scene to save it."
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
-msgid "Sub-Resources:"
-msgstr ""
+#, fuzzy
+msgid "Sub-Resources"
+msgstr "Ressurs"
 
 #: editor/scene_tree_dock.cpp
 msgid "Clear Inheritance"
@@ -6973,13 +7055,18 @@ msgstr ""
 msgid "Pick one or more items from the list to display the graph."
 msgstr ""
 
-#: editor/script_editor_debugger.cpp
+#: editor/script_editor_debugger.cpp modules/mono/editor/mono_bottom_panel.cpp
 msgid "Errors"
 msgstr ""
 
 #: editor/script_editor_debugger.cpp
 msgid "Child Process Connected"
 msgstr ""
+
+#: editor/script_editor_debugger.cpp
+#, fuzzy
+msgid "Copy Error"
+msgstr "Last Errors"
 
 #: editor/script_editor_debugger.cpp
 msgid "Inspect Previous Instance"
@@ -7332,8 +7419,55 @@ msgstr ""
 msgid "Pick Distance:"
 msgstr ""
 
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Generating solution..."
+msgstr "Lager konturer..."
+
+#: modules/mono/editor/godotsharp_editor.cpp
+msgid "Generating C# project..."
+msgstr ""
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Failed to create solution."
+msgstr "Kunne ikke lage omriss!"
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Failed to save solution."
+msgstr "Kunne ikke laste ressurs."
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Done"
+msgstr "Ferdig!"
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Failed to create C# project."
+msgstr "Kunne ikke laste ressurs."
+
+#: modules/mono/editor/godotsharp_editor.cpp
+msgid "Mono"
+msgstr ""
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Create C# solution"
+msgstr "Lag Omriss"
+
 #: modules/mono/editor/mono_bottom_panel.cpp
 msgid "Builds"
+msgstr ""
+
+#: modules/mono/editor/mono_bottom_panel.cpp
+#, fuzzy
+msgid "Build Project"
+msgstr "Prosjekt"
+
+#: modules/mono/editor/mono_bottom_panel.cpp
+msgid "Warnings"
 msgstr ""
 
 #: modules/visual_script/visual_script.cpp
@@ -7699,23 +7833,31 @@ msgid "Run exported HTML in the system's default browser."
 msgstr ""
 
 #: platform/javascript/export/export.cpp
-msgid "Could not write file:\n"
+#, fuzzy
+msgid "Could not write file:"
+msgstr "Kunne ikke opprette mappe."
+
+#: platform/javascript/export/export.cpp
+#, fuzzy
+msgid "Could not open template for export:"
+msgstr "Kunne ikke opprette mappe."
+
+#: platform/javascript/export/export.cpp
+#, fuzzy
+msgid "Invalid export template:"
+msgstr "Håndter Eksportmaler"
+
+#: platform/javascript/export/export.cpp
+msgid "Could not read custom HTML shell:"
 msgstr ""
 
 #: platform/javascript/export/export.cpp
-msgid "Could not open template for export:\n"
-msgstr ""
+#, fuzzy
+msgid "Could not read boot splash image file:"
+msgstr "Kunne ikke opprette mappe."
 
 #: platform/javascript/export/export.cpp
-msgid "Invalid export template:\n"
-msgstr ""
-
-#: platform/javascript/export/export.cpp
-msgid "Could not read custom HTML shell:\n"
-msgstr ""
-
-#: platform/javascript/export/export.cpp
-msgid "Could not read boot splash image file:\n"
+msgid "Using default boot splash image."
 msgstr ""
 
 #: scene/2d/animated_sprite.cpp
@@ -7728,6 +7870,13 @@ msgstr ""
 msgid ""
 "Only one visible CanvasModulate is allowed per scene (or set of instanced "
 "scenes). The first created one will work, while the rest will be ignored."
+msgstr ""
+
+#: scene/2d/collision_object_2d.cpp
+msgid ""
+"This node has no children shapes, so it can't interact with the space.\n"
+"Consider adding CollisionShape2D or CollisionPolygon2D children nodes to "
+"define its shape."
 msgstr ""
 
 #: scene/2d/collision_polygon_2d.cpp
@@ -7798,7 +7947,7 @@ msgstr ""
 
 #: scene/2d/physics_body_2d.cpp
 msgid ""
-"Size changes to RigidBody2D (in character or rigid modes) will be overriden "
+"Size changes to RigidBody2D (in character or rigid modes) will be overridden "
 "by the physics engine when running.\n"
 "Change the size in children collision shapes instead."
 msgstr ""
@@ -7857,6 +8006,13 @@ msgstr ""
 msgid "Lighting Meshes: "
 msgstr ""
 
+#: scene/3d/collision_object.cpp
+msgid ""
+"This node has no children shapes, so it can't interact with the space.\n"
+"Consider adding CollisionShape or CollisionPolygon children nodes to define "
+"its shape."
+msgstr ""
+
 #: scene/3d/collision_polygon.cpp
 msgid ""
 "CollisionPolygon only serves to provide a collision shape to a "
@@ -7902,8 +8058,8 @@ msgstr ""
 
 #: scene/3d/physics_body.cpp
 msgid ""
-"Size changes to RigidBody (in character or rigid modes) will be overriden by "
-"the physics engine when running.\n"
+"Size changes to RigidBody (in character or rigid modes) will be overridden "
+"by the physics engine when running.\n"
 "Change the size in children collision shapes instead."
 msgstr ""
 
@@ -7969,8 +8125,8 @@ msgstr ""
 
 #: scene/main/scene_tree.cpp
 msgid ""
-"Default Environment as specified in Project Setings (Rendering -> Viewport -"
-"> Default Environment) could not be loaded."
+"Default Environment as specified in Project Settings (Rendering -> "
+"Environment -> Default Environment) could not be loaded."
 msgstr ""
 
 #: scene/main/viewport.cpp
@@ -7996,6 +8152,27 @@ msgstr ""
 #: scene/resources/dynamic_font.cpp
 msgid "Invalid font size."
 msgstr "Ugyldig fontstørrelse."
+
+#~ msgid "Next"
+#~ msgstr "Neste"
+
+#~ msgid "Not found!"
+#~ msgstr "Ikke funnet!"
+
+#~ msgid "Replace By"
+#~ msgstr "Erstatt Med"
+
+#~ msgid "Case Sensitive"
+#~ msgstr "Forskjell på små og store bokstaver"
+
+#~ msgid "Backwards"
+#~ msgstr "Baklengs"
+
+#~ msgid "Prompt On Replace"
+#~ msgstr "Spør Ved Erstatning"
+
+#~ msgid "Skip"
+#~ msgstr "Hopp Over"
 
 #~ msgid "Move Add Key"
 #~ msgstr "Flytt Legg-Til-Nøkkel"

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "rasterizer_storage_gles3.h"
 #include "project_settings.h"
 #include "rasterizer_canvas_gles3.h"
@@ -875,11 +876,34 @@ Ref<Image> RasterizerStorageGLES3::texture_get_data(RID p_texture, VS::CubeMapSi
 		}
 	}
 
+	Image::Format img_format;
+
+	//convert special case RGB10_A2 to RGBA8 because it's not a supported image format
+	if (texture->gl_internal_format_cache == GL_RGB10_A2) {
+
+		img_format = Image::FORMAT_RGBA8;
+
+		uint32_t *ptr = (uint32_t *)wb.ptr();
+		uint32_t num_pixels = data_size / 4;
+
+		for (int ofs = 0; ofs < num_pixels; ofs++) {
+			uint32_t px = ptr[ofs];
+			uint32_t a = px >> 30 & 0xFF;
+
+			ptr[ofs] = (px >> 2 & 0xFF) |
+					   (px >> 12 & 0xFF) << 8 |
+					   (px >> 22 & 0xFF) << 16 |
+					   (a | a << 2 | a << 4 | a << 6) << 24;
+		}
+	} else {
+		img_format = texture->format;
+	}
+
 	wb = PoolVector<uint8_t>::Write();
 
 	data.resize(data_size);
 
-	Image *img = memnew(Image(texture->alloc_width, texture->alloc_height, texture->mipmaps > 1 ? true : false, texture->format, data));
+	Image *img = memnew(Image(texture->alloc_width, texture->alloc_height, texture->mipmaps > 1 ? true : false, img_format, data));
 
 	return Ref<Image>(img);
 #else
@@ -1618,6 +1642,7 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 			p_shader->spatial.uses_time = false;
 			p_shader->spatial.uses_vertex_lighting = false;
 			p_shader->spatial.uses_screen_texture = false;
+			p_shader->spatial.uses_depth_texture = false;
 			p_shader->spatial.uses_vertex = false;
 			p_shader->spatial.writes_modelview_or_projection = false;
 			p_shader->spatial.uses_world_coordinates = false;
@@ -1649,6 +1674,7 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 			shaders.actions_scene.usage_flag_pointers["SSS_STRENGTH"] = &p_shader->spatial.uses_sss;
 			shaders.actions_scene.usage_flag_pointers["DISCARD"] = &p_shader->spatial.uses_discard;
 			shaders.actions_scene.usage_flag_pointers["SCREEN_TEXTURE"] = &p_shader->spatial.uses_screen_texture;
+			shaders.actions_scene.usage_flag_pointers["DEPTH_TEXTURE"] = &p_shader->spatial.uses_depth_texture;
 			shaders.actions_scene.usage_flag_pointers["TIME"] = &p_shader->spatial.uses_time;
 
 			shaders.actions_scene.write_flag_pointers["MODELVIEW_MATRIX"] = &p_shader->spatial.writes_modelview_or_projection;
@@ -2181,10 +2207,15 @@ _FORCE_INLINE_ static void _fill_std140_variant_ubo_value(ShaderLanguage::DataTy
 			Transform2D v = value;
 			GLfloat *gui = (GLfloat *)data;
 
+			//in std140 members of mat2 are treated as vec4s
 			gui[0] = v.elements[0][0];
 			gui[1] = v.elements[0][1];
-			gui[2] = v.elements[1][0];
-			gui[3] = v.elements[1][1];
+			gui[2] = 0;
+			gui[3] = 0;
+			gui[4] = v.elements[1][0];
+			gui[5] = v.elements[1][1];
+			gui[6] = 0;
+			gui[7] = 0;
 		} break;
 		case ShaderLanguage::TYPE_MAT3: {
 
@@ -2359,9 +2390,15 @@ _FORCE_INLINE_ static void _fill_std140_ubo_value(ShaderLanguage::DataType type,
 		case ShaderLanguage::TYPE_MAT2: {
 			GLfloat *gui = (GLfloat *)data;
 
-			for (int i = 0; i < 2; i++) {
-				gui[i] = value[i].real;
-			}
+			//in std140 members of mat2 are treated as vec4s
+			gui[0] = value[0].real;
+			gui[1] = value[1].real;
+			gui[2] = 0;
+			gui[3] = 0;
+			gui[4] = value[2].real;
+			gui[5] = value[3].real;
+			gui[6] = 0;
+			gui[7] = 0;
 		} break;
 		case ShaderLanguage::TYPE_MAT3: {
 
@@ -2415,10 +2452,13 @@ _FORCE_INLINE_ static void _fill_std140_ubo_empty(ShaderLanguage::DataType type,
 		case ShaderLanguage::TYPE_BVEC4:
 		case ShaderLanguage::TYPE_IVEC4:
 		case ShaderLanguage::TYPE_UVEC4:
-		case ShaderLanguage::TYPE_VEC4:
-		case ShaderLanguage::TYPE_MAT2: {
+		case ShaderLanguage::TYPE_VEC4: {
 
 			zeromem(data, 16);
+		} break;
+		case ShaderLanguage::TYPE_MAT2: {
+
+			zeromem(data, 32);
 		} break;
 		case ShaderLanguage::TYPE_MAT3: {
 
@@ -5329,7 +5369,7 @@ void RasterizerStorageGLES3::particles_set_emitting(RID p_particles, bool p_emit
 	Particles *particles = particles_owner.getornull(p_particles);
 	ERR_FAIL_COND(!particles);
 	if (p_emitting != particles->emitting) {
-		// Restart is overriden by set_emitting
+		// Restart is overridden by set_emitting
 		particles->restart_request = false;
 	}
 	particles->emitting = p_emitting;
@@ -5677,6 +5717,7 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 	SWAP(p_particles->particle_buffers[0], p_particles->particle_buffers[1]);
 	SWAP(p_particles->particle_vaos[0], p_particles->particle_vaos[1]);
 
+	glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, 0);
 	glBindVertexArray(0);
 	/* //debug particles :D
 	glBindBuffer(GL_ARRAY_BUFFER, p_particles->particle_buffers[0]);
@@ -6903,6 +6944,7 @@ bool RasterizerStorageGLES3::free(RID p_rid) {
 
 		// delete the texture
 		GIProbe *gi_probe = gi_probe_owner.get(p_rid);
+		gi_probe->instance_remove_deps();
 
 		gi_probe_owner.free(p_rid);
 		memdelete(gi_probe);
@@ -6918,6 +6960,7 @@ bool RasterizerStorageGLES3::free(RID p_rid) {
 
 		// delete the texture
 		LightmapCapture *lightmap_capture = lightmap_capture_data_owner.get(p_rid);
+		lightmap_capture->instance_remove_deps();
 
 		gi_probe_owner.free(p_rid);
 		memdelete(lightmap_capture);
@@ -6943,6 +6986,11 @@ bool RasterizerStorageGLES3::free(RID p_rid) {
 		glDeleteTextures(1, &cls->distance);
 		canvas_light_shadow_owner.free(p_rid);
 		memdelete(cls);
+	} else if (particles_owner.owns(p_rid)) {
+		Particles *particles = particles_owner.get(p_rid);
+		particles->instance_remove_deps();
+		particles_owner.free(p_rid);
+		memdelete(particles);
 	} else {
 		return false;
 	}
@@ -7241,8 +7289,6 @@ void RasterizerStorageGLES3::initialize() {
 	config.use_texture_array_environment = GLOBAL_GET("rendering/quality/reflections/texture_array_reflections");
 
 	config.force_vertex_shading = GLOBAL_GET("rendering/quality/shading/force_vertex_shading");
-
-	GLOBAL_DEF("rendering/quality/depth_prepass/disable", false);
 
 	String renderer = (const char *)glGetString(GL_RENDERER);
 

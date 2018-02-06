@@ -69,6 +69,7 @@ def get_opts():
         # Vista support dropped after EOL due to GH-10243
         ('target_win_version', 'Targeted Windows version, >= 0x0601 (Windows 7)', '0x0601'),
         EnumVariable('debug_symbols', 'Add debug symbols to release version', 'yes', ('yes', 'no', 'full')),
+        BoolVariable('separate_debug_symbols', 'Create a separate file with the debug symbols', False),
     ]
 
 
@@ -190,7 +191,11 @@ def configure(env):
 
         if (env["use_lto"]):
             env.Append(CCFLAGS=['/GL'])
-            env.Append(LINKFLAGS=['/LTCG'])
+            env.Append(ARFLAGS=['/LTCG'])
+            if env["progress"]:
+                env.Append(LINKFLAGS=['/LTCG:STATUS'])
+            else:
+                env.Append(LINKFLAGS=['/LTCG'])
 
         env.Append(CCFLAGS=["/I" + p for p in os.getenv("INCLUDE").split(";")])
         env.Append(LIBPATH=[p for p in os.getenv("LIB").split(";")])
@@ -261,7 +266,7 @@ def configure(env):
         env['CXX'] = mingw_prefix + "g++"
         env['AR'] = mingw_prefix + "gcc-ar"
         env['RANLIB'] = mingw_prefix + "gcc-ranlib"
-        env['LD'] = mingw_prefix + "g++"
+        env['LINK'] = mingw_prefix + "g++"
         env["x86_libtheora_opt_gcc"] = True
 
         if env['use_lto']:

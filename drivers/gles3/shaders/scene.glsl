@@ -445,8 +445,7 @@ VERTEX_SHADER_CODE
 	vtx.z=(distance/shadow_dual_paraboloid_render_zfar);
 	vtx.z=vtx.z * 2.0 - 1.0;
 
-	vertex.xyz=vtx;
-	vertex.w=1.0;
+	vertex_interp = vtx;
 
 
 #else
@@ -905,7 +904,7 @@ float G_GGX_anisotropic_2cos(float cos_theta_m, float alpha_x, float alpha_y, fl
 	float sin2 = (1.0-cos2);
 	float s_x = alpha_x * cos_phi;
 	float s_y = alpha_y * sin_phi;
-	return 1.0  / (cos_theta_m + sqrt(cos2 + (s_x*s_x + s_y*s_y)*sin2 ));
+	return 1.0  / max(cos_theta_m + sqrt(cos2 + (s_x*s_x + s_y*s_y)*sin2 ), 0.001);
 }
 
 float D_GGX_anisotropic(float cos_theta_m, float alpha_x, float alpha_y, float cos_phi, float sin_phi) {
@@ -914,7 +913,7 @@ float D_GGX_anisotropic(float cos_theta_m, float alpha_x, float alpha_y, float c
 	float r_x = cos_phi/alpha_x;
 	float r_y = sin_phi/alpha_y;
 	float d = cos2 + sin2*(r_x * r_x + r_y * r_y);
-	return 1.0 / (M_PI * alpha_x * alpha_y * d * d );
+	return 1.0 / max(M_PI * alpha_x * alpha_y * d * d, 0.001);
 }
 
 
@@ -1308,7 +1307,7 @@ void reflection_process(int idx, vec3 vertex, vec3 normal,vec3 binormal, vec3 ta
 	//make blend more rounded
 	blend=mix(length(inner_pos),blend,blend);
 	blend*=blend;
-	blend=1.001-blend;
+	blend=max(0.0, 1.0-blend);
 
 	if (reflections[idx].params.x>0.0){// compute reflection
 
@@ -1476,9 +1475,9 @@ void gi_probe_compute(mediump sampler3D probe, mat4 probe_xform, vec3 bounds,vec
 		return;
 	}
 
-	//vec3 blendv = probe_pos/bounds * 2.0 - 1.0;
-	//float blend = 1.001-max(blendv.x,max(blendv.y,blendv.z));
-	float blend=1.0;
+	vec3 blendv = abs(probe_pos/bounds * 2.0 - 1.0);
+	float blend = clamp(1.0-max(blendv.x,max(blendv.y,blendv.z)), 0.0, 1.0);
+	//float blend=1.0;
 
 	float max_distance = length(bounds);
 
@@ -1649,7 +1648,7 @@ void main() {
 
 #if defined(ENABLE_NORMALMAP)
 
-	vec3 normalmap = vec3(0.0);
+	vec3 normalmap = vec3(0.5);
 #endif
 
 	float normaldepth=1.0;
@@ -2004,7 +2003,7 @@ FRAGMENT_SHADER_CODE
 	}
 #ifndef USE_LIGHTMAP
 	if (ambient_accum.a>0.0) {
-		ambient_light+=ambient_accum.rgb/ambient_accum.a;
+		ambient_light=ambient_accum.rgb/ambient_accum.a;
 	}
 #endif
 

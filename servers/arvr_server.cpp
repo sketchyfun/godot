@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -67,11 +67,11 @@ void ARVRServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(RESET_BUT_KEEP_TILT);
 	BIND_ENUM_CONSTANT(DONT_RESET_ROTATION);
 
-	ADD_SIGNAL(MethodInfo("interface_added", PropertyInfo(Variant::STRING, "name")));
-	ADD_SIGNAL(MethodInfo("interface_removed", PropertyInfo(Variant::STRING, "name")));
+	ADD_SIGNAL(MethodInfo("interface_added", PropertyInfo(Variant::STRING, "interface_name")));
+	ADD_SIGNAL(MethodInfo("interface_removed", PropertyInfo(Variant::STRING, "interface_name")));
 
-	ADD_SIGNAL(MethodInfo("tracker_added", PropertyInfo(Variant::STRING, "name"), PropertyInfo(Variant::INT, "type"), PropertyInfo(Variant::INT, "id")));
-	ADD_SIGNAL(MethodInfo("tracker_removed", PropertyInfo(Variant::STRING, "name"), PropertyInfo(Variant::INT, "type"), PropertyInfo(Variant::INT, "id")));
+	ADD_SIGNAL(MethodInfo("tracker_added", PropertyInfo(Variant::STRING, "tracker_name"), PropertyInfo(Variant::INT, "type"), PropertyInfo(Variant::INT, "id")));
+	ADD_SIGNAL(MethodInfo("tracker_removed", PropertyInfo(Variant::STRING, "tracker_name"), PropertyInfo(Variant::INT, "type"), PropertyInfo(Variant::INT, "id")));
 };
 
 real_t ARVRServer::get_world_scale() const {
@@ -212,7 +212,7 @@ Array ARVRServer::get_interfaces() const {
 };
 
 /*
-	A little extra info on the tracker ids, these are unique per tracker type so we get soem consistency in recognising our trackers, specifically controllers.
+	A little extra info on the tracker ids, these are unique per tracker type so we get some consistency in recognising our trackers, specifically controllers.
 
 	The first controller that is turned of will get ID 1, the second will get ID 2, etc.
 	The magic happens when one of the controllers is turned off, say controller 1 turns off, controller 2 will remain controller 2, controller 3 will remain controller 3.

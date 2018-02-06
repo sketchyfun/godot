@@ -1,25 +1,25 @@
 # Finnish translation of the Godot Engine editor
-# Copyright (C) 2007-2017 Juan Linietsky, Ariel Manzur
-# Copyright (C) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)
+# Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.
+# Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)
 # This file is distributed under the same license as the Godot source code.
 #
 # basse <basse@roiske.org>, 2017.
 # Bastian Salmela <bastian.salmela@gmail.com>, 2017.
-# ekeimaja <ekeimaja@gmail.com>, 2017.
+# ekeimaja <ekeimaja@gmail.com>, 2017-2018.
 # Jarmo Riikonen <amatrelan@gmail.com>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
-"PO-Revision-Date: 2017-12-03 11:31+0000\n"
-"Last-Translator: Bastian Salmela <bastian.salmela@gmail.com>\n"
+"PO-Revision-Date: 2018-01-24 12:10+0000\n"
+"Last-Translator: ekeimaja <ekeimaja@gmail.com>\n"
 "Language-Team: Finnish <https://hosted.weblate.org/projects/godot-engine/"
 "godot/fi/>\n"
 "Language: fi\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8-bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2.18-dev\n"
+"X-Generator: Weblate 2.19-dev\n"
 
 #: editor/animation_editor.cpp
 msgid "Disabled"
@@ -204,8 +204,7 @@ msgstr "Luo %d uutta raitaa ja lisää avaimet?"
 #: editor/editor_audio_buses.cpp editor/plugins/abstract_polygon_2d_editor.cpp
 #: editor/plugins/light_occluder_2d_editor_plugin.cpp
 #: editor/plugins/mesh_instance_editor_plugin.cpp
-#: editor/plugins/particles_editor_plugin.cpp editor/project_manager.cpp
-#: editor/script_create_dialog.cpp
+#: editor/plugins/particles_editor_plugin.cpp editor/script_create_dialog.cpp
 msgid "Create"
 msgstr "Luo"
 
@@ -386,14 +385,6 @@ msgid "Replaced %d occurrence(s)."
 msgstr "Korvattu %d osuvuutta."
 
 #: editor/code_editor.cpp
-msgid "Replace"
-msgstr "Korvaa"
-
-#: editor/code_editor.cpp
-msgid "Replace All"
-msgstr "Korvaa kaikki"
-
-#: editor/code_editor.cpp
 msgid "Match Case"
 msgstr "Huomioi kirjainkoko"
 
@@ -402,48 +393,16 @@ msgid "Whole Words"
 msgstr "Kokonaisia sanoja"
 
 #: editor/code_editor.cpp
-msgid "Selection Only"
-msgstr "Pelkkä valinta"
-
-#: editor/code_editor.cpp editor/editor_node.cpp
-#: editor/plugins/asset_library_editor_plugin.cpp
-#: editor/plugins/script_editor_plugin.cpp
-#: editor/plugins/script_text_editor.cpp
-#: editor/plugins/shader_editor_plugin.cpp editor/project_settings_editor.cpp
-msgid "Search"
-msgstr "Hae"
-
-#: editor/code_editor.cpp editor/editor_help.cpp
-msgid "Find"
-msgstr "Etsi"
-
-#: editor/code_editor.cpp
-msgid "Next"
-msgstr "Seuraava"
-
-#: editor/code_editor.cpp
-msgid "Not found!"
-msgstr "Ei löytynyt!"
-
-#: editor/code_editor.cpp
-msgid "Replace By"
+msgid "Replace"
 msgstr "Korvaa"
 
 #: editor/code_editor.cpp
-msgid "Case Sensitive"
-msgstr "Merkkikokoriippuvainen"
+msgid "Replace All"
+msgstr "Korvaa kaikki"
 
 #: editor/code_editor.cpp
-msgid "Backwards"
-msgstr "Taaksepäin"
-
-#: editor/code_editor.cpp
-msgid "Prompt On Replace"
-msgstr "Kysy vaihdettaessa"
-
-#: editor/code_editor.cpp
-msgid "Skip"
-msgstr "Ohita"
+msgid "Selection Only"
+msgstr "Pelkkä valinta"
 
 #: editor/code_editor.cpp
 msgid "Zoom In"
@@ -564,6 +523,16 @@ msgstr "Signaalit"
 
 #: editor/create_dialog.cpp
 #, fuzzy
+msgid "Change %s Type"
+msgstr "Muuta tyyppiä"
+
+#: editor/create_dialog.cpp editor/project_settings_editor.cpp
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Change"
+msgstr "Muuta"
+
+#: editor/create_dialog.cpp
+#, fuzzy
 msgid "Create New %s"
 msgstr "Luo uusi"
 
@@ -677,7 +646,8 @@ msgstr ""
 "Poistetaanko silti? (ei mahdollisuutta kumota)"
 
 #: editor/dependency_editor.cpp
-msgid "Cannot remove:\n"
+#, fuzzy
+msgid "Cannot remove:"
 msgstr "Ei voida poistaa:\n"
 
 #: editor/dependency_editor.cpp
@@ -764,8 +734,9 @@ msgstr "Projektin perustajat"
 msgid "Lead Developer"
 msgstr "Pääkehittäjä"
 
-#: editor/editor_about.cpp editor/project_manager.cpp
-msgid "Project Manager"
+#: editor/editor_about.cpp
+#, fuzzy
+msgid "Project Manager "
 msgstr "Projektinhallinta"
 
 #: editor/editor_about.cpp
@@ -854,7 +825,7 @@ msgid "Success!"
 msgstr "Onnistui!"
 
 #: editor/editor_asset_installer.cpp
-#: editor/plugins/asset_library_editor_plugin.cpp editor/project_manager.cpp
+#: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Install"
 msgstr "Asenna"
 
@@ -1133,7 +1104,7 @@ msgstr "(tyhjä)"
 
 #: editor/editor_data.cpp
 msgid "[unsaved]"
-msgstr ""
+msgstr "[ei tallennettu]"
 
 #: editor/editor_dir_dialog.cpp
 msgid "Please select a base directory first"
@@ -1173,7 +1144,8 @@ msgid "Packing"
 msgstr "Pakataan"
 
 #: editor/editor_export.cpp platform/javascript/export/export.cpp
-msgid "Template file not found:\n"
+#, fuzzy
+msgid "Template file not found:"
 msgstr "Mallitiedostoa ei löytynyt:\n"
 
 #: editor/editor_file_dialog.cpp scene/gui/file_dialog.cpp
@@ -1262,8 +1234,9 @@ msgid "Toggle Mode"
 msgstr "Näytä/piilota"
 
 #: editor/editor_file_dialog.cpp
+#, fuzzy
 msgid "Focus Path"
-msgstr ""
+msgstr "Kohdista polku"
 
 #: editor/editor_file_dialog.cpp
 msgid "Move Favorite Up"
@@ -1399,6 +1372,21 @@ msgstr "Kuvaus:"
 
 #: editor/editor_help.cpp
 #, fuzzy
+msgid "Online Tutorials:"
+msgstr "Oppaat"
+
+#: editor/editor_help.cpp
+#, fuzzy
+msgid ""
+"There are currently no tutorials for this class, you can [color=$color][url="
+"$url]contribute one[/url][/color] or [color=$color][url=$url2]request one[/"
+"url][/color]."
+msgstr ""
+"Tälle metodille ei vielä löydy kuvailua. Voit auttaa meitä [color=$color]"
+"[url=$url]kirjoittamalla sellaisen[/url][/color]!"
+
+#: editor/editor_help.cpp
+#, fuzzy
 msgid "Properties"
 msgstr "Ominaisuudet:"
 
@@ -1436,6 +1424,10 @@ msgstr ""
 msgid "Search Text"
 msgstr "Hae tekstiä"
 
+#: editor/editor_help.cpp
+msgid "Find"
+msgstr "Etsi"
+
 #: editor/editor_log.cpp
 #, fuzzy
 msgid "Output:"
@@ -1448,6 +1440,11 @@ msgstr " Tuloste:"
 msgid "Clear"
 msgstr "Tyhjennä"
 
+#: editor/editor_log.cpp
+#, fuzzy
+msgid "Clear Output"
+msgstr "Tuloste"
+
 #: editor/editor_node.cpp editor/plugins/animation_player_editor_plugin.cpp
 msgid "Error saving resource!"
 msgstr "Virhe tallennettaessa resurssia!"
@@ -1456,8 +1453,8 @@ msgstr "Virhe tallennettaessa resurssia!"
 msgid "Save Resource As.."
 msgstr "Tallenna resurssi nimellä..."
 
-#: editor/editor_node.cpp editor/plugins/canvas_item_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
+#: editor/editor_node.cpp editor/plugins/spatial_editor_plugin.cpp
+#: editor/scene_tree_dock.cpp
 msgid "I see.."
 msgstr "Ymmärrän..."
 
@@ -1515,8 +1512,10 @@ msgid "This operation can't be done without a tree root."
 msgstr "Tätä toimintoa ei voi tehdä ilman Sceneä."
 
 #: editor/editor_node.cpp
+#, fuzzy
 msgid ""
-"Couldn't save scene. Likely dependencies (instances) couldn't be satisfied."
+"Couldn't save scene. Likely dependencies (instances or inheritance) couldn't "
+"be satisfied."
 msgstr "Sceneä ei voitu tallentaa. Riippuvuuksia ei voitu tyydyttää."
 
 #: editor/editor_node.cpp
@@ -2129,6 +2128,13 @@ msgstr "Ohje"
 msgid "Classes"
 msgstr "Luokat"
 
+#: editor/editor_node.cpp editor/plugins/asset_library_editor_plugin.cpp
+#: editor/plugins/script_editor_plugin.cpp
+#: editor/plugins/script_text_editor.cpp
+#: editor/plugins/shader_editor_plugin.cpp editor/project_settings_editor.cpp
+msgid "Search"
+msgstr "Hae"
+
 #: editor/editor_node.cpp editor/plugins/script_editor_plugin.cpp
 msgid "Online Docs"
 msgstr "Dokumentaatio"
@@ -2519,7 +2525,8 @@ msgid "No version.txt found inside templates."
 msgstr "version.txt -tiedostoa ei löytynyt."
 
 #: editor/export_template_manager.cpp
-msgid "Error creating path for templates:\n"
+#, fuzzy
+msgid "Error creating path for templates:"
 msgstr "Virhe luotaessa polkua mallille:\n"
 
 #: editor/export_template_manager.cpp
@@ -2692,9 +2699,8 @@ msgid "View items as a list"
 msgstr "Listanäkymä"
 
 #: editor/filesystem_dock.cpp
-msgid ""
-"\n"
-"Status: Import of file failed. Please fix file and reimport manually."
+#, fuzzy
+msgid "Status: Import of file failed. Please fix file and reimport manually."
 msgstr ""
 "\n"
 "Tila: Tuonti epäonnistui. Ole hyvä, korjaa tiedosto, ja tuo uudelleen."
@@ -2704,22 +2710,23 @@ msgid "Cannot move/rename resources root."
 msgstr "Ei voitu siirtää/nimetä uudelleen resurssien päätasoa."
 
 #: editor/filesystem_dock.cpp
-msgid "Cannot move a folder into itself.\n"
+#, fuzzy
+msgid "Cannot move a folder into itself."
 msgstr "Hakemistoa ei voi siirtää itsensä sisään.\n"
 
 #: editor/filesystem_dock.cpp
 #, fuzzy
-msgid "Error moving:\n"
+msgid "Error moving:"
 msgstr "Virhe tuotaessa:"
 
 #: editor/filesystem_dock.cpp
 #, fuzzy
-msgid "Error duplicating:\n"
+msgid "Error duplicating:"
 msgstr "Virhe ladatessa:"
 
 #: editor/filesystem_dock.cpp
 #, fuzzy
-msgid "Unable to update dependencies:\n"
+msgid "Unable to update dependencies:"
 msgstr "Scenellä '%s' on rikkinäisiä riippuvuuksia:"
 
 #: editor/filesystem_dock.cpp
@@ -3385,6 +3392,11 @@ msgstr "Muokkaa noden suodattimia"
 msgid "Filters.."
 msgstr "Suodattimet..."
 
+#: editor/plugins/animation_tree_editor_plugin.cpp
+#, fuzzy
+msgid "AnimationTree"
+msgstr "Animaatio"
+
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "Free"
 msgstr "Vapauta"
@@ -3485,7 +3497,7 @@ msgstr "edellinen"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "next"
-msgstr ""
+msgstr "seuraava"
 
 #: editor/plugins/asset_library_editor_plugin.cpp
 msgid "last"
@@ -3558,6 +3570,7 @@ msgid "Bake Lightmaps"
 msgstr "Muunna Lightmapiksi:"
 
 #: editor/plugins/camera_editor_plugin.cpp
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Preview"
 msgstr "Esikatselu"
 
@@ -3875,6 +3888,14 @@ msgstr "Lisää %s"
 msgid "Adding %s..."
 msgstr "Lisätään %s..."
 
+#: editor/plugins/canvas_item_editor_plugin.cpp editor/scene_tree_dock.cpp
+msgid "Ok"
+msgstr ""
+
+#: editor/plugins/canvas_item_editor_plugin.cpp
+msgid "Cannot instantiate multiple nodes without root."
+msgstr ""
+
 #: editor/plugins/canvas_item_editor_plugin.cpp
 #: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
 msgid "Create Node"
@@ -3884,11 +3905,6 @@ msgstr "Luo Node"
 #: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
 msgid "Error instancing scene from %s"
 msgstr "Virhe luotaessa instanssia kohteesta %s"
-
-#: editor/plugins/canvas_item_editor_plugin.cpp
-#: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
-msgid "This operation requires a single selected node."
-msgstr "Tämä toiminto vaatii yhden valitun noden."
 
 #: editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Change default type"
@@ -4269,7 +4285,7 @@ msgid "Bake!"
 msgstr ""
 
 #: editor/plugins/navigation_mesh_editor_plugin.cpp
-msgid "Bake the navigation mesh.\n"
+msgid "Bake the navigation mesh."
 msgstr ""
 
 #: editor/plugins/navigation_mesh_editor_plugin.cpp
@@ -4278,11 +4294,11 @@ msgstr ""
 
 #: editor/plugins/navigation_mesh_generator.cpp
 msgid "Setting up Configuration..."
-msgstr ""
+msgstr "Luodaan konfiguraatiota..."
 
 #: editor/plugins/navigation_mesh_generator.cpp
 msgid "Calculating grid size..."
-msgstr ""
+msgstr "Lasketaan ruudukon kokoa..."
 
 #: editor/plugins/navigation_mesh_generator.cpp
 msgid "Creating heightfield..."
@@ -4673,15 +4689,19 @@ msgstr "Lataa resurssi"
 msgid "Paste"
 msgstr "Liitä"
 
+#: editor/plugins/resource_preloader_editor_plugin.cpp
+#, fuzzy
+msgid "ResourcePreloader"
+msgstr "Resurssi"
+
 #: editor/plugins/script_editor_plugin.cpp
 #, fuzzy
 msgid "Clear Recent Files"
 msgstr "Tyhjennä luut"
 
 #: editor/plugins/script_editor_plugin.cpp
-msgid ""
-"Close and save changes?\n"
-"\""
+#, fuzzy
+msgid "Close and save changes?"
 msgstr ""
 "Sulje ja tallenna muutokset?\n"
 "\""
@@ -4759,6 +4779,11 @@ msgstr ""
 #, fuzzy
 msgid "Copy Script Path"
 msgstr "Kopioi polku"
+
+#: editor/plugins/script_editor_plugin.cpp
+#, fuzzy
+msgid "Show In File System"
+msgstr "Näytä tiedostojärjestelmässä"
 
 #: editor/plugins/script_editor_plugin.cpp
 msgid "History Prev"
@@ -5204,51 +5229,6 @@ msgid "Rotating %s degrees."
 msgstr "Kierto %s astetta."
 
 #: editor/plugins/spatial_editor_plugin.cpp
-msgid "Bottom View."
-msgstr "Pohjanäkymä."
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Bottom"
-msgstr "Pohja"
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Top View."
-msgstr "Pintanäkymä."
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Rear View."
-msgstr "Takanäkymä."
-
-#: editor/plugins/spatial_editor_plugin.cpp
-#, fuzzy
-msgid "Rear"
-msgstr "Taka/perä"
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Front View."
-msgstr "Etunäkymä."
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Front"
-msgstr "Etu"
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Left View."
-msgstr "Vasen näkymä."
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Left"
-msgstr "Vasen"
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Right View."
-msgstr "Oikea näkymä."
-
-#: editor/plugins/spatial_editor_plugin.cpp
-msgid "Right"
-msgstr "OIkea"
-
-#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Keying is disabled (no key inserted)."
 msgstr ""
 
@@ -5289,6 +5269,51 @@ msgid "FPS"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
+msgid "Top View."
+msgstr "Pintanäkymä."
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Bottom View."
+msgstr "Pohjanäkymä."
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Bottom"
+msgstr "Pohja"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Left View."
+msgstr "Vasen näkymä."
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Left"
+msgstr "Vasen"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Right View."
+msgstr "Oikea näkymä."
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Right"
+msgstr "OIkea"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Front View."
+msgstr "Etunäkymä."
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Front"
+msgstr "Etu"
+
+#: editor/plugins/spatial_editor_plugin.cpp
+msgid "Rear View."
+msgstr "Takanäkymä."
+
+#: editor/plugins/spatial_editor_plugin.cpp
+#, fuzzy
+msgid "Rear"
+msgstr "Taka/perä"
+
+#: editor/plugins/spatial_editor_plugin.cpp
 msgid "Align with view"
 msgstr "Kohdista näkymään"
 
@@ -5299,6 +5324,10 @@ msgstr "Asia kunnossa :("
 #: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
 msgid "No parent to instance a child at."
 msgstr ""
+
+#: editor/plugins/spatial_editor_plugin.cpp editor/scene_tree_dock.cpp
+msgid "This operation requires a single selected node."
+msgstr "Tämä toiminto vaatii yhden valitun noden."
 
 #: editor/plugins/spatial_editor_plugin.cpp
 msgid "Display Normal"
@@ -5382,17 +5411,12 @@ msgid "Freelook Speed Modifier"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
-#, fuzzy
-msgid "preview"
-msgstr "Esikatselu"
-
-#: editor/plugins/spatial_editor_plugin.cpp
 msgid "XForm Dialog"
 msgstr ""
 
 #: editor/plugins/spatial_editor_plugin.cpp
 #, fuzzy
-msgid "Select Mode (Q)\n"
+msgid "Select Mode (Q)"
 msgstr "Valitse tila"
 
 #: editor/plugins/spatial_editor_plugin.cpp
@@ -5677,9 +5701,19 @@ msgstr "Poista Node(t)"
 msgid "Move (After)"
 msgstr "Siirry vasemmalle"
 
+#: editor/plugins/sprite_frames_editor_plugin.cpp
+#, fuzzy
+msgid "SpriteFrames"
+msgstr "Pinoa Framet"
+
 #: editor/plugins/style_box_editor_plugin.cpp
 msgid "StyleBox Preview:"
 msgstr "StyleBox:in esikatselu:"
+
+#: editor/plugins/style_box_editor_plugin.cpp
+#, fuzzy
+msgid "StyleBox"
+msgstr "Tyyli"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
 #, fuzzy
@@ -5707,14 +5741,17 @@ msgid "Auto Slice"
 msgstr "Jaa automaattisesti"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Offset:"
 msgstr "Siirtymä:"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Step:"
 msgstr "Välistys:"
 
 #: editor/plugins/texture_region_editor_plugin.cpp
+#: editor/plugins/tile_set_editor_plugin.cpp
 msgid "Separation:"
 msgstr "Erotus:"
 
@@ -5856,6 +5893,10 @@ msgstr "Fontti"
 msgid "Color"
 msgstr "Väri"
 
+#: editor/plugins/theme_editor_plugin.cpp
+msgid "Theme"
+msgstr "Teema"
+
 #: editor/plugins/tile_map_editor_plugin.cpp
 #, fuzzy
 msgid "Erase Selection"
@@ -5958,6 +5999,32 @@ msgstr ""
 #: editor/plugins/tile_set_editor_plugin.cpp editor/script_editor_debugger.cpp
 msgid "Error"
 msgstr "Virhe"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Autotiles"
+msgstr "Jaa automaattisesti"
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid ""
+"Select sub-tile to use as icon, this will be also used on invalid autotile "
+"bindings."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid ""
+"LMB: set bit on.\n"
+"RMB: set bit off."
+msgstr ""
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+#, fuzzy
+msgid "Select current edited sub-tile."
+msgstr "Tallenna tällä hetkellä muokattu resurssi."
+
+#: editor/plugins/tile_set_editor_plugin.cpp
+msgid "Select sub-tile to change its priority."
+msgstr ""
 
 #: editor/progress_dialog.cpp scene/gui/dialogs.cpp
 msgid "Cancel"
@@ -6072,12 +6139,9 @@ msgid "Please choose a 'project.godot' file."
 msgstr "Ole hyvä ja valitse 'project.godot' tiedosto."
 
 #: editor/project_manager.cpp
-msgid ""
-"Your project will be created in a non empty folder (you might want to create "
-"a new folder)."
-msgstr ""
-"Projektillesi valitsema hakemisto ei ole tyhjä (ehkä haluaisit luoda uuden "
-"hakemiston)."
+#, fuzzy
+msgid "Please choose an empty folder."
+msgstr "Ole hyvä ja valitse 'project.godot' tiedosto."
 
 #: editor/project_manager.cpp
 msgid "Please choose a folder that does not contain a 'project.godot' file."
@@ -6086,6 +6150,15 @@ msgstr "Ole hyvä ja valitse hakemisto jossa ei ole 'project.godot' tiedostoa."
 #: editor/project_manager.cpp
 msgid "Imported Project"
 msgstr "Tuotu projekti"
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Couldn't create folder."
+msgstr "Kansiota ei voitu luoda."
+
+#: editor/project_manager.cpp
+msgid "There is already a folder in this path with the specified name."
+msgstr ""
 
 #: editor/project_manager.cpp
 msgid "It would be a good idea to name your project."
@@ -6132,12 +6205,27 @@ msgid "Import Existing Project"
 msgstr "Tuo olemassaoleva projekti"
 
 #: editor/project_manager.cpp
+#, fuzzy
+msgid "Import & Edit"
+msgstr "Tuo & Avaa"
+
+#: editor/project_manager.cpp
 msgid "Create New Project"
 msgstr "Luo uusi projekti"
 
 #: editor/project_manager.cpp
+#, fuzzy
+msgid "Create & Edit"
+msgstr "Luo säteilijä/lähetin"
+
+#: editor/project_manager.cpp
 msgid "Install Project:"
 msgstr "Asenna projekti:"
+
+#: editor/project_manager.cpp
+#, fuzzy
+msgid "Install & Edit"
+msgstr "Asenna"
 
 #: editor/project_manager.cpp
 msgid "Project Name:"
@@ -6155,10 +6243,6 @@ msgstr "Projektin polku:"
 #: editor/project_manager.cpp
 msgid "Browse"
 msgstr "Selaa"
-
-#: editor/project_manager.cpp
-msgid "That's a BINGO!"
-msgstr "Sehän on BINGO!"
 
 #: editor/project_manager.cpp
 msgid "Unnamed Project"
@@ -6212,6 +6296,10 @@ msgid ""
 "You are about the scan %s folders for existing Godot projects. Do you "
 "confirm?"
 msgstr "Olet aikeissa etsiä hakemistosta %s Godot projekteja. Oletko varma?"
+
+#: editor/project_manager.cpp
+msgid "Project Manager"
+msgstr "Projektinhallinta"
 
 #: editor/project_manager.cpp
 msgid "Project List"
@@ -6344,11 +6432,6 @@ msgid "Button 9"
 msgstr "Painike 9"
 
 #: editor/project_settings_editor.cpp
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Change"
-msgstr "Muuta"
-
-#: editor/project_settings_editor.cpp
 msgid "Joypad Axis Index:"
 msgstr "Ohjaimen akselin indeksi:"
 
@@ -6430,7 +6513,7 @@ msgstr "Yhdistä Nodeen:"
 
 #: editor/project_settings_editor.cpp
 msgid "Already existing"
-msgstr ""
+msgstr "On jo olemassa"
 
 #: editor/project_settings_editor.cpp
 msgid "Add Input Action"
@@ -6492,7 +6575,7 @@ msgstr "Projektin asetukset"
 
 #: editor/project_settings_editor.cpp editor/settings_config_dialog.cpp
 msgid "General"
-msgstr ""
+msgstr "Yleinen"
 
 #: editor/project_settings_editor.cpp editor/property_editor.cpp
 msgid "Property:"
@@ -6617,7 +6700,7 @@ msgstr "Uusi skripti"
 
 #: editor/property_editor.cpp
 msgid "New %s"
-msgstr ""
+msgstr "Uusi %s"
 
 #: editor/property_editor.cpp
 #, fuzzy
@@ -6720,7 +6803,7 @@ msgstr "Pääskenen argumentit:"
 
 #: editor/run_settings_dialog.cpp
 msgid "Scene Run Settings"
-msgstr ""
+msgstr "Scenen suorittamisasetukset"
 
 #: editor/scene_tree_dock.cpp editor/script_create_dialog.cpp
 #: scene/gui/dialogs.cpp
@@ -6733,10 +6816,6 @@ msgstr ""
 
 #: editor/scene_tree_dock.cpp
 msgid "Error loading scene from %s"
-msgstr ""
-
-#: editor/scene_tree_dock.cpp
-msgid "Ok"
 msgstr ""
 
 #: editor/scene_tree_dock.cpp
@@ -6763,7 +6842,7 @@ msgstr ""
 
 #: editor/scene_tree_dock.cpp
 msgid "Duplicate Node(s)"
-msgstr ""
+msgstr "Monista node(t)"
 
 #: editor/scene_tree_dock.cpp
 msgid "Delete Node(s)?"
@@ -6825,7 +6904,7 @@ msgstr ""
 
 #: editor/scene_tree_dock.cpp
 #, fuzzy
-msgid "Sub-Resources:"
+msgid "Sub-Resources"
 msgstr "Resurssit"
 
 #: editor/scene_tree_dock.cpp
@@ -7024,7 +7103,7 @@ msgstr ""
 
 #: editor/script_create_dialog.cpp
 msgid "Directory of the same name exists"
-msgstr ""
+msgstr "Samanniminen hakemisto on jo olemassa"
 
 #: editor/script_create_dialog.cpp
 #, fuzzy
@@ -7131,13 +7210,18 @@ msgstr "Funktio:"
 msgid "Pick one or more items from the list to display the graph."
 msgstr ""
 
-#: editor/script_editor_debugger.cpp
+#: editor/script_editor_debugger.cpp modules/mono/editor/mono_bottom_panel.cpp
 msgid "Errors"
 msgstr "Virheet"
 
 #: editor/script_editor_debugger.cpp
 msgid "Child Process Connected"
 msgstr "Lapsiprosessi yhdistetty"
+
+#: editor/script_editor_debugger.cpp
+#, fuzzy
+msgid "Copy Error"
+msgstr "Lataa virheet"
 
 #: editor/script_editor_debugger.cpp
 msgid "Inspect Previous Instance"
@@ -7173,7 +7257,7 @@ msgstr ""
 
 #: editor/script_editor_debugger.cpp
 msgid "Value"
-msgstr ""
+msgstr "Arvo"
 
 #: editor/script_editor_debugger.cpp
 msgid "Monitors"
@@ -7185,7 +7269,7 @@ msgstr ""
 
 #: editor/script_editor_debugger.cpp
 msgid "Total:"
-msgstr ""
+msgstr "Yhteensä:"
 
 #: editor/script_editor_debugger.cpp
 msgid "Video Mem"
@@ -7197,7 +7281,7 @@ msgstr ""
 
 #: editor/script_editor_debugger.cpp
 msgid "Type"
-msgstr ""
+msgstr "Tyyppi"
 
 #: editor/script_editor_debugger.cpp
 msgid "Format"
@@ -7205,7 +7289,7 @@ msgstr "Muoto"
 
 #: editor/script_editor_debugger.cpp
 msgid "Usage"
-msgstr ""
+msgstr "Käyttö"
 
 #: editor/script_editor_debugger.cpp
 msgid "Misc"
@@ -7302,11 +7386,11 @@ msgstr ""
 
 #: modules/gdnative/gdnative_library_editor_plugin.cpp
 msgid "Platform:"
-msgstr ""
+msgstr "Alusta:"
 
 #: modules/gdnative/gdnative_library_editor_plugin.cpp
 msgid "Platform"
-msgstr ""
+msgstr "Alusta"
 
 #: modules/gdnative/gdnative_library_editor_plugin.cpp
 #, fuzzy
@@ -7334,7 +7418,7 @@ msgstr "Tila:"
 
 #: modules/gdnative/gdnative_library_singleton_editor.cpp
 msgid "Libraries: "
-msgstr ""
+msgstr "Kirjastot: "
 
 #: modules/gdnative/register_types.cpp
 msgid "GDNative"
@@ -7434,15 +7518,15 @@ msgstr ""
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Edit X Axis"
-msgstr ""
+msgstr "Muokkaa X-akselia"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Edit Y Axis"
-msgstr ""
+msgstr "Muokkaa Y-akselia"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
 msgid "Edit Z Axis"
-msgstr ""
+msgstr "Muokkaa Z-akselia"
 
 #: modules/gridmap/grid_map_editor_plugin.cpp
 #, fuzzy
@@ -7504,9 +7588,56 @@ msgstr "Näyttöruudun asetukset"
 msgid "Pick Distance:"
 msgstr "Poimi tile"
 
+#: modules/mono/editor/godotsharp_editor.cpp
+msgid "Generating solution..."
+msgstr ""
+
+#: modules/mono/editor/godotsharp_editor.cpp
+msgid "Generating C# project..."
+msgstr "Luodaan C# projekti..."
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Failed to create solution."
+msgstr "Ääriviivoja ei voitu luoda!"
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Failed to save solution."
+msgstr "Resurssin lataaminen epäonnistui."
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Done"
+msgstr "Valmis!"
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Failed to create C# project."
+msgstr "Resurssin lataaminen epäonnistui."
+
+#: modules/mono/editor/godotsharp_editor.cpp
+msgid "Mono"
+msgstr ""
+
+#: modules/mono/editor/godotsharp_editor.cpp
+#, fuzzy
+msgid "Create C# solution"
+msgstr "Luo ääriviivat"
+
 #: modules/mono/editor/mono_bottom_panel.cpp
 msgid "Builds"
 msgstr ""
+
+#: modules/mono/editor/mono_bottom_panel.cpp
+#, fuzzy
+msgid "Build Project"
+msgstr "Uusi projekti"
+
+#: modules/mono/editor/mono_bottom_panel.cpp
+#, fuzzy
+msgid "Warnings"
+msgstr "Varoitus"
 
 #: modules/visual_script/visual_script.cpp
 msgid ""
@@ -7865,26 +7996,33 @@ msgid "Run exported HTML in the system's default browser."
 msgstr "Suorita viety HTML järjestelmän oletusselaimessa."
 
 #: platform/javascript/export/export.cpp
-msgid "Could not write file:\n"
+#, fuzzy
+msgid "Could not write file:"
 msgstr "Ei voitu kirjoittaa tiedostoa:\n"
 
 #: platform/javascript/export/export.cpp
-msgid "Could not open template for export:\n"
-msgstr ""
+#, fuzzy
+msgid "Could not open template for export:"
+msgstr "Kansiota ei voitu luoda."
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Invalid export template:\n"
+msgid "Invalid export template:"
 msgstr "Hallitse vietäviä Templateja"
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not read custom HTML shell:\n"
+msgid "Could not read custom HTML shell:"
 msgstr "Ei voitu lukea tiedostoa:\n"
 
 #: platform/javascript/export/export.cpp
 #, fuzzy
-msgid "Could not read boot splash image file:\n"
+msgid "Could not read boot splash image file:"
+msgstr "Ei voitu lukea tiedostoa:\n"
+
+#: platform/javascript/export/export.cpp
+#, fuzzy
+msgid "Using default boot splash image."
 msgstr "Ei voitu lukea tiedostoa:\n"
 
 #: scene/2d/animated_sprite.cpp
@@ -7897,6 +8035,13 @@ msgstr ""
 msgid ""
 "Only one visible CanvasModulate is allowed per scene (or set of instanced "
 "scenes). The first created one will work, while the rest will be ignored."
+msgstr ""
+
+#: scene/2d/collision_object_2d.cpp
+msgid ""
+"This node has no children shapes, so it can't interact with the space.\n"
+"Consider adding CollisionShape2D or CollisionPolygon2D children nodes to "
+"define its shape."
 msgstr ""
 
 #: scene/2d/collision_polygon_2d.cpp
@@ -7969,7 +8114,7 @@ msgstr ""
 
 #: scene/2d/physics_body_2d.cpp
 msgid ""
-"Size changes to RigidBody2D (in character or rigid modes) will be overriden "
+"Size changes to RigidBody2D (in character or rigid modes) will be overridden "
 "by the physics engine when running.\n"
 "Change the size in children collision shapes instead."
 msgstr ""
@@ -8028,6 +8173,13 @@ msgstr ""
 msgid "Lighting Meshes: "
 msgstr ""
 
+#: scene/3d/collision_object.cpp
+msgid ""
+"This node has no children shapes, so it can't interact with the space.\n"
+"Consider adding CollisionShape or CollisionPolygon children nodes to define "
+"its shape."
+msgstr ""
+
 #: scene/3d/collision_polygon.cpp
 msgid ""
 "CollisionPolygon only serves to provide a collision shape to a "
@@ -8073,8 +8225,8 @@ msgstr ""
 
 #: scene/3d/physics_body.cpp
 msgid ""
-"Size changes to RigidBody (in character or rigid modes) will be overriden by "
-"the physics engine when running.\n"
+"Size changes to RigidBody (in character or rigid modes) will be overridden "
+"by the physics engine when running.\n"
 "Change the size in children collision shapes instead."
 msgstr ""
 
@@ -8143,13 +8295,13 @@ msgstr ""
 
 #: scene/gui/tree.cpp
 msgid "(Other)"
-msgstr ""
+msgstr "(Muu)"
 
 #: scene/main/scene_tree.cpp
 #, fuzzy
 msgid ""
-"Default Environment as specified in Project Setings (Rendering -> Viewport -"
-"> Default Environment) could not be loaded."
+"Default Environment as specified in Project Settings (Rendering -> "
+"Environment -> Default Environment) could not be loaded."
 msgstr ""
 "Projektin asetuksissa määriteltyä oletusympäristöä  (Renderöinti -> Näkymä -"
 "> Oletusympäristö) ei voitu ladata."
@@ -8181,6 +8333,41 @@ msgstr "Virhe fontin latauksessa."
 #: scene/resources/dynamic_font.cpp
 msgid "Invalid font size."
 msgstr "Virheellinen fonttikoko."
+
+#~ msgid "Next"
+#~ msgstr "Seuraava"
+
+#~ msgid "Not found!"
+#~ msgstr "Ei löytynyt!"
+
+#~ msgid "Replace By"
+#~ msgstr "Korvaa"
+
+#~ msgid "Case Sensitive"
+#~ msgstr "Merkkikokoriippuvainen"
+
+#~ msgid "Backwards"
+#~ msgstr "Taaksepäin"
+
+#~ msgid "Prompt On Replace"
+#~ msgstr "Kysy vaihdettaessa"
+
+#~ msgid "Skip"
+#~ msgstr "Ohita"
+
+#~ msgid ""
+#~ "Your project will be created in a non empty folder (you might want to "
+#~ "create a new folder)."
+#~ msgstr ""
+#~ "Projektillesi valitsema hakemisto ei ole tyhjä (ehkä haluaisit luoda "
+#~ "uuden hakemiston)."
+
+#~ msgid "That's a BINGO!"
+#~ msgstr "Sehän on BINGO!"
+
+#, fuzzy
+#~ msgid "preview"
+#~ msgstr "Esikatselu"
 
 #, fuzzy
 #~ msgid "Move Add Key"
@@ -8240,9 +8427,6 @@ msgstr "Virheellinen fonttikoko."
 
 #~ msgid "Filter:"
 #~ msgstr "Suodatin:"
-
-#~ msgid "Theme"
-#~ msgstr "Teema"
 
 #~ msgid "Arguments:"
 #~ msgstr "Argumentit:"
@@ -8410,9 +8594,6 @@ msgstr "Virheellinen fonttikoko."
 
 #~ msgid "Import Anyway"
 #~ msgstr "Tuo joka tapauksessa"
-
-#~ msgid "Import & Open"
-#~ msgstr "Tuo & Avaa"
 
 #~ msgid "Edited scene has not been saved, open imported scene anyway?"
 #~ msgstr ""
@@ -8676,9 +8857,6 @@ msgstr "Virheellinen fonttikoko."
 
 #~ msgid "Export the project to many platforms."
 #~ msgstr "Vie projekti usealle alustalle."
-
-#~ msgid "Tutorials"
-#~ msgstr "Oppaat"
 
 #, fuzzy
 #~ msgid "Open https://godotengine.org at tutorials section."

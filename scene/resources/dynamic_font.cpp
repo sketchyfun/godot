@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #ifdef FREETYPE_ENABLED
 #include "dynamic_font.h"
 #include "os/file_access.h"
@@ -34,13 +35,7 @@
 
 bool DynamicFontData::CacheID::operator<(CacheID right) const {
 
-	if (size < right.size)
-		return true;
-	if (mipmaps != right.mipmaps)
-		return right.mipmaps;
-	if (filter != right.filter)
-		return right.filter;
-	return false;
+	return key < right.key;
 }
 
 Ref<DynamicFontAtSize> DynamicFontData::_get_dynamic_font_at_size(CacheID p_cache_id) {
@@ -630,6 +625,7 @@ bool DynamicFontAtSize::update_oversampling() {
 	textures.clear();
 	char_map.clear();
 	oversampling = font_oversampling;
+	valid = false;
 	_load();
 
 	return true;
@@ -650,8 +646,9 @@ DynamicFontAtSize::~DynamicFontAtSize() {
 
 	if (valid) {
 		FT_Done_FreeType(library);
-		font->size_cache.erase(id);
 	}
+	font->size_cache.erase(id);
+	font.unref();
 }
 
 /////////////////////////
@@ -972,13 +969,25 @@ void DynamicFont::finish_dynamic_fonts() {
 
 void DynamicFont::update_oversampling() {
 
+	Vector<Ref<DynamicFont> > changed;
+
+	if (dynamic_font_mutex)
+		dynamic_font_mutex->lock();
+
 	SelfList<DynamicFont> *E = dynamic_fonts.first();
 	while (E) {
 
 		if (E->self()->data_at_size.is_valid() && E->self()->data_at_size->update_oversampling()) {
-			E->self()->emit_changed();
+			changed.push_back(Ref<DynamicFont>(E->self()));
 		}
 		E = E->next();
+	}
+
+	if (dynamic_font_mutex)
+		dynamic_font_mutex->unlock();
+
+	for (int i = 0; i < changed.size(); i++) {
+		changed[i]->emit_changed();
 	}
 }
 

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2017 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2017 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)    */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -27,6 +27,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
+
 #include "export.h"
 
 #include "editor/editor_export.h"
@@ -548,6 +549,10 @@ class EditorExportAndroid : public EditorExportPlatform {
 
 		store_in_apk(ed, dst_path, p_data, _should_compress_asset(p_path, p_data) ? Z_DEFLATED : 0);
 		ed->ep->step("File: " + p_path, 3 + p_file * 100 / p_total);
+		return OK;
+	}
+
+	static Error ignore_apk_file(void *p_userdata, const String &p_path, const Vector<uint8_t> &p_data, int p_file, int p_total) {
 		return OK;
 	}
 
@@ -1503,6 +1508,10 @@ public:
 				cl.push_back(passwd);
 			}*/
 
+			APKExportData ed;
+			ed.ep = &ep;
+			ed.apk = unaligned_apk;
+			err = export_project_files(p_preset, ignore_apk_file, &ed, save_apk_so);
 		} else {
 			//all files
 
@@ -1530,17 +1539,17 @@ public:
 
 				err = export_project_files(p_preset, save_apk_file, &ed, save_apk_so);
 			}
+		}
 
-			if (!err) {
-				APKExportData ed;
-				ed.ep = &ep;
-				ed.apk = unaligned_apk;
-				for (int i = 0; i < sizeof(launcher_icons) / sizeof(launcher_icons[0]); ++i) {
-					String icon_path = String(p_preset->get(launcher_icons[i].option_id)).strip_edges();
-					if (icon_path != "" && icon_path.ends_with(".png") && FileAccess::exists(icon_path)) {
-						Vector<uint8_t> data = FileAccess::get_file_as_array(icon_path);
-						store_in_apk(&ed, launcher_icons[i].export_path, data);
-					}
+		if (!err) {
+			APKExportData ed;
+			ed.ep = &ep;
+			ed.apk = unaligned_apk;
+			for (int i = 0; i < sizeof(launcher_icons) / sizeof(launcher_icons[0]); ++i) {
+				String icon_path = String(p_preset->get(launcher_icons[i].option_id)).strip_edges();
+				if (icon_path != "" && icon_path.ends_with(".png") && FileAccess::exists(icon_path)) {
+					Vector<uint8_t> data = FileAccess::get_file_as_array(icon_path);
+					store_in_apk(&ed, launcher_icons[i].export_path, data);
 				}
 			}
 		}
