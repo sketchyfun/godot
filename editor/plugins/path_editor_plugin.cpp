@@ -131,8 +131,12 @@ void PathSpatialGizmo::set_handle(int p_idx, Camera *p_camera, const Point2 &p_p
 		Vector3 local = gi.xform(inters) - base;
 		if (t == 0) {
 			c->set_point_in(idx, local);
+			if(PathEditorPlugin::singleton->mirror_handles->is_pressed())
+				c->set_point_out(idx, -local);
 		} else {
 			c->set_point_out(idx, local);
+			if(PathEditorPlugin::singleton->mirror_handles->is_pressed())
+				c->set_point_in(idx, -local);
 		}
 	}
 }
@@ -164,8 +168,6 @@ void PathSpatialGizmo::commit_handle(int p_idx, const Variant &p_restore, bool p
 
 	int idx = p_idx / 2;
 	int t = p_idx % 2;
-
-	Vector3 ofs;
 
 	if (t == 0) {
 		if (p_cancel) {
@@ -459,6 +461,7 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->show();
 		curve_del->show();
 		curve_close->show();
+		mirror_handles->show();
 		sep->show();
 	} else {
 
@@ -466,6 +469,7 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->hide();
 		curve_del->hide();
 		curve_close->hide();
+		mirror_handles->hide();
 		sep->hide();
 
 		{
@@ -566,7 +570,14 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	curve_close->set_focus_mode(Control::FOCUS_NONE);
 	curve_close->set_tooltip(TTR("Close Curve"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(curve_close);
-
+	mirror_handles = memnew(CheckBox);
+	mirror_handles->set_toggle_mode(true);
+	mirror_handles->set_pressed(true);
+	mirror_handles->set_text("Mirror Handles");
+	mirror_handles->hide();
+	mirror_handles->set_focus_mode(Control::FOCUS_NONE);
+	mirror_handles->set_tooltip(TTR("Mirror Curve Handles"));
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handles);
 	curve_edit->set_pressed(true);
 	/*
 	collision_polygon_editor = memnew( PathEditor(p_node) );
