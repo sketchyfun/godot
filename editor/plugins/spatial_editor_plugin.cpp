@@ -552,8 +552,8 @@ void SpatialEditorViewport::_select_region() {
 		while (root_sp && root_sp != edited_scene && root_sp->get_owner() != edited_scene && !edited_scene->is_editable_instance(root_sp->get_owner())) {
 			root_sp = Object::cast_to<Spatial>(root_sp->get_owner());
 		}
-
-		_select(root_sp, true, false);
+		if(root_sp->is_visible())
+			_select(root_sp, true, false);
 	}
 }
 
