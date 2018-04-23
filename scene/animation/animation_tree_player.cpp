@@ -895,13 +895,12 @@ void AnimationTreePlayer::_process_animation(float p_delta) {
 		}
 
 		Transform xform;
-		xform.basis = t.rot;
 		xform.origin = t.loc;
 
 		t.scale.x += 1.0;
 		t.scale.y += 1.0;
 		t.scale.z += 1.0;
-		xform.basis.scale(t.scale);
+		xform.basis.set_quat_scale(t.rot, t.scale);
 
 		if (t.bone_idx >= 0) {
 			if (t.skeleton)

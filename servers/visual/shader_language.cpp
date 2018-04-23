@@ -1492,11 +1492,6 @@ const ShaderLanguage::BuiltinFuncDef ShaderLanguage::builtin_func_defs[] = {
 	{ "abs", TYPE_IVEC3, { TYPE_IVEC3, TYPE_VOID } },
 	{ "abs", TYPE_IVEC4, { TYPE_IVEC4, TYPE_VOID } },
 
-	{ "abs", TYPE_UINT, { TYPE_UINT, TYPE_VOID } },
-	{ "abs", TYPE_UVEC2, { TYPE_UVEC2, TYPE_VOID } },
-	{ "abs", TYPE_UVEC3, { TYPE_UVEC3, TYPE_VOID } },
-	{ "abs", TYPE_UVEC4, { TYPE_UVEC4, TYPE_VOID } },
-
 	{ "sign", TYPE_FLOAT, { TYPE_FLOAT, TYPE_VOID } },
 	{ "sign", TYPE_VEC2, { TYPE_VEC2, TYPE_VOID } },
 	{ "sign", TYPE_VEC3, { TYPE_VEC3, TYPE_VOID } },
@@ -2971,7 +2966,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 				expr_pos++;
 				if (expr_pos == expression.size()) {
 					//can happen..
-					_set_error("Unexpected end of expression..");
+					_set_error("Unexpected end of expression...");
 					return NULL;
 				}
 			}
@@ -3008,12 +3003,12 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 		} else if (is_ternary) {
 
 			if (next_op < 1 || next_op >= (expression.size() - 1)) {
-				_set_error("Parser bug..");
+				_set_error("Parser bug...");
 				ERR_FAIL_V(NULL);
 			}
 
 			if (next_op + 2 >= expression.size() || !expression[next_op + 2].is_op || expression[next_op + 2].op != OP_SELECT_ELSE) {
-				_set_error("Mising matching ':' for select operator");
+				_set_error("Missing matching ':' for select operator");
 				return NULL;
 			}
 
@@ -3044,7 +3039,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 		} else {
 
 			if (next_op < 1 || next_op >= (expression.size() - 1)) {
-				_set_error("Parser bug..");
+				_set_error("Parser bug...");
 				ERR_FAIL_V(NULL);
 			}
 
@@ -3053,7 +3048,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 
 			if (expression[next_op - 1].is_op) {
 
-				_set_error("Parser bug..");
+				_set_error("Parser bug...");
 				ERR_FAIL_V(NULL);
 			}
 
@@ -3069,7 +3064,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 				// can be followed by a unary op in a valid combination,
 				// due to how precedence works, unaries will always disappear first
 
-				_set_error("Parser bug..");
+				_set_error("Parser bug...");
 			}
 
 			op->arguments.push_back(expression[next_op - 1].node); //expression goes as left
@@ -3218,7 +3213,7 @@ Error ShaderLanguage::_parse_block(BlockNode *p_block, const Map<StringName, Bui
 				precision = get_token_precision(tk.type);
 				tk = _get_token();
 				if (!is_token_nonvoid_datatype(tk.type)) {
-					_set_error("Expected datatype after precission");
+					_set_error("Expected datatype after precision");
 					return ERR_PARSE_ERROR;
 				}
 			}
@@ -3516,7 +3511,7 @@ Error ShaderLanguage::_parse_block(BlockNode *p_block, const Map<StringName, Bui
 
 			if (!p_can_break) {
 				//all is good
-				_set_error("Contiuning is not allowed here");
+				_set_error("Continuing is not allowed here");
 			}
 
 			ControlFlowNode *flow = alloc_node<ControlFlowNode>();
