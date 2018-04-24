@@ -362,7 +362,7 @@ BaseButton::DrawMode BaseButton::get_draw_mode() const {
 	};
 
 	//print_line("press attempt: "+itos(status.press_attempt)+" hover: "+itos(status.hovering)+" pressed: "+itos(status.pressed));
-	if (status.press_attempt == false && status.hovering && !status.pressed) {
+	if (status.press_attempt == false && status.hovering) {
 
 		return DRAW_HOVER;
 	} else {
