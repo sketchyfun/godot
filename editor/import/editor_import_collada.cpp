@@ -138,7 +138,7 @@ Error ColladaImport::_populate_skeleton(Skeleton *p_skeleton, Collada::Node *p_n
 		//should map this bone to something for animation?
 	} else {
 		print_line("no rest: " + joint->sid);
-		WARN_PRINT("Joint has no rest..");
+		WARN_PRINT("Joint has no rest...");
 	}
 
 	int id = r_bone++;
@@ -480,7 +480,7 @@ Error ColladaImport::_create_material(const String &p_target) {
 		}
 	}
 
-	float roughness = Math::sqrt(1.0 - ((Math::log(effect.shininess) / Math::log(2.0)) / 8.0)); //not very right..
+	float roughness = (effect.shininess - 1.0) / 510;
 	material->set_roughness(roughness);
 
 	if (effect.double_sided) {

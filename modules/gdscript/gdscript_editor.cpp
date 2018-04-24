@@ -1333,13 +1333,23 @@ static void _find_identifiers_in_block(GDScriptCompletionContext &context, int p
 
 	for (int i = 0; i < context.block->statements.size(); i++) {
 
-		if (context.block->statements[i]->line > p_line)
+		GDScriptParser::Node *statement = context.block->statements[i];
+		if (statement->line > p_line)
 			continue;
 
-		if (context.block->statements[i]->type == GDScriptParser::BlockNode::TYPE_LOCAL_VAR) {
+		GDScriptParser::BlockNode::Type statementType = statement->type;
+		if (statementType == GDScriptParser::BlockNode::TYPE_LOCAL_VAR) {
 
-			const GDScriptParser::LocalVarNode *lv = static_cast<const GDScriptParser::LocalVarNode *>(context.block->statements[i]);
+			const GDScriptParser::LocalVarNode *lv = static_cast<const GDScriptParser::LocalVarNode *>(statement);
 			result.insert(lv->name.operator String());
+		} else if (statementType == GDScriptParser::BlockNode::TYPE_CONTROL_FLOW) {
+
+			const GDScriptParser::ControlFlowNode *cf = static_cast<const GDScriptParser::ControlFlowNode *>(statement);
+			if (cf->cf_type == GDScriptParser::ControlFlowNode::CF_FOR) {
+
+				const GDScriptParser::IdentifierNode *id = static_cast<const GDScriptParser::IdentifierNode *>(cf->arguments[0]);
+				result.insert(id->name.operator String());
+			}
 		}
 	}
 }
@@ -2850,7 +2860,24 @@ Error GDScriptLanguage::lookup_code(const String &p_code, const String &p_symbol
 							return OK;
 						}
 					} else {
-						r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_CONSTANT;
+						/*
+						// Because get_integer_constant_enum and get_integer_constant dont work on @GlobalScope
+						// We cannot determine the exact nature of the identifier here
+						// Otherwise these codes would work
+						StringName enumName = ClassDB::get_integer_constant_enum("@GlobalScope", p_symbol, true);
+						if (enumName != NULL) {
+							r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_ENUM;
+							r_result.class_name = "@GlobalScope";
+							r_result.class_member = enumName;
+							return OK;
+						}
+						else {
+							r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_CONSTANT;
+							r_result.class_name = "@GlobalScope";
+							r_result.class_member = p_symbol;
+							return OK;
+						}*/
+						r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_TBD_GLOBALSCOPE;
 						r_result.class_name = "@GlobalScope";
 						r_result.class_member = p_symbol;
 						return OK;
@@ -2910,6 +2937,14 @@ Error GDScriptLanguage::lookup_code(const String &p_code, const String &p_symbol
 						r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_METHOD;
 						r_result.class_name = t.obj_type;
 						r_result.class_member = p_symbol;
+						return OK;
+					}
+
+					StringName enumName = ClassDB::get_integer_constant_enum(t.obj_type, p_symbol, true);
+					if (enumName != StringName()) {
+						r_result.type = ScriptLanguage::LookupResult::RESULT_CLASS_ENUM;
+						r_result.class_name = t.obj_type;
+						r_result.class_member = enumName;
 						return OK;
 					}
 

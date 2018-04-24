@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  power_javascript.cpp                                                 */
+/*  gdscript_highlighter.h                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,46 +28,29 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "power_javascript.h"
-#include "error_macros.h"
+#ifndef GDSCRIPT_HIGHLIGHTER_H
+#define GDSCRIPT_HIGHLIGHTER_H
 
-bool PowerJavascript::UpdatePowerInfo() {
-	// TODO Javascript implementation
-	return false;
-}
+#include "scene/gui/text_edit.h"
 
-OS::PowerState PowerJavascript::get_power_state() {
-	if (UpdatePowerInfo()) {
-		return power_state;
-	} else {
-		WARN_PRINT("Power management is not implemented on this platform, defaulting to POWERSTATE_UNKNOWN");
-		return OS::POWERSTATE_UNKNOWN;
-	}
-}
+class GDScriptSyntaxHighlighter : public SyntaxHighlighter {
+private:
+	// colours
+	Color font_color;
+	Color symbol_color;
+	Color function_color;
+	Color built_in_type_color;
+	Color number_color;
+	Color member_color;
 
-int PowerJavascript::get_power_seconds_left() {
-	if (UpdatePowerInfo()) {
-		return nsecs_left;
-	} else {
-		WARN_PRINT("Power management is not implemented on this platform, defaulting to -1");
-		return -1;
-	}
-}
+public:
+	static SyntaxHighlighter *create();
 
-int PowerJavascript::get_power_percent_left() {
-	if (UpdatePowerInfo()) {
-		return percent_left;
-	} else {
-		WARN_PRINT("Power management is not implemented on this platform, defaulting to -1");
-		return -1;
-	}
-}
+	virtual void _update_cache();
+	virtual Map<int, TextEdit::HighlighterInfo> _get_line_syntax_highlighting(int p_line);
 
-PowerJavascript::PowerJavascript() :
-		nsecs_left(-1),
-		percent_left(-1),
-		power_state(OS::POWERSTATE_UNKNOWN) {
-}
+	virtual String get_name();
+	virtual List<String> get_supported_languages();
+};
 
-PowerJavascript::~PowerJavascript() {
-}
+#endif // GDSCRIPT_HIGHLIGHTER_H
