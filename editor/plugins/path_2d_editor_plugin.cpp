@@ -205,6 +205,10 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					undo_redo->create_action(TTR("Move In-Control in Curve"));
 					undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, new_pos);
 					undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, moving_from);
+					if (mirror_handles->is_pressed()){
+						undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, -new_pos);
+						undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, -moving_from);
+					}
 					undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->commit_action();
@@ -216,6 +220,10 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					undo_redo->create_action(TTR("Move Out-Control in Curve"));
 					undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, new_pos);
 					undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, moving_from);
+					if (mirror_handles->is_pressed()){
+						undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, -new_pos);
+						undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, -moving_from);
+					}
 					undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->commit_action();
@@ -255,10 +263,14 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 
 				case ACTION_MOVING_IN: {
 					curve->set_point_in(action_point, new_pos);
+					if (mirror_handles->is_pressed())
+						curve->set_point_out(action_point, -new_pos);
 				} break;
 
 				case ACTION_MOVING_OUT: {
 					curve->set_point_out(action_point, new_pos);
+					if (mirror_handles->is_pressed())
+						curve->set_point_in(action_point, -new_pos);
 				} break;
 			}
 
@@ -444,6 +456,13 @@ Path2DEditor::Path2DEditor(EditorNode *p_editor) {
 	curve_close->set_tooltip(TTR("Close Curve"));
 	curve_close->connect("pressed", this, "_mode_selected", varray(ACTION_CLOSE));
 	base_hb->add_child(curve_close);
+	mirror_handles = memnew(CheckBox);
+	mirror_handles->set_toggle_mode(true);
+	mirror_handles->set_pressed(true);
+	mirror_handles->set_text("Mirror Handles");
+	mirror_handles->set_focus_mode(Control::FOCUS_NONE);
+	mirror_handles->set_tooltip(TTR("Mirror Curve Tangent Handles"));
+	base_hb->add_child(mirror_handles);
 	base_hb->hide();
 
 	curve_edit->set_pressed(true);

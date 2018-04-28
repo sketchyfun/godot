@@ -69,6 +69,7 @@ class Path2DEditor : public HBoxContainer {
 	ToolButton *curve_edit_curve;
 	ToolButton *curve_del;
 	ToolButton *curve_close;
+	CheckBox *mirror_handles;
 
 	enum Action {
 
