@@ -610,23 +610,7 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	mirror_handle_length->set_toggle_mode(true);
 	mirror_handle_length->set_pressed(true);
 	mirror_handle_length->set_text("Mirror Handle Lengths");
-	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_length);
-
-	mirror_handle_angle = memnew(CheckBox);
-	mirror_handle_angle->set_toggle_mode(true);
-	mirror_handle_angle->set_pressed(true);
-	mirror_handle_angle->set_text("Mirror Handle Angles");
-	mirror_handle_angle->hide();
-	mirror_handle_angle->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handle_angle->set_tooltip(TTR("Mirror Angle of Curve Tangent Handles"));
-	mirror_handle_angle->connect("pressed", this, "_mirror_angle_clicked");
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_angle);
-	mirror_handle_length = memnew(CheckBox);
-	mirror_handle_length->set_toggle_mode(true);
-	mirror_handle_length->set_pressed(true);
-	mirror_handle_length->set_text("Mirror Handle Lengths");
+	mirror_handle_length->hide();
 	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
 	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_length);

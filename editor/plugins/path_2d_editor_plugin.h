@@ -71,11 +71,16 @@ class Path2DEditor : public HBoxContainer {
 	ToolButton *curve_close;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	CheckBox   *mirror_handles;
 =======
 	CheckBox *mirror_handle_angle;
 	CheckBox *mirror_handle_length;
 >>>>>>> Added option to keep length of handles and only change the angle
+=======
+	CheckBox *mirror_handle_angle;
+	CheckBox *mirror_handle_length;
+>>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 =======
 	CheckBox *mirror_handle_angle;
 	CheckBox *mirror_handle_length;
