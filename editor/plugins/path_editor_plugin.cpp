@@ -610,6 +610,7 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	mirror_handle_length->set_toggle_mode(true);
 	mirror_handle_length->set_pressed(true);
 	mirror_handle_length->set_text("Mirror Handle Lengths");
+	mirror_handle_length->hide();
 	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
 	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_length);
