@@ -99,6 +99,11 @@ public:
 	bool is_handle_clicked() { return handle_clicked; }
 	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
 
+	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
+	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
+	bool is_handle_clicked() { return handle_clicked; }
+	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
+
 	PathEditorPlugin(EditorNode *p_node);
 	~PathEditorPlugin();
 };
