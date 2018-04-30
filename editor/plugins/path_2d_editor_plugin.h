@@ -69,7 +69,8 @@ class Path2DEditor : public HBoxContainer {
 	ToolButton *curve_edit_curve;
 	ToolButton *curve_del;
 	ToolButton *curve_close;
-	CheckBox   *mirror_handles;
+	CheckBox *mirror_handle_angle;
+	CheckBox *mirror_handle_length;
 
 	enum Action {
 
@@ -83,8 +84,11 @@ class Path2DEditor : public HBoxContainer {
 	int action_point;
 	Point2 moving_from;
 	Point2 moving_screen_from;
+	float orig_in_length;
+	float orig_out_length;
 
 	void _mode_selected(int p_mode);
+	void _mirror_angle_clicked();
 
 	void _node_visibility_changed();
 	friend class Path2DEditorPlugin;
