@@ -479,6 +479,7 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_del->show();
 		curve_close->show();
 		mirror_handle_angle->show();
+		mirror_handle_length->show();
 		sep->show();
 	} else {
 
@@ -487,6 +488,7 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_del->hide();
 		curve_close->hide();
 		mirror_handle_angle->hide();
+		mirror_handle_length->show();
 		sep->hide();
 
 		{
