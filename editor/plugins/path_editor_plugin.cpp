@@ -131,11 +131,11 @@ void PathSpatialGizmo::set_handle(int p_idx, Camera *p_camera, const Point2 &p_p
 		Vector3 local = gi.xform(inters) - base;
 		if (t == 0) {
 			c->set_point_in(idx, local);
-			if(PathEditorPlugin::singleton->mirror_handles->is_pressed())
+			if (PathEditorPlugin::singleton->handle_mirror_enabled())
 				c->set_point_out(idx, -local);
 		} else {
 			c->set_point_out(idx, local);
-			if(PathEditorPlugin::singleton->mirror_handles->is_pressed())
+			if (PathEditorPlugin::singleton->handle_mirror_enabled())
 				c->set_point_in(idx, -local);
 		}
 	}
@@ -179,6 +179,11 @@ void PathSpatialGizmo::commit_handle(int p_idx, const Variant &p_restore, bool p
 		ur->create_action(TTR("Set Curve In Position"));
 		ur->add_do_method(c.ptr(), "set_point_in", idx, c->get_point_in(idx));
 		ur->add_undo_method(c.ptr(), "set_point_in", idx, p_restore);
+		if(PathEditorPlugin::singleton->handle_mirror_enabled())
+		{
+			ur->add_do_method(c.ptr(), "set_point_out", idx, -c->get_point_in(idx));
+			ur->add_undo_method(c.ptr(), "set_point_out", idx, -static_cast<Vector3>(p_restore));
+		}
 		ur->commit_action();
 
 	} else {
@@ -190,6 +195,11 @@ void PathSpatialGizmo::commit_handle(int p_idx, const Variant &p_restore, bool p
 		ur->create_action(TTR("Set Curve Out Position"));
 		ur->add_do_method(c.ptr(), "set_point_out", idx, c->get_point_out(idx));
 		ur->add_undo_method(c.ptr(), "set_point_out", idx, p_restore);
+		if(PathEditorPlugin::singleton->handle_mirror_enabled())
+		{
+			ur->add_do_method(c.ptr(), "set_point_in", idx, -c->get_point_out(idx));
+			ur->add_undo_method(c.ptr(), "set_point_in", idx, -static_cast<Vector3>(p_restore));
+		}
 		ur->commit_action();
 	}
 }
@@ -576,8 +586,9 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	mirror_handles->set_text("Mirror Handles");
 	mirror_handles->hide();
 	mirror_handles->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handles->set_tooltip(TTR("Mirror Curve Handles"));
+	mirror_handles->set_tooltip(TTR("Mirror Curve Tangent Handles"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handles);
+
 	curve_edit->set_pressed(true);
 	/*
 	collision_polygon_editor = memnew( PathEditor(p_node) );

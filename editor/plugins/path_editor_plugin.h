@@ -60,6 +60,7 @@ class PathEditorPlugin : public EditorPlugin {
 	ToolButton *curve_edit;
 	ToolButton *curve_del;
 	ToolButton *curve_close;
+	CheckBox   *mirror_handles;
 
 	EditorNode *editor;
 
@@ -88,6 +89,7 @@ public:
 	virtual void edit(Object *p_object);
 	virtual bool handles(Object *p_object) const;
 	virtual void make_visible(bool p_visible);
+	bool handle_mirror_enabled() { return mirror_handles->is_pressed(); }
 
 	PathEditorPlugin(EditorNode *p_node);
 	~PathEditorPlugin();
