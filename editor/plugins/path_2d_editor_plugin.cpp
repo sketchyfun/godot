@@ -207,29 +207,10 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					undo_redo->create_action(TTR("Move In-Control in Curve"));
 					undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, new_pos);
 					undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, moving_from);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-					if (mirror_handles->is_pressed())
-					{
-						undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, -new_pos);
-						undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, -moving_from);
-=======
-					if (mirror_handle_angle->is_pressed()) {
-						undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_out_length));
-						undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length->is_pressed() ? -moving_from : (-moving_from.normalized() * orig_out_length));
->>>>>>> Added option to keep length of handles and only change the angle
-=======
-=======
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 
 					if (mirror_handle_angle->is_pressed()) {
 						undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_out_length));
 						undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length->is_pressed() ? -moving_from : (-moving_from.normalized() * orig_out_length));
-<<<<<<< HEAD
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
-=======
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 					}
 					undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
@@ -242,29 +223,10 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					undo_redo->create_action(TTR("Move Out-Control in Curve"));
 					undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, new_pos);
 					undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, moving_from);
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-					if (mirror_handles->is_pressed())
-					{
-						undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, -new_pos);
-						undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, -moving_from);
-=======
-					if (mirror_handle_angle->is_pressed()) {
-						undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_in_length));
-						undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length->is_pressed() ? -moving_from : (-moving_from.normalized() * orig_in_length));
->>>>>>> Added option to keep length of handles and only change the angle
-=======
-=======
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 
 					if (mirror_handle_angle->is_pressed()) {
 						undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_in_length));
 						undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length->is_pressed() ? -moving_from : (-moving_from.normalized() * orig_in_length));
-<<<<<<< HEAD
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
-=======
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 					}
 					undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
@@ -305,28 +267,14 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 
 				case ACTION_MOVING_IN: {
 					curve->set_point_in(action_point, new_pos);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
-=======
-
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 					if (mirror_handle_angle->is_pressed())
 						curve->set_point_out(action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_out_length));
 				} break;
 
 				case ACTION_MOVING_OUT: {
 					curve->set_point_out(action_point, new_pos);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
-=======
-
->>>>>>> Added option to 2D and 3D curve editor so that the curve tangent handles can be mirrored with or without length preservation
 					if (mirror_handle_angle->is_pressed())
 						curve->set_point_in(action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_in_length));
 				} break;
