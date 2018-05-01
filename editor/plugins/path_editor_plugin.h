@@ -1,4 +1,4 @@
-﻿/*************************************************************************/
+/*************************************************************************/
 /*  path_editor_plugin.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
@@ -40,8 +40,6 @@ class PathSpatialGizmo : public EditorSpatialGizmo {
 
 	Path *path;
 	mutable Vector3 original;
-	mutable float orig_in_length;
-	mutable float orig_out_length;
 
 public:
 	virtual String get_handle_name(int p_idx) const;
@@ -62,8 +60,6 @@ class PathEditorPlugin : public EditorPlugin {
 	ToolButton *curve_edit;
 	ToolButton *curve_del;
 	ToolButton *curve_close;
-	CheckBox *mirror_handle_angle;
-	CheckBox *mirror_handle_length;
 
 	EditorNode *editor;
 
@@ -71,8 +67,6 @@ class PathEditorPlugin : public EditorPlugin {
 
 	void _mode_changed(int p_idx);
 	void _close_curve();
-	void _mirror_angle_clicked();
-	bool handle_clicked;
 
 protected:
 	void _notification(int p_what);
@@ -84,7 +78,6 @@ public:
 	static PathEditorPlugin *singleton;
 	Ref<SpatialMaterial> path_material;
 	Ref<SpatialMaterial> path_thin_material;
-	CheckBox *mirror_handles;
 	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event);
 
 	//virtual bool forward_gui_input(const InputEvent& p_event) { return collision_polygon_editor->forward_gui_input(p_event); }
@@ -94,11 +87,6 @@ public:
 	virtual void edit(Object *p_object);
 	virtual bool handles(Object *p_object) const;
 	virtual void make_visible(bool p_visible);
-	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
-	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
-	bool is_handle_clicked() { return handle_clicked; }
-	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
-
 	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
 	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
 	bool is_handle_clicked() { return handle_clicked; }
