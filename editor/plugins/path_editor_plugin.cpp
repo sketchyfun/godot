@@ -128,11 +128,22 @@ void PathSpatialGizmo::set_handle(int p_idx, Camera *p_camera, const Point2 &p_p
 
 	if (p.intersects_ray(ray_from, ray_dir, &inters)) {
 
+		if (!PathEditorPlugin::singleton->is_handle_clicked()) {
+			orig_in_length = c->get_point_in(idx).length();
+			orig_out_length = c->get_point_out(idx).length();
+			PathEditorPlugin::singleton->set_handle_clicked(true);
+		}
+
 		Vector3 local = gi.xform(inters) - base;
 		if (t == 0) {
 			c->set_point_in(idx, local);
+
+			if (PathEditorPlugin::singleton->mirror_angle_enabled())
+				c->set_point_out(idx, PathEditorPlugin::singleton->mirror_length_enabled() ? -local : (-local.normalized() * orig_out_length));
 		} else {
 			c->set_point_out(idx, local);
+			if (PathEditorPlugin::singleton->mirror_angle_enabled())
+				c->set_point_in(idx, PathEditorPlugin::singleton->mirror_length_enabled() ? -local : (-local.normalized() * orig_in_length));
 		}
 	}
 }
@@ -165,8 +176,6 @@ void PathSpatialGizmo::commit_handle(int p_idx, const Variant &p_restore, bool p
 	int idx = p_idx / 2;
 	int t = p_idx % 2;
 
-	Vector3 ofs;
-
 	if (t == 0) {
 		if (p_cancel) {
 			c->set_point_in(p_idx, p_restore);
@@ -176,6 +185,11 @@ void PathSpatialGizmo::commit_handle(int p_idx, const Variant &p_restore, bool p
 		ur->create_action(TTR("Set Curve In Position"));
 		ur->add_do_method(c.ptr(), "set_point_in", idx, c->get_point_in(idx));
 		ur->add_undo_method(c.ptr(), "set_point_in", idx, p_restore);
+
+		if (PathEditorPlugin::singleton->mirror_angle_enabled()) {
+			ur->add_do_method(c.ptr(), "set_point_out", idx, PathEditorPlugin::singleton->mirror_length_enabled() ? -c->get_point_in(idx) : (-c->get_point_in(idx).normalized() * orig_out_length));
+			ur->add_undo_method(c.ptr(), "set_point_out", idx, PathEditorPlugin::singleton->mirror_length_enabled() ? -static_cast<Vector3>(p_restore) : (-static_cast<Vector3>(p_restore).normalized() * orig_out_length));
+		}
 		ur->commit_action();
 
 	} else {
@@ -188,6 +202,11 @@ void PathSpatialGizmo::commit_handle(int p_idx, const Variant &p_restore, bool p
 		ur->create_action(TTR("Set Curve Out Position"));
 		ur->add_do_method(c.ptr(), "set_point_out", idx, c->get_point_out(idx));
 		ur->add_undo_method(c.ptr(), "set_point_out", idx, p_restore);
+
+		if (PathEditorPlugin::singleton->mirror_angle_enabled()) {
+			ur->add_do_method(c.ptr(), "set_point_in", idx, PathEditorPlugin::singleton->mirror_length_enabled() ? -c->get_point_out(idx) : (-c->get_point_out(idx).normalized() * orig_in_length));
+			ur->add_undo_method(c.ptr(), "set_point_in", idx, PathEditorPlugin::singleton->mirror_length_enabled() ? -static_cast<Vector3>(p_restore) : (-static_cast<Vector3>(p_restore).normalized() * orig_in_length));
+		}
 		ur->commit_action();
 	}
 }
@@ -290,6 +309,9 @@ bool PathEditorPlugin::forward_spatial_gui_input(Camera *p_camera, const Ref<Inp
 	if (mb.is_valid()) {
 
 		Point2 mbpos(mb->get_position().x, mb->get_position().y);
+
+		if (!mb->is_pressed())
+			set_handle_clicked(false);
 
 		if (mb->is_pressed() && mb->get_button_index() == BUTTON_LEFT && (curve_create->is_pressed() || (curve_edit->is_pressed() && mb->get_control()))) {
 			//click into curve, break it down
@@ -459,6 +481,8 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->show();
 		curve_del->show();
 		curve_close->show();
+		mirror_handle_angle->show();
+		mirror_handle_length->show();
 		sep->show();
 	} else {
 
@@ -466,6 +490,8 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->hide();
 		curve_del->hide();
 		curve_close->hide();
+		mirror_handle_angle->hide();
+		mirror_handle_length->hide();
 		sep->hide();
 
 		{
@@ -495,6 +521,10 @@ void PathEditorPlugin::_close_curve() {
 	c->add_point(c->get_point_position(0), c->get_point_in(0), c->get_point_out(0));
 }
 
+void PathEditorPlugin::_mirror_angle_clicked() {
+	mirror_handle_length->set_disabled(!mirror_handle_angle->is_pressed());
+}
+
 void PathEditorPlugin::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_ENTER_TREE) {
@@ -510,6 +540,7 @@ void PathEditorPlugin::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_mode_changed"), &PathEditorPlugin::_mode_changed);
 	ClassDB::bind_method(D_METHOD("_close_curve"), &PathEditorPlugin::_close_curve);
+	ClassDB::bind_method(D_METHOD("_mirror_angle_clicked"), &PathEditorPlugin::_mirror_angle_clicked);
 }
 
 PathEditorPlugin *PathEditorPlugin::singleton = NULL;
@@ -566,6 +597,23 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	curve_close->set_focus_mode(Control::FOCUS_NONE);
 	curve_close->set_tooltip(TTR("Close Curve"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(curve_close);
+	mirror_handle_angle = memnew(CheckBox);
+	mirror_handle_angle->set_toggle_mode(true);
+	mirror_handle_angle->set_pressed(true);
+	mirror_handle_angle->set_text("Mirror Handle Angles");
+	mirror_handle_angle->hide();
+	mirror_handle_angle->set_focus_mode(Control::FOCUS_NONE);
+	mirror_handle_angle->set_tooltip(TTR("Mirror Angle of Curve Tangent Handles"));
+	mirror_handle_angle->connect("pressed", this, "_mirror_angle_clicked");
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_angle);
+	mirror_handle_length = memnew(CheckBox);
+	mirror_handle_length->set_toggle_mode(true);
+	mirror_handle_length->set_pressed(true);
+	mirror_handle_length->set_text("Mirror Handle Lengths");
+	mirror_handle_length->hide();
+	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
+	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_length);
 
 	curve_edit->set_pressed(true);
 	/*
