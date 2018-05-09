@@ -433,7 +433,6 @@ void Path2DEditor::_handle_option_pressed(int p_option) {
 			pm->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
 		} break;
 	}
->>>>>>> new_mirror_path_handles
 }
 
 Path2DEditor::Path2DEditor(EditorNode *p_editor) {

@@ -481,12 +481,7 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->show();
 		curve_del->show();
 		curve_close->show();
-<<<<<<< HEAD
-		mirror_handle_angle->show();
-		mirror_handle_length->show();
-=======
 		handle_menu->show();
->>>>>>> new_mirror_path_handles
 		sep->show();
 	} else {
 
@@ -494,12 +489,7 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->hide();
 		curve_del->hide();
 		curve_close->hide();
-<<<<<<< HEAD
-		mirror_handle_angle->hide();
-		mirror_handle_length->hide();
-=======
 		handle_menu->hide();
->>>>>>> new_mirror_path_handles
 		sep->hide();
 
 		{
@@ -529,10 +519,6 @@ void PathEditorPlugin::_close_curve() {
 	c->add_point(c->get_point_position(0), c->get_point_in(0), c->get_point_out(0));
 }
 
-<<<<<<< HEAD
-void PathEditorPlugin::_mirror_angle_clicked() {
-	mirror_handle_length->set_disabled(!mirror_handle_angle->is_pressed());
-=======
 void PathEditorPlugin::_handle_option_pressed(int p_option) {
 
 	PopupMenu *pm;
@@ -551,7 +537,6 @@ void PathEditorPlugin::_handle_option_pressed(int p_option) {
 			pm->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
 		} break;
 	}
->>>>>>> new_mirror_path_handles
 }
 
 void PathEditorPlugin::_notification(int p_what) {
@@ -569,11 +554,7 @@ void PathEditorPlugin::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_mode_changed"), &PathEditorPlugin::_mode_changed);
 	ClassDB::bind_method(D_METHOD("_close_curve"), &PathEditorPlugin::_close_curve);
-<<<<<<< HEAD
-	ClassDB::bind_method(D_METHOD("_mirror_angle_clicked"), &PathEditorPlugin::_mirror_angle_clicked);
-=======
 	ClassDB::bind_method(D_METHOD("_handle_option_pressed"), &PathEditorPlugin::_handle_option_pressed);
->>>>>>> new_mirror_path_handles
 }
 
 PathEditorPlugin *PathEditorPlugin::singleton = NULL;
@@ -632,23 +613,6 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	curve_close->set_focus_mode(Control::FOCUS_NONE);
 	curve_close->set_tooltip(TTR("Close Curve"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(curve_close);
-	mirror_handle_angle = memnew(CheckBox);
-	mirror_handle_angle->set_toggle_mode(true);
-	mirror_handle_angle->set_pressed(true);
-	mirror_handle_angle->set_text("Mirror Handle Angles");
-	mirror_handle_angle->hide();
-	mirror_handle_angle->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handle_angle->set_tooltip(TTR("Mirror Angle of Curve Tangent Handles"));
-	mirror_handle_angle->connect("pressed", this, "_mirror_angle_clicked");
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_angle);
-	mirror_handle_length = memnew(CheckBox);
-	mirror_handle_length->set_toggle_mode(true);
-	mirror_handle_length->set_pressed(true);
-	mirror_handle_length->set_text("Mirror Handle Lengths");
-	mirror_handle_length->hide();
-	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_length);
 
 	PopupMenu *menu;
 

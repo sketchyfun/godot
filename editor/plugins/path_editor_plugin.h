@@ -62,12 +62,7 @@ class PathEditorPlugin : public EditorPlugin {
 	ToolButton *curve_edit;
 	ToolButton *curve_del;
 	ToolButton *curve_close;
-<<<<<<< HEAD
-	CheckBox *mirror_handle_angle;
-	CheckBox *mirror_handle_length;
-=======
 	MenuButton *handle_menu;
->>>>>>> new_mirror_path_handles
 
 	EditorNode *editor;
 
@@ -75,10 +70,6 @@ class PathEditorPlugin : public EditorPlugin {
 
 	void _mode_changed(int p_idx);
 	void _close_curve();
-<<<<<<< HEAD
-	void _mirror_angle_clicked();
-	bool handle_clicked;
-=======
 	void _handle_option_pressed(int p_option);
 	bool handle_clicked;
 	bool mirror_handle_angle;
@@ -88,7 +79,6 @@ class PathEditorPlugin : public EditorPlugin {
 		HANDLE_OPTION_ANGLE,
 		HANDLE_OPTION_LENGTH
 	};
->>>>>>> new_mirror_path_handles
 
 protected:
 	void _notification(int p_what);
@@ -110,30 +100,6 @@ public:
 	virtual void edit(Object *p_object);
 	virtual bool handles(Object *p_object) const;
 	virtual void make_visible(bool p_visible);
-	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
-	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
-	bool is_handle_clicked() { return handle_clicked; }
-	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
-
-	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
-	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
-	bool is_handle_clicked() { return handle_clicked; }
-	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
-
-	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
-	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
-	bool is_handle_clicked() { return handle_clicked; }
-	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
-
-	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
-	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
-	bool is_handle_clicked() { return handle_clicked; }
-	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
-
-	bool mirror_angle_enabled() { return mirror_handle_angle->is_pressed(); }
-	bool mirror_length_enabled() { return mirror_handle_length->is_pressed(); }
-	bool is_handle_clicked() { return handle_clicked; }
-	void set_handle_clicked(bool clicked) { handle_clicked = clicked; }
 
 	bool mirror_angle_enabled() { return mirror_handle_angle; }
 	bool mirror_length_enabled() { return mirror_handle_length; }
