@@ -208,9 +208,9 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, new_pos);
 					undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, moving_from);
 
-					if (mirror_handle_angle->is_pressed()) {
-						undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_out_length));
-						undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length->is_pressed() ? -moving_from : (-moving_from.normalized() * orig_out_length));
+					if (mirror_handle_angle) {
+						undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length ? -new_pos : (-new_pos.normalized() * orig_out_length));
+						undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, mirror_handle_length ? -moving_from : (-moving_from.normalized() * orig_out_length));
 					}
 					undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
@@ -224,9 +224,9 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 					undo_redo->add_do_method(curve.ptr(), "set_point_out", action_point, new_pos);
 					undo_redo->add_undo_method(curve.ptr(), "set_point_out", action_point, moving_from);
 
-					if (mirror_handle_angle->is_pressed()) {
-						undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_in_length));
-						undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length->is_pressed() ? -moving_from : (-moving_from.normalized() * orig_in_length));
+					if (mirror_handle_angle) {
+						undo_redo->add_do_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length ? -new_pos : (-new_pos.normalized() * orig_in_length));
+						undo_redo->add_undo_method(curve.ptr(), "set_point_in", action_point, mirror_handle_length ? -moving_from : (-moving_from.normalized() * orig_in_length));
 					}
 					undo_redo->add_do_method(canvas_item_editor->get_viewport_control(), "update");
 					undo_redo->add_undo_method(canvas_item_editor->get_viewport_control(), "update");
@@ -268,15 +268,15 @@ bool Path2DEditor::forward_gui_input(const Ref<InputEvent> &p_event) {
 				case ACTION_MOVING_IN: {
 					curve->set_point_in(action_point, new_pos);
 
-					if (mirror_handle_angle->is_pressed())
-						curve->set_point_out(action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_out_length));
+					if (mirror_handle_angle)
+						curve->set_point_out(action_point, mirror_handle_length ? -new_pos : (-new_pos.normalized() * orig_out_length));
 				} break;
 
 				case ACTION_MOVING_OUT: {
 					curve->set_point_out(action_point, new_pos);
 
-					if (mirror_handle_angle->is_pressed())
-						curve->set_point_in(action_point, mirror_handle_length->is_pressed() ? -new_pos : (-new_pos.normalized() * orig_in_length));
+					if (mirror_handle_angle)
+						curve->set_point_in(action_point, mirror_handle_length ? -new_pos : (-new_pos.normalized() * orig_in_length));
 				} break;
 			}
 
@@ -360,7 +360,7 @@ void Path2DEditor::_bind_methods() {
 	//ClassDB::bind_method(D_METHOD("_menu_option"),&Path2DEditor::_menu_option);
 	ClassDB::bind_method(D_METHOD("_node_visibility_changed"), &Path2DEditor::_node_visibility_changed);
 	ClassDB::bind_method(D_METHOD("_mode_selected"), &Path2DEditor::_mode_selected);
-	ClassDB::bind_method(D_METHOD("_mirror_angle_clicked"), &Path2DEditor::_mirror_angle_clicked);
+	ClassDB::bind_method(D_METHOD("_handle_option_pressed"), &Path2DEditor::_handle_option_pressed);
 }
 
 void Path2DEditor::_mode_selected(int p_mode) {
@@ -415,8 +415,25 @@ void Path2DEditor::_mode_selected(int p_mode) {
 	mode = Mode(p_mode);
 }
 
-void Path2DEditor::_mirror_angle_clicked() {
-	mirror_handle_length->set_disabled(!mirror_handle_angle->is_pressed());
+void Path2DEditor::_handle_option_pressed(int p_option) {
+
+	PopupMenu *pm;
+	pm = handle_menu->get_popup();
+
+	switch (p_option) {
+		case HANDLE_OPTION_ANGLE: {
+			bool is_checked = pm->is_item_checked(HANDLE_OPTION_ANGLE);
+			mirror_handle_angle = !is_checked;
+			pm->set_item_checked(HANDLE_OPTION_ANGLE, mirror_handle_angle);
+			pm->set_item_disabled(HANDLE_OPTION_LENGTH, !mirror_handle_angle);
+		} break;
+		case HANDLE_OPTION_LENGTH: {
+			bool is_checked = pm->is_item_checked(HANDLE_OPTION_LENGTH);
+			mirror_handle_length = !is_checked;
+			pm->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
+		} break;
+	}
+>>>>>>> new_mirror_path_handles
 }
 
 Path2DEditor::Path2DEditor(EditorNode *p_editor) {
@@ -424,6 +441,8 @@ Path2DEditor::Path2DEditor(EditorNode *p_editor) {
 	canvas_item_editor = NULL;
 	editor = p_editor;
 	undo_redo = editor->get_undo_redo();
+	mirror_handle_angle = true;
+	mirror_handle_length = true;
 
 	mode = MODE_EDIT;
 	action = ACTION_NONE;
@@ -467,21 +486,20 @@ Path2DEditor::Path2DEditor(EditorNode *p_editor) {
 	curve_close->set_tooltip(TTR("Close Curve"));
 	curve_close->connect("pressed", this, "_mode_selected", varray(ACTION_CLOSE));
 	base_hb->add_child(curve_close);
-	mirror_handle_angle = memnew(CheckBox);
-	mirror_handle_angle->set_toggle_mode(true);
-	mirror_handle_angle->set_pressed(true);
-	mirror_handle_angle->set_text("Mirror Handle Angles");
-	mirror_handle_angle->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handle_angle->set_tooltip(TTR("Mirror Angle of Curve Tangent Handles"));
-	mirror_handle_angle->connect("pressed", this, "_mirror_angle_clicked");
-	base_hb->add_child(mirror_handle_angle);
-	mirror_handle_length = memnew(CheckBox);
-	mirror_handle_length->set_toggle_mode(true);
-	mirror_handle_length->set_pressed(true);
-	mirror_handle_length->set_text("Mirror Handle Lengths");
-	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
-	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
-	base_hb->add_child(mirror_handle_length);
+
+	PopupMenu *menu;
+
+	handle_menu = memnew(MenuButton);
+	handle_menu->set_text(TTR("Options"));
+	base_hb->add_child(handle_menu);
+
+	menu = handle_menu->get_popup();
+	menu->add_check_item(TTR("Mirror Handle Angles"));
+	menu->set_item_checked(HANDLE_OPTION_ANGLE, mirror_handle_angle);
+	menu->add_check_item(TTR("Mirror Handle Lengths"));
+	menu->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
+	menu->connect("id_pressed", this, "_handle_option_pressed");
+
 	base_hb->hide();
 
 	curve_edit->set_pressed(true);

@@ -481,8 +481,12 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->show();
 		curve_del->show();
 		curve_close->show();
+<<<<<<< HEAD
 		mirror_handle_angle->show();
 		mirror_handle_length->show();
+=======
+		handle_menu->show();
+>>>>>>> new_mirror_path_handles
 		sep->show();
 	} else {
 
@@ -490,8 +494,12 @@ void PathEditorPlugin::make_visible(bool p_visible) {
 		curve_edit->hide();
 		curve_del->hide();
 		curve_close->hide();
+<<<<<<< HEAD
 		mirror_handle_angle->hide();
 		mirror_handle_length->hide();
+=======
+		handle_menu->hide();
+>>>>>>> new_mirror_path_handles
 		sep->hide();
 
 		{
@@ -521,8 +529,29 @@ void PathEditorPlugin::_close_curve() {
 	c->add_point(c->get_point_position(0), c->get_point_in(0), c->get_point_out(0));
 }
 
+<<<<<<< HEAD
 void PathEditorPlugin::_mirror_angle_clicked() {
 	mirror_handle_length->set_disabled(!mirror_handle_angle->is_pressed());
+=======
+void PathEditorPlugin::_handle_option_pressed(int p_option) {
+
+	PopupMenu *pm;
+	pm = handle_menu->get_popup();
+
+	switch (p_option) {
+		case HANDLE_OPTION_ANGLE: {
+			bool is_checked = pm->is_item_checked(HANDLE_OPTION_ANGLE);
+			mirror_handle_angle = !is_checked;
+			pm->set_item_checked(HANDLE_OPTION_ANGLE, mirror_handle_angle);
+			pm->set_item_disabled(HANDLE_OPTION_LENGTH, !mirror_handle_angle);
+		} break;
+		case HANDLE_OPTION_LENGTH: {
+			bool is_checked = pm->is_item_checked(HANDLE_OPTION_LENGTH);
+			mirror_handle_length = !is_checked;
+			pm->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
+		} break;
+	}
+>>>>>>> new_mirror_path_handles
 }
 
 void PathEditorPlugin::_notification(int p_what) {
@@ -540,7 +569,11 @@ void PathEditorPlugin::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_mode_changed"), &PathEditorPlugin::_mode_changed);
 	ClassDB::bind_method(D_METHOD("_close_curve"), &PathEditorPlugin::_close_curve);
+<<<<<<< HEAD
 	ClassDB::bind_method(D_METHOD("_mirror_angle_clicked"), &PathEditorPlugin::_mirror_angle_clicked);
+=======
+	ClassDB::bind_method(D_METHOD("_handle_option_pressed"), &PathEditorPlugin::_handle_option_pressed);
+>>>>>>> new_mirror_path_handles
 }
 
 PathEditorPlugin *PathEditorPlugin::singleton = NULL;
@@ -550,6 +583,8 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	path = NULL;
 	editor = p_node;
 	singleton = this;
+	mirror_handle_angle = true;
+	mirror_handle_length = true;
 
 	path_material = Ref<SpatialMaterial>(memnew(SpatialMaterial));
 	path_material->set_albedo(Color(0.5, 0.5, 1.0, 0.8));
@@ -614,6 +649,20 @@ PathEditorPlugin::PathEditorPlugin(EditorNode *p_node) {
 	mirror_handle_length->set_focus_mode(Control::FOCUS_NONE);
 	mirror_handle_length->set_tooltip(TTR("Mirror Length of Curve Tangent Handles (Mirror Angles must be enabled)"));
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(mirror_handle_length);
+
+	PopupMenu *menu;
+
+	handle_menu = memnew(MenuButton);
+	handle_menu->set_text(TTR("Options"));
+	handle_menu->hide();
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(handle_menu);
+
+	menu = handle_menu->get_popup();
+	menu->add_check_item(TTR("Mirror Handle Angles"));
+	menu->set_item_checked(HANDLE_OPTION_ANGLE, mirror_handle_angle);
+	menu->add_check_item(TTR("Mirror Handle Lengths"));
+	menu->set_item_checked(HANDLE_OPTION_LENGTH, mirror_handle_length);
+	menu->connect("id_pressed", this, "_handle_option_pressed");
 
 	curve_edit->set_pressed(true);
 	/*
