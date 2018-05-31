@@ -31,6 +31,7 @@
 #ifndef EDITOR_PLUGIN_H
 #define EDITOR_PLUGIN_H
 
+#include "editor/editor_inspector.h"
 #include "editor/import/editor_import_plugin.h"
 #include "editor/import/resource_importer_scene.h"
 #include "io/config_file.h"
@@ -191,6 +192,7 @@ public:
 	virtual void set_window_layout(Ref<ConfigFile> p_layout);
 	virtual void get_window_layout(Ref<ConfigFile> p_layout);
 	virtual void edited_scene_changed() {} // if changes are pending in editor, apply them
+	virtual bool build(); // builds with external tools. Returns true if safe to continue running scene.
 
 	EditorInterface *get_editor_interface();
 
@@ -209,6 +211,9 @@ public:
 
 	void add_export_plugin(const Ref<EditorExportPlugin> &p_exporter);
 	void remove_export_plugin(const Ref<EditorExportPlugin> &p_exporter);
+
+	void add_inspector_plugin(const Ref<EditorInspectorPlugin> &p_plugin);
+	void remove_inspector_plugin(const Ref<EditorInspectorPlugin> &p_plugin);
 
 	void add_scene_import_plugin(const Ref<EditorSceneImporter> &p_importer);
 	void remove_scene_import_plugin(const Ref<EditorSceneImporter> &p_importer);

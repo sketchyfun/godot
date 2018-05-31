@@ -31,16 +31,11 @@
 #ifndef NAVIGATION_MESH_GENERATOR_H
 #define NAVIGATION_MESH_GENERATOR_H
 
-#ifdef RECAST_ENABLED
-
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
-
-#include "scene/3d/mesh_instance.h"
-
-#include "scene/3d/navigation_mesh.h"
-
 #include "os/thread.h"
+#include "scene/3d/mesh_instance.h"
+#include "scene/3d/navigation_mesh.h"
 #include "scene/resources/shape.h"
 
 #include <Recast.h>
@@ -60,7 +55,5 @@ public:
 	static void bake(Ref<NavigationMesh> p_nav_mesh, Node *p_node);
 	static void clear(Ref<NavigationMesh> p_nav_mesh);
 };
-
-#endif // RECAST_ENABLED
 
 #endif // NAVIGATION_MESH_GENERATOR_H

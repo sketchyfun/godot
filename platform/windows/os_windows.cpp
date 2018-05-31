@@ -623,9 +623,12 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 		case WM_SIZE: {
 			int window_w = LOWORD(lParam);
 			int window_h = HIWORD(lParam);
-			if (window_w > 0 && window_h > 0) {
+			if (window_w > 0 && window_h > 0 && !preserve_window_size) {
 				video_mode.width = window_w;
 				video_mode.height = window_h;
+			} else {
+				preserve_window_size = false;
+				set_window_size(Size2(video_mode.width, video_mode.height));
 			}
 			if (wParam == SIZE_MAXIMIZED) {
 				maximized = true;
@@ -777,7 +780,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 						SetCursor(NULL);
 				} else {
 					if (hCursor != NULL) {
-						SetCursor(hCursor);
+						CursorShape c = cursor_shape;
+						cursor_shape = CURSOR_MAX;
+						set_cursor_shape(c);
 						hCursor = NULL;
 					}
 				}
@@ -1561,6 +1566,15 @@ void OS_Windows::set_window_size(const Size2 p_size) {
 	}
 
 	MoveWindow(hWnd, rect.left, rect.top, w, h, TRUE);
+
+	// Don't let the mouse leave the window when resizing to a smaller resolution
+	if (mouse_mode == MOUSE_MODE_CONFINED) {
+		RECT rect;
+		GetClientRect(hWnd, &rect);
+		ClientToScreen(hWnd, (POINT *)&rect.left);
+		ClientToScreen(hWnd, (POINT *)&rect.right);
+		ClipCursor(&rect);
+	}
 }
 void OS_Windows::set_window_fullscreen(bool p_enabled) {
 
@@ -1767,6 +1781,7 @@ void OS_Windows::set_borderless_window(bool p_borderless) {
 
 	video_mode.borderless_window = p_borderless;
 
+	preserve_window_size = true;
 	_update_window_style();
 }
 
@@ -1785,7 +1800,7 @@ void OS_Windows::_update_window_style(bool repaint) {
 		}
 	}
 
-	SetWindowPos(hWnd, video_mode.always_on_top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	SetWindowPos(hWnd, video_mode.always_on_top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE);
 
 	if (repaint) {
 		RECT rect;
@@ -1996,7 +2011,7 @@ void OS_Windows::set_cursor_shape(CursorShape p_shape) {
 	if (cursor_shape == p_shape)
 		return;
 
-	if (mouse_mode != MOUSE_MODE_VISIBLE) {
+	if (mouse_mode != MOUSE_MODE_VISIBLE && mouse_mode != MOUSE_MODE_CONFINED) {
 		cursor_shape = p_shape;
 		return;
 	}
@@ -2033,27 +2048,59 @@ void OS_Windows::set_cursor_shape(CursorShape p_shape) {
 void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, const Vector2 &p_hotspot) {
 	if (p_cursor.is_valid()) {
 		Ref<Texture> texture = p_cursor;
-		Ref<Image> image = texture->get_data();
+		Ref<AtlasTexture> atlas_texture = p_cursor;
+		Ref<Image> image;
+		Size2 texture_size;
+		Rect2 atlas_rect;
 
-		UINT image_size = texture->get_width() * texture->get_height();
+		if (texture.is_valid()) {
+			image = texture->get_data();
+		}
+
+		if (!image.is_valid() && atlas_texture.is_valid()) {
+			texture = atlas_texture->get_atlas();
+
+			atlas_rect.size.width = texture->get_width();
+			atlas_rect.size.height = texture->get_height();
+			atlas_rect.position.x = atlas_texture->get_region().position.x;
+			atlas_rect.position.y = atlas_texture->get_region().position.y;
+
+			texture_size.width = atlas_texture->get_region().size.x;
+			texture_size.height = atlas_texture->get_region().size.y;
+		} else if (image.is_valid()) {
+			texture_size.width = texture->get_width();
+			texture_size.height = texture->get_height();
+		}
+
+		ERR_FAIL_COND(!texture.is_valid());
+		ERR_FAIL_COND(texture_size.width > 256 || texture_size.height > 256);
+
+		image = texture->get_data();
+
+		ERR_FAIL_COND(!image.is_valid());
+
+		UINT image_size = texture_size.width * texture_size.height;
 		UINT size = sizeof(UINT) * image_size;
 
-		ERR_FAIL_COND(texture->get_width() > 256 || texture->get_height() > 256);
-
 		// Create the BITMAP with alpha channel
-		COLORREF *buffer = (COLORREF *)malloc(sizeof(COLORREF) * image_size);
+		COLORREF *buffer = (COLORREF *)memalloc(sizeof(COLORREF) * image_size);
 
 		image->lock();
 		for (UINT index = 0; index < image_size; index++) {
-			int row_index = floor(index / texture->get_width());
-			int column_index = index % texture->get_width();
+			int row_index = floor(index / texture_size.width) + atlas_rect.position.y;
+			int column_index = (index % int(texture_size.width)) + atlas_rect.position.x;
+
+			if (atlas_texture.is_valid()) {
+				column_index = MIN(column_index, atlas_rect.size.width - 1);
+				row_index = MIN(row_index, atlas_rect.size.height - 1);
+			}
 
 			*(buffer + index) = image->get_pixel(column_index, row_index).to_argb32();
 		}
 		image->unlock();
 
 		// Using 4 channels, so 4 * 8 bits
-		HBITMAP bitmap = CreateBitmap(texture->get_width(), texture->get_height(), 1, 4 * 8, buffer);
+		HBITMAP bitmap = CreateBitmap(texture_size.width, texture_size.height, 1, 4 * 8, buffer);
 		COLORREF clrTransparent = -1;
 
 		// Create the AND and XOR masks for the bitmap
@@ -2063,6 +2110,8 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 		GetMaskBitmaps(bitmap, clrTransparent, hAndMask, hXorMask);
 
 		if (NULL == hAndMask || NULL == hXorMask) {
+			memfree(buffer);
+			DeleteObject(bitmap);
 			return;
 		}
 
@@ -2087,6 +2136,14 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 		if (hXorMask != NULL) {
 			DeleteObject(hXorMask);
 		}
+
+		memfree(buffer);
+		DeleteObject(bitmap);
+	} else {
+		// Reset to default system cursor
+		cursors[p_shape] = NULL;
+		cursor_shape = CURSOR_MAX;
+		set_cursor_shape(p_shape);
 	}
 }
 
@@ -2152,10 +2209,6 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 			argss += String(" \"") + E->get() + "\"";
 		}
 
-		//print_line("ARGS: "+argss);
-		//argss+"\"";
-		//argss+=" 2>nul";
-
 		FILE *f = _wpopen(argss.c_str(), L"r");
 
 		ERR_FAIL_COND_V(!f, ERR_CANT_OPEN);
@@ -2182,15 +2235,12 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 		I = I->next();
 	};
 
-	//cmdline+="\"";
-
 	ProcessInfo pi;
 	ZeroMemory(&pi.si, sizeof(pi.si));
 	pi.si.cb = sizeof(pi.si);
 	ZeroMemory(&pi.pi, sizeof(pi.pi));
 	LPSTARTUPINFOW si_w = (LPSTARTUPINFOW)&pi.si;
 
-	print_line("running cmdline: " + cmdline);
 	Vector<CharType> modstr; //windows wants to change this no idea why
 	modstr.resize(cmdline.size());
 	for (int i = 0; i < cmdline.size(); i++)

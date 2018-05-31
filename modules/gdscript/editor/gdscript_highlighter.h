@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  navigation_mesh_editor_plugin.h                                      */
+/*  gdscript_highlighter.h                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,60 +28,43 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef NAVIGATION_MESH_GENERATOR_PLUGIN_H
-#define NAVIGATION_MESH_GENERATOR_PLUGIN_H
+#ifndef GDSCRIPT_HIGHLIGHTER_H
+#define GDSCRIPT_HIGHLIGHTER_H
 
-#ifdef RECAST_ENABLED
+#include "scene/gui/text_edit.h"
 
-#include "editor/editor_node.h"
-#include "editor/editor_plugin.h"
-#include "navigation_mesh_generator.h"
+class GDScriptSyntaxHighlighter : public SyntaxHighlighter {
+private:
+	enum Type {
+		NONE,
+		REGION,
+		NODE_PATH,
+		SYMBOL,
+		NUMBER,
+		FUNCTION,
+		KEYWORD,
+		MEMBER,
+		IDENTIFIER
+	};
 
-class NavigationMeshEditor : public Control {
-	friend class NavigationMeshEditorPlugin;
-
-	GDCLASS(NavigationMeshEditor, Control);
-
-	AcceptDialog *err_dialog;
-
-	HBoxContainer *bake_hbox;
-	Button *button_bake;
-	Button *button_reset;
-	Label *bake_info;
-
-	NavigationMeshInstance *node;
-
-	void _bake_pressed();
-	void _clear_pressed();
-
-protected:
-	void _node_removed(Node *p_node);
-	static void _bind_methods();
-	void _notification(int p_option);
+	// colours
+	Color font_color;
+	Color symbol_color;
+	Color function_color;
+	Color function_definition_color;
+	Color built_in_type_color;
+	Color number_color;
+	Color member_color;
+	Color node_path_color;
 
 public:
-	void edit(NavigationMeshInstance *p_nav_mesh_instance);
-	NavigationMeshEditor();
-	~NavigationMeshEditor();
+	static SyntaxHighlighter *create();
+
+	virtual void _update_cache();
+	virtual Map<int, TextEdit::HighlighterInfo> _get_line_syntax_highlighting(int p_line);
+
+	virtual String get_name();
+	virtual List<String> get_supported_languages();
 };
 
-class NavigationMeshEditorPlugin : public EditorPlugin {
-
-	GDCLASS(NavigationMeshEditorPlugin, EditorPlugin);
-
-	NavigationMeshEditor *navigation_mesh_editor;
-	EditorNode *editor;
-
-public:
-	virtual String get_name() const { return "NavigationMesh"; }
-	bool has_main_screen() const { return false; }
-	virtual void edit(Object *p_object);
-	virtual bool handles(Object *p_object) const;
-	virtual void make_visible(bool p_visible);
-
-	NavigationMeshEditorPlugin(EditorNode *p_node);
-	~NavigationMeshEditorPlugin();
-};
-
-#endif // RECAST_ENABLED
-#endif // NAVIGATION_MESH_GENERATOR_PLUGIN_H
+#endif // GDSCRIPT_HIGHLIGHTER_H

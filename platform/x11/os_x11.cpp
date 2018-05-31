@@ -1292,6 +1292,9 @@ void OS_X11::set_borderless_window(bool p_borderless) {
 	hints.decorations = current_videomode.borderless_window ? 0 : 1;
 	property = XInternAtom(x11_display, "_MOTIF_WM_HINTS", True);
 	XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+
+	// Preserve window size
+	set_window_size(Size2(current_videomode.width, current_videomode.height));
 }
 
 bool OS_X11::get_borderless_window() {
@@ -2407,7 +2410,7 @@ void OS_X11::set_cursor_shape(CursorShape p_shape) {
 
 	if (p_shape == current_cursor)
 		return;
-	if (mouse_mode == MOUSE_MODE_VISIBLE) {
+	if (mouse_mode == MOUSE_MODE_VISIBLE && mouse_mode != MOUSE_MODE_CONFINED) {
 		if (cursors[p_shape] != None)
 			XDefineCursor(x11_display, x11_window, cursors[p_shape]);
 		else if (cursors[CURSOR_ARROW] != None)
@@ -2420,13 +2423,40 @@ void OS_X11::set_cursor_shape(CursorShape p_shape) {
 void OS_X11::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, const Vector2 &p_hotspot) {
 	if (p_cursor.is_valid()) {
 		Ref<Texture> texture = p_cursor;
-		Ref<Image> image = texture->get_data();
+		Ref<AtlasTexture> atlas_texture = p_cursor;
+		Ref<Image> image;
+		Size2 texture_size;
+		Rect2 atlas_rect;
 
-		ERR_FAIL_COND(texture->get_width() > 256 || texture->get_height() > 256);
+		if (texture.is_valid()) {
+			image = texture->get_data();
+		}
+
+		if (!image.is_valid() && atlas_texture.is_valid()) {
+			texture = atlas_texture->get_atlas();
+
+			atlas_rect.size.width = texture->get_width();
+			atlas_rect.size.height = texture->get_height();
+			atlas_rect.position.x = atlas_texture->get_region().position.x;
+			atlas_rect.position.y = atlas_texture->get_region().position.y;
+
+			texture_size.width = atlas_texture->get_region().size.x;
+			texture_size.height = atlas_texture->get_region().size.y;
+		} else if (image.is_valid()) {
+			texture_size.width = texture->get_width();
+			texture_size.height = texture->get_height();
+		}
+
+		ERR_FAIL_COND(!texture.is_valid());
+		ERR_FAIL_COND(texture_size.width > 256 || texture_size.height > 256);
+
+		image = texture->get_data();
+
+		ERR_FAIL_COND(!image.is_valid());
 
 		// Create the cursor structure
-		XcursorImage *cursor_image = XcursorImageCreate(texture->get_width(), texture->get_height());
-		XcursorUInt image_size = texture->get_width() * texture->get_height();
+		XcursorImage *cursor_image = XcursorImageCreate(texture_size.width, texture_size.height);
+		XcursorUInt image_size = texture_size.width * texture_size.height;
 		XcursorDim size = sizeof(XcursorPixel) * image_size;
 
 		cursor_image->version = 1;
@@ -2435,13 +2465,18 @@ void OS_X11::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, c
 		cursor_image->yhot = p_hotspot.y;
 
 		// allocate memory to contain the whole file
-		cursor_image->pixels = (XcursorPixel *)malloc(size);
+		cursor_image->pixels = (XcursorPixel *)memalloc(size);
 
 		image->lock();
 
 		for (XcursorPixel index = 0; index < image_size; index++) {
-			int row_index = floor(index / texture->get_width());
-			int column_index = index % texture->get_width();
+			int row_index = floor(index / texture_size.width) + atlas_rect.position.y;
+			int column_index = (index % int(texture_size.width)) + atlas_rect.position.x;
+
+			if (atlas_texture.is_valid()) {
+				column_index = MIN(column_index, atlas_rect.size.width - 1);
+				row_index = MIN(row_index, atlas_rect.size.height - 1);
+			}
 
 			*(cursor_image->pixels + index) = image->get_pixel(column_index, row_index).to_argb32();
 		}
@@ -2456,6 +2491,17 @@ void OS_X11::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, c
 		if (p_shape == CURSOR_ARROW) {
 			XDefineCursor(x11_display, x11_window, cursors[p_shape]);
 		}
+
+		memfree(cursor_image->pixels);
+		XcursorImageDestroy(cursor_image);
+	} else {
+		// Reset to default system cursor
+		if (img[p_shape]) {
+			cursors[p_shape] = XcursorImageLoadCursor(x11_display, img[p_shape]);
+		}
+
+		current_cursor = CURSOR_MAX;
+		set_cursor_shape(p_shape);
 	}
 }
 

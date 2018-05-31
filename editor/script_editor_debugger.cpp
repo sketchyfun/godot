@@ -872,7 +872,7 @@ void ScriptEditorDebugger::_set_reason_text(const String &p_reason, MessageType 
 			reason->add_color_override("font_color", get_color("success_color", "Editor"));
 	}
 	reason->set_text(p_reason);
-	reason->set_tooltip(p_reason);
+	reason->set_tooltip(p_reason.word_wrap(80));
 }
 
 void ScriptEditorDebugger::_performance_select() {
@@ -1851,7 +1851,7 @@ ScriptEditorDebugger::ScriptEditorDebugger(EditorNode *p_editor) {
 	ppeer = Ref<PacketPeerStream>(memnew(PacketPeerStream));
 	ppeer->set_input_buffer_max_size(1024 * 1024 * 8); //8mb should be enough
 	editor = p_editor;
-	editor->get_property_editor()->connect("object_id_selected", this, "_scene_tree_property_select_object");
+	editor->get_inspector()->connect("object_id_selected", this, "_scene_tree_property_select_object");
 
 	tabs = memnew(TabContainer);
 	tabs->set_tab_align(TabContainer::ALIGN_LEFT);
@@ -1877,6 +1877,9 @@ ScriptEditorDebugger::ScriptEditorDebugger(EditorNode *p_editor) {
 		reason->set_text("");
 		hbc->add_child(reason);
 		reason->set_h_size_flags(SIZE_EXPAND_FILL);
+		reason->set_autowrap(true);
+		reason->set_max_lines_visible(3);
+		reason->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 
 		hbc->add_child(memnew(VSeparator));
 
@@ -1936,7 +1939,7 @@ ScriptEditorDebugger::ScriptEditorDebugger(EditorNode *p_editor) {
 		inspector = memnew(PropertyEditor);
 		inspector->set_h_size_flags(SIZE_EXPAND_FILL);
 		inspector->hide_top_label();
-		inspector->get_scene_tree()->set_column_title(0, TTR("Variable"));
+		inspector->get_property_tree()->set_column_title(0, TTR("Variable"));
 		inspector->set_enable_capitalize_paths(false);
 		inspector->set_read_only(true);
 		inspector->connect("object_id_selected", this, "_scene_tree_property_select_object");

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  gdscript_highlighter.h                                               */
+/*  editor_spin_slider.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,29 +28,60 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GDSCRIPT_HIGHLIGHTER_H
-#define GDSCRIPT_HIGHLIGHTER_H
+#ifndef EDITOR_SPIN_SLIDER_H
+#define EDITOR_SPIN_SLIDER_H
 
-#include "scene/gui/text_edit.h"
+#include "scene/gui/line_edit.h"
+#include "scene/gui/range.h"
+#include "scene/gui/texture_rect.h"
 
-class GDScriptSyntaxHighlighter : public SyntaxHighlighter {
-private:
-	// colours
-	Color font_color;
-	Color symbol_color;
-	Color function_color;
-	Color built_in_type_color;
-	Color number_color;
-	Color member_color;
+class EditorSpinSlider : public Range {
+	GDCLASS(EditorSpinSlider, Range)
+
+	String label;
+	int updown_offset;
+	bool hover_updown;
+	bool mouse_hover;
+
+	TextureRect *grabber;
+	int grabber_range;
+
+	bool mouse_over_spin;
+	bool mouse_over_grabber;
+
+	bool grabbing_grabber;
+	int grabbing_from;
+	float grabbing_ratio;
+
+	bool grabbing_spinner_attempt;
+	bool grabbing_spinner;
+	Vector2 grabbing_spinner_mouse_pos;
+
+	LineEdit *value_input;
+
+	void _grabber_gui_input(const Ref<InputEvent> &p_event);
+	void _value_input_closed();
+	void _value_input_entered(const String &);
+
+	bool hide_slider;
+
+protected:
+	void _notification(int p_what);
+	void _gui_input(const Ref<InputEvent> &p_event);
+	static void _bind_methods();
+	void _grabber_mouse_entered();
+	void _grabber_mouse_exited();
 
 public:
-	static SyntaxHighlighter *create();
+	String get_text_value() const;
+	void set_label(const String &p_label);
+	String get_label() const;
 
-	virtual void _update_cache();
-	virtual Map<int, TextEdit::HighlighterInfo> _get_line_syntax_highlighting(int p_line);
+	void set_hide_slider(bool p_hide);
+	bool is_hiding_slider() const;
 
-	virtual String get_name();
-	virtual List<String> get_supported_languages();
+	virtual Size2 get_minimum_size() const;
+	EditorSpinSlider();
 };
 
-#endif // GDSCRIPT_HIGHLIGHTER_H
+#endif // EDITOR_SPIN_SLIDER_H
