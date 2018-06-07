@@ -30,6 +30,7 @@
 
 #include "scene_tree_editor.h"
 
+#include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
 #include "editor_node.h"
 #include "message_queue.h"
@@ -89,6 +90,12 @@ void SceneTreeEditor::_cell_button_pressed(Object *p_item, int p_column, int p_i
 			n->set_meta("_edit_lock_", Variant());
 			_update_tree();
 			emit_signal("node_changed");
+		}
+	} else if (p_id == BUTTON_PIN) {
+
+		if (n->is_class("AnimationPlayer")) {
+			AnimationPlayerEditor::singleton->unpin();
+			_update_tree();
 		}
 
 	} else if (p_id == BUTTON_GROUP) {
@@ -219,7 +226,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 		bool has_groups = p_node->has_persistent_groups();
 
 		if (has_connections && has_groups) {
-			item->add_button(0, get_icon("SignalsAndGroups", "EditorIcons"), BUTTON_SIGNALS, false, TTR("Node has connection(s) and group(s)\nClick to show signals dock."));
+			item->add_button(0, get_icon("SignalsAndGroups", "EditorIcons"), BUTTON_SIGNALS, false, TTR("Node has connection(s) and group(s).\nClick to show signals dock."));
 		} else if (has_connections) {
 			item->add_button(0, get_icon("Signals", "EditorIcons"), BUTTON_SIGNALS, false, TTR("Node has connections.\nClick to show signals dock."));
 		} else if (has_groups) {
@@ -245,18 +252,18 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 
 		if (!p_node->get_script().is_null()) {
 
-			item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT, false, TTR("Open script"));
+			item->add_button(0, get_icon("Script", "EditorIcons"), BUTTON_SCRIPT, false, TTR("Open Script"));
 		}
 
 		if (p_node->is_class("CanvasItem")) {
 
 			bool is_locked = p_node->has_meta("_edit_lock_"); //_edit_group_
 			if (is_locked)
-				item->add_button(0, get_icon("Lock", "EditorIcons"), BUTTON_LOCK, false, TTR("Node is locked.\nClick to unlock"));
+				item->add_button(0, get_icon("Lock", "EditorIcons"), BUTTON_LOCK, false, TTR("Node is locked.\nClick to unlock it."));
 
 			bool is_grouped = p_node->has_meta("_edit_group_");
 			if (is_grouped)
-				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make selectable"));
+				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make selectable."));
 
 			bool v = p_node->call("is_visible");
 			if (v)
@@ -272,7 +279,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 
 			bool is_locked = p_node->has_meta("_edit_lock_");
 			if (is_locked)
-				item->add_button(0, get_icon("Lock", "EditorIcons"), BUTTON_LOCK, false, TTR("Node is locked.\nClick to unlock"));
+				item->add_button(0, get_icon("Lock", "EditorIcons"), BUTTON_LOCK, false, TTR("Node is locked.\nClick to unlock it."));
 
 			bool v = p_node->call("is_visible");
 			if (v)
@@ -284,6 +291,13 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 				p_node->connect("visibility_changed", this, "_node_visibility_changed", varray(p_node));
 
 			_update_visibility_color(p_node, item);
+		} else if (p_node->is_class("AnimationPlayer")) {
+
+			bool is_pinned = AnimationPlayerEditor::singleton->get_player() == p_node && AnimationPlayerEditor::singleton->is_pinned();
+
+			if (is_pinned) {
+				item->add_button(0, get_icon("Pin", "EditorIcons"), BUTTON_PIN, false, TTR("AnimationPlayer is pinned.\nClick to unpin."));
+			}
 		}
 	}
 
