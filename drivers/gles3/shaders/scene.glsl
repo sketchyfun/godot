@@ -1610,6 +1610,11 @@ void main() {
 	float clearcoat_gloss=0.0;
 	float anisotropy = 1.0;
 	vec2 anisotropy_flow = vec2(1.0,0.0);
+#if defined(USE_LIGHT_DIRECTIONAL)
+	vec3 light = -light_direction_attenuation.xyz;
+#else
+	vec3 light = vec3(0.0);
+#endif
 
 #if defined(ENABLE_AO)
 	float ao=1.0;
