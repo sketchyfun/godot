@@ -1159,13 +1159,7 @@ void AnimationTrackEdit::_notification(int p_what) {
 				} else if (animation->track_get_type(track) == Animation::TYPE_ANIMATION) {
 					text = TTR("Anim Clips:");
 				} else {
-					Vector<StringName> sn = path.get_subnames();
-					for (int i = 0; i < sn.size(); i++) {
-						if (i > 0) {
-							text += ".";
-						}
-						text += sn[i];
-					}
+					text += path.get_concatenated_subnames();
 				}
 				text_color.a *= 0.7;
 			} else if (node) {
@@ -1179,14 +1173,9 @@ void AnimationTrackEdit::_notification(int p_what) {
 				draw_texture(icon, Point2(ofs, int(get_size().height - icon->get_height()) / 2));
 				icon_cache = icon;
 
-				text = node->get_name();
+				text = String() + node->get_name() + ":" + path.get_concatenated_subnames();
 				ofs += hsep;
 				ofs += icon->get_width();
-				Vector<StringName> sn = path.get_subnames();
-				for (int i = 0; i < sn.size(); i++) {
-					text += ".";
-					text += sn[i];
-				}
 			} else {
 				icon_cache = type_icon;
 
@@ -2972,12 +2961,12 @@ PropertyInfo AnimationTrackEditor::_find_hint_for_track(int p_idx, NodePath &r_b
 	if (res.is_valid()) {
 		property_info_base = res;
 		if (r_current_val) {
-			*r_current_val = res->get(leftover_path[leftover_path.size() - 1]);
+			*r_current_val = res->get_indexed(leftover_path);
 		}
 	} else if (node) {
 		property_info_base = node;
 		if (r_current_val) {
-			*r_current_val = node->get(leftover_path[leftover_path.size() - 1]);
+			*r_current_val = node->get_indexed(leftover_path);
 		}
 	}
 
@@ -3011,31 +3000,31 @@ static Vector<String> _get_bezier_subindices_for_type(Variant::Type p_type, bool
 			subindices.push_back("");
 		} break;
 		case Variant::VECTOR2: {
-			subindices.push_back(".x");
-			subindices.push_back(".y");
+			subindices.push_back(":x");
+			subindices.push_back(":y");
 		} break;
 		case Variant::VECTOR3: {
-			subindices.push_back(".x");
-			subindices.push_back(".y");
-			subindices.push_back(".z");
+			subindices.push_back(":x");
+			subindices.push_back(":y");
+			subindices.push_back(":z");
 		} break;
 		case Variant::QUAT: {
-			subindices.push_back(".x");
-			subindices.push_back(".y");
-			subindices.push_back(".z");
-			subindices.push_back(".w");
+			subindices.push_back(":x");
+			subindices.push_back(":y");
+			subindices.push_back(":z");
+			subindices.push_back(":w");
 		} break;
 		case Variant::COLOR: {
-			subindices.push_back(".r");
-			subindices.push_back(".g");
-			subindices.push_back(".b");
-			subindices.push_back(".a");
+			subindices.push_back(":r");
+			subindices.push_back(":g");
+			subindices.push_back(":b");
+			subindices.push_back(":a");
 		} break;
 		case Variant::PLANE: {
-			subindices.push_back(".x");
-			subindices.push_back(".y");
-			subindices.push_back(".z");
-			subindices.push_back(".d");
+			subindices.push_back(":x");
+			subindices.push_back(":y");
+			subindices.push_back(":z");
+			subindices.push_back(":d");
 		} break;
 		default: {
 			if (r_valid) {
@@ -3246,31 +3235,19 @@ void AnimationTrackEditor::_update_tracks() {
 
 			if (root && root->has_node_and_resource(path)) {
 				RES res;
+				NodePath base_path;
 				Vector<StringName> leftover_path;
 				Node *node = root->get_node_and_resource(path, res, leftover_path, true);
+				PropertyInfo pinfo = _find_hint_for_track(i, base_path);
 
 				Object *object = node;
 				if (res.is_valid()) {
 					object = res.ptr();
-				} else {
-					object = node;
 				}
 
 				if (object && !leftover_path.empty()) {
-					//not a property (value track?)
-					PropertyInfo pinfo;
-					pinfo.name = leftover_path[leftover_path.size() - 1];
-					//now let's see if we can get more info about it
-
-					List<PropertyInfo> plist;
-					object->get_property_list(&plist);
-
-					for (List<PropertyInfo>::Element *E = plist.front(); E; E = E->next()) {
-
-						if (E->get().name == leftover_path[leftover_path.size() - 1]) {
-							pinfo = E->get();
-							break;
-						}
+					if (pinfo.name.empty()) {
+						pinfo.name = leftover_path[leftover_path.size() - 1];
 					}
 
 					for (int j = 0; j < track_edit_plugins.size(); j++) {
@@ -4116,7 +4093,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 					track_edits[i]->append_to_selection(local_rect);
 				}
 
-				if (_get_track_selected() == -1) { //minimal hack to make shortcuts work
+				if (_get_track_selected() == -1 && track_edits.size() > 0) { //minimal hack to make shortcuts work
 					track_edits[track_edits.size() - 1]->grab_focus();
 				}
 			} else {
@@ -4302,12 +4279,7 @@ void AnimationTrackEditor::_edit_menu_pressed(int p_option) {
 						icon = get_icon(node->get_class(), "EditorIcons");
 					}
 
-					text = node->get_name();
-					Vector<StringName> sn = path.get_subnames();
-					for (int i = 0; i < sn.size(); i++) {
-						text += ".";
-						text += sn[i];
-					}
+					text = String() + node->get_name() + ":" + path.get_concatenated_subnames();
 
 					path = NodePath(node->get_path().get_names(), path.get_subnames(), true); //store full path instead for copying
 				} else {
