@@ -512,16 +512,16 @@ void SpatialEditorViewport::_select_region() {
 
 	Vector<Plane> frustum;
 
-	Vector3 cursor_pos = to_camera_transform(cursor).origin;
+	Vector3 cam_pos = _get_camera_position();
 
 	for (int i = 0; i < 4; i++) {
 
 		Vector3 a = _get_screen_to_space(box[i]);
 		Vector3 b = _get_screen_to_space(box[(i + 1) % 4]);
-		frustum.push_back(Plane(a, b, cursor_pos));
+		frustum.push_back(Plane(a, b, cam_pos));
 	}
 
-	Plane near(cursor_pos, -_get_camera_normal());
+	Plane near(cam_pos, -_get_camera_normal());
 	near.d -= get_znear();
 
 	frustum.push_back(near);
@@ -532,6 +532,7 @@ void SpatialEditorViewport::_select_region() {
 	frustum.push_back(far);
 
 	Vector<ObjectID> instances = VisualServer::get_singleton()->instances_cull_convex(frustum, get_tree()->get_root()->get_world()->get_scenario());
+	Vector<Spatial *> selected;
 
 	Node *edited_scene = get_tree()->get_edited_scene_root();
 
@@ -556,8 +557,11 @@ void SpatialEditorViewport::_select_region() {
 		if (seg->intersect_frustum(camera, frustum)) {
 			selected.push_back(root_sp);
 		}
-		if(root_sp->is_visible())
-			_select(root_sp, true, false);
+	}
+
+	bool single = selected.size() == 1;
+	for (int i = 0; i < selected.size(); i++) {
+		_select(selected[i], true, single);
 	}
 }
 
@@ -3846,9 +3850,6 @@ Object *SpatialEditor::_get_editor_data(Object *p_what) {
 	si->sp = sp;
 	si->sbox_instance = VisualServer::get_singleton()->instance_create2(selection_box->get_rid(), sp->get_world()->get_scenario());
 	VS::get_singleton()->instance_geometry_set_cast_shadows_setting(si->sbox_instance, VS::SHADOW_CASTING_SETTING_OFF);
-
-	if (Engine::get_singleton()->is_editor_hint())
-		editor->call("edit_node", sp);
 
 	return si;
 }
