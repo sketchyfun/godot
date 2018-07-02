@@ -415,14 +415,26 @@ void AnimationPlayer::_animation_process_animation(AnimationData *p_anim, float 
 						pa->capture = pa->object->get_indexed(pa->subpath);
 					}
 
-					if (a->track_get_key_count(i) == 0)
+					int key_count = a->track_get_key_count(i);
+					if (key_count == 0)
 						continue; //eeh not worth it
 
 					float first_key_time = a->track_get_key_time(i, 0);
+					float transition = 1.0;
+					int first_key = 0;
+
+					if (first_key_time == 0.0) {
+						//ignore, use for transition
+						if (key_count == 1)
+							continue; //with one key we cant do anything
+						transition = a->track_get_key_transition(i, 0);
+						first_key_time = a->track_get_key_time(i, 1);
+						first_key = 1;
+					}
 
 					if (p_time < first_key_time) {
-						float c = p_time / first_key_time;
-						Variant first_value = a->track_get_key_value(i, 0);
+						float c = Math::ease(p_time / first_key_time, transition);
+						Variant first_value = a->track_get_key_value(i, first_key);
 						Variant interp_value;
 						Variant::interpolate(pa->capture, first_value, c, interp_value);
 
@@ -644,7 +656,22 @@ void AnimationPlayer::_animation_process_animation(AnimationData *p_anim, float 
 							nc->audio_start = p_time;
 						}
 					} else if (nc->audio_playing) {
-						if (nc->audio_start > p_time || (nc->audio_len > 0 && p_time - nc->audio_start < nc->audio_len)) {
+
+						bool loop = a->has_loop();
+
+						bool stop = false;
+
+						if (!loop && p_time < nc->audio_start) {
+							stop = true;
+						} else if (nc->audio_len > 0) {
+							float len = nc->audio_start > p_time ? (a->get_length() - nc->audio_start) + p_time : p_time - nc->audio_start;
+
+							if (len > nc->audio_len) {
+								stop = true;
+							}
+						}
+
+						if (stop) {
 							//time to stop
 							nc->node->call("stop");
 							nc->audio_playing = false;
@@ -1323,6 +1350,7 @@ float AnimationPlayer::get_current_animation_length() const {
 void AnimationPlayer::_animation_changed() {
 
 	clear_caches();
+	emit_signal("caches_cleared");
 }
 
 void AnimationPlayer::_stop_playing_caches() {
@@ -1618,6 +1646,7 @@ void AnimationPlayer::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("animation_finished", PropertyInfo(Variant::STRING, "anim_name")));
 	ADD_SIGNAL(MethodInfo("animation_changed", PropertyInfo(Variant::STRING, "old_name"), PropertyInfo(Variant::STRING, "new_name")));
 	ADD_SIGNAL(MethodInfo("animation_started", PropertyInfo(Variant::STRING, "anim_name")));
+	ADD_SIGNAL(MethodInfo("caches_cleared"));
 
 	BIND_ENUM_CONSTANT(ANIMATION_PROCESS_PHYSICS);
 	BIND_ENUM_CONSTANT(ANIMATION_PROCESS_IDLE);
