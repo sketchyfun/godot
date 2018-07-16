@@ -50,7 +50,7 @@ void EditorPropertyText::_text_changed(const String &p_string) {
 	if (updating)
 		return;
 
-	emit_signal("property_changed", get_edited_property(), p_string);
+	emit_signal("property_changed", get_edited_property(), p_string, true);
 }
 
 void EditorPropertyText::update_property() {
@@ -78,12 +78,12 @@ EditorPropertyText::EditorPropertyText() {
 
 void EditorPropertyMultilineText::_big_text_changed() {
 	text->set_text(big_text->get_text());
-	emit_signal("property_changed", get_edited_property(), big_text->get_text());
+	emit_signal("property_changed", get_edited_property(), big_text->get_text(), true);
 }
 
 void EditorPropertyMultilineText::_text_changed() {
 
-	emit_signal("property_changed", get_edited_property(), text->get_text());
+	emit_signal("property_changed", get_edited_property(), text->get_text(), true);
 }
 
 void EditorPropertyMultilineText::_open_big_text() {
@@ -403,6 +403,10 @@ void EditorPropertyEnum::setup(const Vector<String> &p_options) {
 	for (int i = 0; i < p_options.size(); i++) {
 		options->add_item(p_options[i], i);
 	}
+}
+
+void EditorPropertyEnum::set_option_button_clip(bool p_enable) {
+	options->set_clip_text(p_enable);
 }
 
 void EditorPropertyEnum::_bind_methods() {
@@ -1522,8 +1526,15 @@ EditorPropertyColor::EditorPropertyColor() {
 
 void EditorPropertyNodePath::_node_selected(const NodePath &p_path) {
 
+	NodePath path = p_path;
 	Node *base_node = Object::cast_to<Node>(get_edited_object());
-	emit_signal("property_changed", get_edited_property(), base_node->get_path().rel_path_to(p_path));
+	if (base_node == NULL && get_edited_object()->has_method("get_root_path")) {
+		base_node = get_edited_object()->call("get_root_path");
+	}
+	if (base_node) { // for AnimationTrackKeyEdit
+		path = base_node->get_path().rel_path_to(p_path);
+	}
+	emit_signal("property_changed", get_edited_property(), path);
 	update_property();
 }
 
@@ -2259,6 +2270,10 @@ void EditorPropertyResource::drop_data_fw(const Point2 &p_point, const Variant &
 	}
 }
 
+void EditorPropertyResource::set_use_sub_inspector(bool p_enable) {
+	use_sub_inspector = p_enable;
+}
+
 void EditorPropertyResource::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_file_selected"), &EditorPropertyResource::_file_selected);
@@ -2281,7 +2296,8 @@ EditorPropertyResource::EditorPropertyResource() {
 
 	sub_inspector = NULL;
 	sub_inspector_vbox = NULL;
-	use_sub_inspector = !bool(EDITOR_GET("interface/inspector/open_resources_in_new_inspector"));
+	use_sub_inspector = bool(EDITOR_GET("interface/inspector/open_resources_in_current_inspector"));
+
 	HBoxContainer *hbc = memnew(HBoxContainer);
 	add_child(hbc);
 	assign = memnew(Button);
@@ -2684,6 +2700,22 @@ bool EditorInspectorDefaultPlugin::parse_property(Object *p_object, Variant::Typ
 		case Variant::OBJECT: {
 			EditorPropertyResource *editor = memnew(EditorPropertyResource);
 			editor->setup(p_hint == PROPERTY_HINT_RESOURCE_TYPE ? p_hint_text : "Resource");
+
+			if (p_hint == PROPERTY_HINT_RESOURCE_TYPE) {
+				String open_in_new = EDITOR_GET("interface/inspector/resources_types_to_open_in_new_inspector");
+				for (int i = 0; i < open_in_new.get_slice_count(","); i++) {
+					String type = open_in_new.get_slicec(',', i).strip_edges();
+					for (int j = 0; j < p_hint_text.get_slice_count(","); j++) {
+						String inherits = p_hint_text.get_slicec(',', j);
+
+						if (ClassDB::is_parent_class(inherits, type)) {
+
+							editor->set_use_sub_inspector(false);
+						}
+					}
+				}
+			}
+
 			add_property_editor(p_path, editor);
 
 		} break;

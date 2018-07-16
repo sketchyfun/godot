@@ -515,7 +515,11 @@ Error ProjectSettings::_load_settings_text(const String p_path) {
 				}
 			} else {
 				// config_version is checked and dropped
-				set(section + "/" + assign, value);
+				if (section == String()) {
+					set(assign, value);
+				} else {
+					set(section + "/" + assign, value);
+				}
 			}
 		} else if (next_tag.name != String()) {
 			section = next_tag.name;
@@ -868,6 +872,10 @@ void ProjectSettings::set_custom_property_info(const String &p_prop, const Prope
 	ERR_FAIL_COND(!props.has(p_prop));
 	custom_prop_info[p_prop] = p_info;
 	custom_prop_info[p_prop].name = p_prop;
+}
+
+const Map<StringName, PropertyInfo> &ProjectSettings::get_custom_property_info() const {
+	return custom_prop_info;
 }
 
 void ProjectSettings::set_disable_feature_overrides(bool p_disable) {
