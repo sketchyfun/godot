@@ -1612,6 +1612,7 @@ void main() {
 	float clearcoat_gloss=0.0;
 	float anisotropy = 1.0;
 	vec2 anisotropy_flow = vec2(1.0,0.0);
+	float shadow = 0.0;
 #if defined(USE_LIGHT_DIRECTIONAL)
 	vec3 light = -light_direction_attenuation.xyz;
 #else
@@ -1670,6 +1671,14 @@ void main() {
 
 #if defined (ENABLE_SSS)
 	float sss_strength=0.0;
+#endif
+
+#if !defined(LIGHT_USE_PSSM4) && !defined(LIGHT_USE_PSSM2) && defined(USE_LIGHT_DIRECTIONAL)
+	{ //regular orthogonal
+		highp vec4 my_splane=(shadow_matrix1 * vec4(vertex,1.0));
+		vec3 my_pssm_coord=my_splane.xyz/my_splane.w;
+		shadow = sample_shadow(directional_shadow,directional_shadow_pixel_size,my_pssm_coord.xy,my_pssm_coord.z,light_clamp);
+	}
 #endif
 
 {

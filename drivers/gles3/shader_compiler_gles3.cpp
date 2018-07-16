@@ -864,6 +864,7 @@ ShaderCompilerGLES3::ShaderCompilerGLES3() {
 	actions[VS::SHADER_SPATIAL].renames["VIEW"] = "view";
 	actions[VS::SHADER_SPATIAL].renames["LIGHT_COLOR"] = "light_color";
 	actions[VS::SHADER_SPATIAL].renames["LIGHT"] = "light";
+	actions[VS::SHADER_SPATIAL].renames["SHADOW"] = "shadow";
 	actions[VS::SHADER_SPATIAL].renames["ATTENUATION"] = "attenuation";
 	actions[VS::SHADER_SPATIAL].renames["DIFFUSE_LIGHT"] = "diffuse_light";
 	actions[VS::SHADER_SPATIAL].renames["SPECULAR_LIGHT"] = "specular_light";
