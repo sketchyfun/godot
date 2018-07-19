@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  ConsumeTask.java                                                     */
+/*  audio_stream_editor_plugin.h                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,70 +28,66 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-package org.godotengine.godot.payments;
+#ifndef AUDIO_STREAM_EDITOR_PLUGIN_H
+#define AUDIO_STREAM_EDITOR_PLUGIN_H
 
-import com.android.vending.billing.IInAppBillingService;
+#include "editor/editor_node.h"
+#include "editor/editor_plugin.h"
+#include "scene/audio/audio_player.h"
+#include "scene/gui/color_rect.h"
+#include "scene/resources/texture.h"
 
-import android.content.Context;
-import android.os.AsyncTask;
-import android.os.RemoteException;
-import android.util.Log;
+class AudioStreamEditor : public ColorRect {
 
-abstract public class ConsumeTask {
+	GDCLASS(AudioStreamEditor, ColorRect);
 
-	private Context context;
+	Ref<AudioStream> stream;
+	AudioStreamPlayer *_player;
+	ColorRect *_preview;
+	Control *_indicator;
+	Label *_current_label;
+	Label *_duration_label;
 
-	private IInAppBillingService mService;
-	public ConsumeTask(IInAppBillingService mService, Context context) {
-		this.context = context;
-		this.mService = mService;
-	}
+	ToolButton *_play_button;
+	ToolButton *_stop_button;
 
-	public void consume(final String sku) {
-		//Log.d("XXX", "Consuming product " + sku);
-		PaymentsCache pc = new PaymentsCache(context);
-		Boolean isBlocked = pc.getConsumableFlag("block", sku);
-		String _token = pc.getConsumableValue("token", sku);
-		//Log.d("XXX", "token " + _token);
-		if (!isBlocked && _token == null) {
-			//_token = "inapp:"+context.getPackageName()+":android.test.purchased";
-			//Log.d("XXX", "Consuming product " + sku + " with token " + _token);
-		} else if (!isBlocked) {
-			//Log.d("XXX", "It is not blocked ¿?");
-			return;
-		} else if (_token == null) {
-			//Log.d("XXX", "No token available");
-			this.error("No token for sku:" + sku);
-			return;
-		}
-		final String token = _token;
-		new AsyncTask<String, String, String>() {
-			@Override
-			protected String doInBackground(String... params) {
-				try {
-					//Log.d("XXX", "Requesting to release item.");
-					int response = mService.consumePurchase(3, context.getPackageName(), token);
-					//Log.d("XXX", "release response code: " + response);
-					if (response == 0 || response == 8) {
-						return null;
-					}
-				} catch (RemoteException e) {
-					return e.getMessage();
-				}
-				return "Some error";
-			}
+	float _current;
+	bool _dragging;
 
-			protected void onPostExecute(String param) {
-				if (param == null) {
-					success(new PaymentsCache(context).getConsumableValue("ticket", sku));
-				} else {
-					error(param);
-				}
-			}
-		}
-				.execute();
-	}
+protected:
+	void _notification(int p_what);
+	void _preview_changed(ObjectID p_which);
+	void _play();
+	void _stop();
+	void _on_finished();
+	void _draw_preview();
+	void _draw_indicator();
+	void _on_input_indicator(Ref<InputEvent> p_event);
+	void _seek_to(real_t p_x);
+	void _changed_callback(Object *p_changed, const char *p_prop);
+	static void _bind_methods();
 
-	abstract protected void success(String ticket);
-	abstract protected void error(String message);
-}
+public:
+	void edit(Ref<AudioStream> p_stream);
+	AudioStreamEditor();
+};
+
+class AudioStreamEditorPlugin : public EditorPlugin {
+
+	GDCLASS(AudioStreamEditorPlugin, EditorPlugin);
+
+	AudioStreamEditor *audio_editor;
+	EditorNode *editor;
+
+public:
+	virtual String get_name() const { return "Audio"; }
+	bool has_main_screen() const { return false; }
+	virtual void edit(Object *p_object);
+	virtual bool handles(Object *p_object) const;
+	virtual void make_visible(bool p_visible);
+
+	AudioStreamEditorPlugin(EditorNode *p_node);
+	~AudioStreamEditorPlugin();
+};
+
+#endif // AUDIO_STREAM_EDITOR_PLUGIN_H

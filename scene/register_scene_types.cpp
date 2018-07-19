@@ -477,10 +477,10 @@ void register_scene_types() {
 	ClassDB::register_class<VisualShaderNodeVectorLen>();
 	ClassDB::register_class<VisualShaderNodeScalarInterp>();
 	ClassDB::register_class<VisualShaderNodeVectorInterp>();
-	ClassDB::register_class<VisualShaderNodeVectorConstruct>();
-	ClassDB::register_class<VisualShaderNodeTransformConstruct>();
-	ClassDB::register_class<VisualShaderNodeVectorDestruct>();
-	ClassDB::register_class<VisualShaderNodeTransformDestruct>();
+	ClassDB::register_class<VisualShaderNodeVectorCompose>();
+	ClassDB::register_class<VisualShaderNodeTransformCompose>();
+	ClassDB::register_class<VisualShaderNodeVectorDecompose>();
+	ClassDB::register_class<VisualShaderNodeTransformDecompose>();
 	ClassDB::register_class<VisualShaderNodeTexture>();
 	ClassDB::register_class<VisualShaderNodeCubeMap>();
 	ClassDB::register_virtual_class<VisualShaderNodeUniform>();
@@ -603,6 +603,7 @@ void register_scene_types() {
 	ClassDB::register_class<CurveTexture>();
 	ClassDB::register_class<GradientTexture>();
 	ClassDB::register_class<ProxyTexture>();
+	ClassDB::register_class<AnimatedTexture>();
 	ClassDB::register_class<CubeMap>();
 	ClassDB::register_class<Animation>();
 	ClassDB::register_virtual_class<Font>();
