@@ -155,7 +155,7 @@ Error AudioDriverPulseAudio::init_device() {
 			break;
 	}
 
-	int latency = GLOBAL_DEF("audio/output_latency", DEFAULT_OUTPUT_LATENCY);
+	int latency = GLOBAL_DEF_RST("audio/output_latency", DEFAULT_OUTPUT_LATENCY);
 	buffer_frames = closest_power_of_2(latency * mix_rate / 1000);
 	pa_buffer_size = buffer_frames * pa_map.channels;
 
@@ -204,7 +204,7 @@ Error AudioDriverPulseAudio::init() {
 	thread_exited = false;
 	exit_thread = false;
 
-	mix_rate = GLOBAL_DEF("audio/mix_rate", DEFAULT_MIX_RATE);
+	mix_rate = GLOBAL_DEF_RST("audio/mix_rate", DEFAULT_MIX_RATE);
 
 	pa_ml = pa_mainloop_new();
 	ERR_FAIL_COND_V(pa_ml == NULL, ERR_CANT_OPEN);
@@ -403,7 +403,6 @@ AudioDriver::SpeakerMode AudioDriverPulseAudio::get_speaker_mode() const {
 
 void AudioDriverPulseAudio::pa_sinklist_cb(pa_context *c, const pa_sink_info *l, int eol, void *userdata) {
 	AudioDriverPulseAudio *ad = (AudioDriverPulseAudio *)userdata;
-	int ctr = 0;
 
 	// If eol is set to a positive number, you're at the end of the list
 	if (eol > 0) {

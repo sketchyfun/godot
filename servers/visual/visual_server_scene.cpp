@@ -820,6 +820,11 @@ void VisualServerScene::instance_geometry_set_flag(RID p_instance, VS::InstanceF
 			instance->baked_light = p_enabled;
 
 		} break;
+		case VS::INSTANCE_FLAG_REDRAW_FRAME_IF_VISIBLE: {
+
+			instance->redraw_if_visible = p_enabled;
+
+		} break;
 	}
 }
 void VisualServerScene::instance_geometry_set_cast_shadows_setting(RID p_instance, VS::ShadowCastingSetting p_shadow_casting_setting) {
@@ -1644,7 +1649,8 @@ void VisualServerScene::_light_instance_update_shadow(Instance *p_instance, cons
 }
 
 void VisualServerScene::render_camera(RID p_camera, RID p_scenario, Size2 p_viewport_size, RID p_shadow_atlas) {
-	// render to mono camera
+// render to mono camera
+#ifndef _3D_DISABLED
 
 	Camera *camera = camera_owner.getornull(p_camera);
 	ERR_FAIL_COND(!camera);
@@ -1679,6 +1685,7 @@ void VisualServerScene::render_camera(RID p_camera, RID p_scenario, Size2 p_view
 
 	_prepare_scene(camera->transform, camera_matrix, ortho, camera->env, camera->visible_layers, p_scenario, p_shadow_atlas, RID());
 	_render_scene(camera->transform, camera_matrix, ortho, camera->env, p_scenario, p_shadow_atlas, RID(), -1);
+#endif
 }
 
 void VisualServerScene::render_camera(Ref<ARVRInterface> &p_interface, ARVRInterface::Eyes p_eye, RID p_camera, RID p_scenario, Size2 p_viewport_size, RID p_shadow_atlas) {
@@ -1870,6 +1877,10 @@ void VisualServerScene::_prepare_scene(const Transform p_cam_transform, const Ca
 			keep = true;
 
 			InstanceGeometryData *geom = static_cast<InstanceGeometryData *>(ins->base_data);
+
+			if (ins->redraw_if_visible) {
+				VisualServerRaster::redraw_request();
+			}
 
 			if (ins->base_type == VS::INSTANCE_PARTICLES) {
 				//particles visible? process them
@@ -2102,6 +2113,8 @@ void VisualServerScene::_render_scene(const Transform p_cam_transform, const Cam
 
 void VisualServerScene::render_empty_scene(RID p_scenario, RID p_shadow_atlas) {
 
+#ifndef _3D_DISABLED
+
 	Scenario *scenario = scenario_owner.getornull(p_scenario);
 
 	RID environment;
@@ -2110,6 +2123,7 @@ void VisualServerScene::render_empty_scene(RID p_scenario, RID p_shadow_atlas) {
 	else
 		environment = scenario->fallback_environment;
 	VSG::scene_render->render_scene(Transform(), CameraMatrix(), true, NULL, 0, NULL, 0, NULL, 0, environment, p_shadow_atlas, scenario->reflection_atlas, RID(), 0);
+#endif
 }
 
 bool VisualServerScene::_render_reflection_probe_step(Instance *p_instance, int p_step) {

@@ -290,6 +290,7 @@ void TextEdit::Text::insert(int p_at, const String &p_text) {
 
 	Line line;
 	line.marked = false;
+	line.safe = false;
 	line.breakpoint = false;
 	line.hidden = false;
 	line.width_cache = -1;
@@ -335,10 +336,6 @@ void TextEdit::_update_scrollbars() {
 
 	int hscroll_rows = ((hmin.height - 1) / get_row_height()) + 1;
 	int visible_rows = get_visible_rows();
-
-	int first_vis_line = get_first_visible_line();
-	int wi;
-	int num_rows = MAX(visible_rows, num_lines_from_rows(first_vis_line, cursor.wrap_ofs, visible_rows, wi));
 
 	int total_rows = get_total_visible_rows();
 	if (scroll_past_end_of_file_enabled) {
@@ -972,7 +969,7 @@ void TextEdit::_notification(int p_what) {
 								fc = line_num_padding + fc;
 							}
 
-							cache.font->draw(ci, Point2(cache.style_normal->get_margin(MARGIN_LEFT) + cache.breakpoint_gutter_width + ofs_x, yofs + cache.font->get_ascent()), fc, cache.line_number_color);
+							cache.font->draw(ci, Point2(cache.style_normal->get_margin(MARGIN_LEFT) + cache.breakpoint_gutter_width + ofs_x, yofs + cache.font->get_ascent()), fc, text.is_safe(line) ? cache.safe_line_number_color : cache.line_number_color);
 						}
 					}
 
@@ -1672,7 +1669,6 @@ void TextEdit::_get_mouse_pos(const Point2i &p_mouse, int &r_row, int &r_col) co
 	rows /= get_row_height();
 	rows += get_v_scroll_offset();
 	int first_vis_line = get_first_visible_line();
-	int last_vis_line = get_last_visible_line();
 	int row = first_vis_line + Math::floor(rows);
 	int wrap_index = 0;
 
@@ -3799,7 +3795,6 @@ Vector<String> TextEdit::get_wrap_rows_text(int p_line) const {
 	}
 	// line ends before hit wrap_at; add this word to the substring
 	wrap_substring += word_str;
-	px += word_px;
 	lines.push_back(wrap_substring);
 	return lines;
 }
@@ -4314,6 +4309,7 @@ void TextEdit::_update_caches() {
 	cache.caret_color = get_color("caret_color");
 	cache.caret_background_color = get_color("caret_background_color");
 	cache.line_number_color = get_color("line_number_color");
+	cache.safe_line_number_color = get_color("safe_line_number_color");
 	cache.font_color = get_color("font_color");
 	cache.font_selected_color = get_color("font_selected_color");
 	cache.keyword_color = get_color("keyword_color");
@@ -4883,6 +4879,17 @@ void TextEdit::set_line_as_marked(int p_line, bool p_marked) {
 	ERR_FAIL_INDEX(p_line, text.size());
 	text.set_marked(p_line, p_marked);
 	update();
+}
+
+void TextEdit::set_line_as_safe(int p_line, bool p_safe) {
+	ERR_FAIL_INDEX(p_line, text.size());
+	text.set_safe(p_line, p_safe);
+	update();
+}
+
+bool TextEdit::is_line_set_as_safe(int p_line) const {
+	ERR_FAIL_INDEX_V(p_line, text.size(), false);
+	return text.is_safe(p_line);
 }
 
 bool TextEdit::is_line_set_as_breakpoint(int p_line) const {
@@ -5506,9 +5513,8 @@ int TextEdit::get_last_visible_line() const {
 int TextEdit::get_last_visible_line_wrap_index() const {
 
 	int first_vis_line = get_first_visible_line();
-	int last_vis_line = 0;
 	int wi;
-	last_vis_line = first_vis_line + num_lines_from_rows(first_vis_line, cursor.wrap_ofs, get_visible_rows() + 1, wi) - 1;
+	num_lines_from_rows(first_vis_line, cursor.wrap_ofs, get_visible_rows() + 1, wi);
 	return wi;
 }
 
