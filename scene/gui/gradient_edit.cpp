@@ -89,7 +89,10 @@ void GradientEdit::_gui_input(const Ref<InputEvent> &p_event) {
 	if (mb.is_valid() && mb->get_button_index() == 1 && mb->is_doubleclick() && mb->is_pressed()) {
 		grabbed = _get_point_from_pos(mb->get_position().x);
 		_show_color_picker();
+		update();
+		emit_signal("ramp_changed");
 		accept_event();
+		return;
 	}
 
 	//Delete point on right click
@@ -146,57 +149,56 @@ void GradientEdit::_gui_input(const Ref<InputEvent> &p_event) {
 
 		grabbed = _get_point_from_pos(x);
 		//grab or select
-		if (grabbed != -1) {
+		if (grabbed == -1) {
 			grabbed = false;
-			return;
-		}
 
-		//insert
-		Gradient::Point newPoint;
-		newPoint.offset = CLAMP(x / float(total_w), 0, 1);
+			//insert
+			Gradient::Point newPoint;
+			newPoint.offset = CLAMP(x / float(total_w), 0, 1);
 
-		Gradient::Point prev;
-		Gradient::Point next;
+			Gradient::Point prev;
+			Gradient::Point next;
 
-		int pos = -1;
-		for (int i = 0; i < points.size(); i++) {
-			if (points[i].offset < newPoint.offset)
-				pos = i;
-		}
+			int pos = -1;
+			for (int i = 0; i < points.size(); i++) {
+				if (points[i].offset < newPoint.offset)
+					pos = i;
+			}
 
-		if (pos == -1) {
+			if (pos == -1) {
 
-			prev.color = Color(0, 0, 0);
-			prev.offset = 0;
-			if (points.size()) {
-				next = points[0];
+				prev.color = Color(0, 0, 0);
+				prev.offset = 0;
+				if (points.size()) {
+					next = points[0];
+				} else {
+					next.color = Color(1, 1, 1);
+					next.offset = 1.0;
+				}
 			} else {
-				next.color = Color(1, 1, 1);
-				next.offset = 1.0;
-			}
-		} else {
 
-			if (pos == points.size() - 1) {
-				next.color = Color(1, 1, 1);
-				next.offset = 1.0;
-			} else {
-				next = points[pos + 1];
+				if (pos == points.size() - 1) {
+					next.color = Color(1, 1, 1);
+					next.offset = 1.0;
+				} else {
+					next = points[pos + 1];
+				}
+				prev = points[pos];
 			}
-			prev = points[pos];
+
+			newPoint.color = prev.color.linear_interpolate(next.color, (newPoint.offset - prev.offset) / (next.offset - prev.offset));
+
+			points.push_back(newPoint);
+			points.sort();
+			for (int i = 0; i < points.size(); i++) {
+				if (points[i].offset == newPoint.offset) {
+					grabbed = i;
+					break;
+				}
+			}
+
+			emit_signal("ramp_changed");
 		}
-
-		newPoint.color = prev.color.linear_interpolate(next.color, (newPoint.offset - prev.offset) / (next.offset - prev.offset));
-
-		points.push_back(newPoint);
-		points.sort();
-		for (int i = 0; i < points.size(); i++) {
-			if (points[i].offset == newPoint.offset) {
-				grabbed = i;
-				break;
-			}
-		}
-
-		emit_signal("ramp_changed");
 	}
 
 	if (mb.is_valid() && mb->get_button_index() == 1 && !mb->is_pressed()) {
