@@ -47,6 +47,8 @@
 #include "os/dir_access.h"
 #include "os/thread.h"
 
+#include "create_dialog.h"
+
 #include "dependency_editor.h"
 #include "editor_dir_dialog.h"
 #include "editor_file_system.h"
@@ -58,12 +60,18 @@ class FileSystemDock : public VBoxContainer {
 	GDCLASS(FileSystemDock, VBoxContainer);
 
 public:
-	enum DisplayMode {
-		DISPLAY_THUMBNAILS,
-		DISPLAY_LIST
+	enum FileListDisplayMode {
+		FILE_LIST_DISPLAY_THUMBNAILS,
+		FILE_LIST_DISPLAY_LIST
 	};
 
 private:
+	enum DisplayMode {
+		DISPLAY_TREE_ONLY,
+		DISPLAY_FILE_LIST_ONLY,
+		DISPLAY_SPLIT,
+	};
+
 	enum FileMenu {
 		FILE_OPEN,
 		FILE_INSTANCE,
@@ -78,7 +86,8 @@ private:
 		FILE_NEW_FOLDER,
 		FILE_NEW_SCRIPT,
 		FILE_SHOW_IN_EXPLORER,
-		FILE_COPY_PATH
+		FILE_COPY_PATH,
+		FILE_NEW_RESOURCE
 	};
 
 	enum FolderMenu {
@@ -103,7 +112,7 @@ private:
 	Button *button_reload;
 	Button *button_favorite;
 	Button *button_tree;
-	Button *button_display_mode;
+	Button *button_file_list_display_mode;
 	Button *button_hist_next;
 	Button *button_hist_prev;
 	Button *button_show;
@@ -112,8 +121,9 @@ private:
 	TextureRect *search_icon;
 	HBoxContainer *path_hb;
 
-	bool low_height_mode;
+	FileListDisplayMode file_list_display_mode;
 	DisplayMode display_mode;
+	bool file_list_view;
 
 	PopupMenu *file_options;
 	PopupMenu *folder_options;
@@ -131,6 +141,7 @@ private:
 	LineEdit *make_dir_dialog_text;
 	ConfirmationDialog *overwrite_dialog;
 	ScriptCreateDialog *make_script_dialog_text;
+	CreateDialog *new_resource_dialog;
 
 	class FileOrFolder {
 	public:
@@ -168,7 +179,7 @@ private:
 	void _files_gui_input(Ref<InputEvent> p_event);
 
 	void _update_files(bool p_keep_selection);
-	void _update_file_display_toggle_button();
+	void _update_file_list_display_mode_button();
 	void _change_file_display();
 	void _fs_changed();
 
@@ -191,6 +202,7 @@ private:
 	void _update_favorite_dirs_list_after_move(const Map<String, String> &p_renames) const;
 	void _update_project_settings_after_move(const Map<String, String> &p_renames) const;
 
+	void _resource_created() const;
 	void _make_dir_confirm();
 	void _rename_operation_confirm();
 	void _duplicate_operation_confirm();
@@ -240,6 +252,8 @@ private:
 	void _preview_invalidated(const String &p_path);
 	void _thumbnail_done(const String &p_path, const Ref<Texture> &p_preview, const Variant &p_udata);
 
+	void _update_display_mode();
+
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
@@ -253,7 +267,7 @@ public:
 
 	void fix_dependencies(const String &p_for_file);
 
-	void set_display_mode(int p_mode);
+	void set_file_list_display_mode(int p_mode);
 
 	int get_split_offset() { return split_box->get_split_offset(); }
 	void set_split_offset(int p_offset) { split_box->set_split_offset(p_offset); }

@@ -342,6 +342,10 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 
 	AudioDriverManager::initialize(p_audio_driver);
 
+#ifdef ALSAMIDI_ENABLED
+	driver_alsamidi.open();
+#endif
+
 	ERR_FAIL_COND_V(!visual_server, ERR_UNAVAILABLE);
 	ERR_FAIL_COND_V(x11_window == 0, ERR_UNAVAILABLE);
 
@@ -606,6 +610,9 @@ void OS_X11::finalize() {
 		memdelete(debugger_connection_console);
 	}
 	*/
+#ifdef ALSAMIDI_ENABLED
+	driver_alsamidi.close();
+#endif
 
 #ifdef JOYDEV_ENABLED
 	memdelete(joypad);
@@ -1831,8 +1838,8 @@ void OS_X11::process_xevents() {
 							GrabModeAsync, GrabModeAsync, x11_window, None, CurrentTime);
 				}
 #ifdef TOUCH_ENABLED
-					// Grab touch devices to avoid OS gesture interference
-					/*for (int i = 0; i < touch.devices.size(); ++i) {
+				// Grab touch devices to avoid OS gesture interference
+				/*for (int i = 0; i < touch.devices.size(); ++i) {
 					XIGrabDevice(x11_display, touch.devices[i], x11_window, CurrentTime, None, XIGrabModeAsync, XIGrabModeAsync, False, &touch.event_mask);
 				}*/
 #endif
@@ -2098,7 +2105,7 @@ void OS_X11::process_xevents() {
 
 					Vector<String> files = String((char *)p.data).split("\n", false);
 					for (int i = 0; i < files.size(); i++) {
-						files[i] = files[i].replace("file://", "").replace("%20", " ").strip_escapes();
+						files.write[i] = files[i].replace("file://", "").replace("%20", " ").strip_escapes();
 					}
 					main_loop->drop_files(files);
 
@@ -2580,12 +2587,12 @@ void OS_X11::set_icon(const Ref<Image> &p_icon) {
 
 		pd.resize(2 + w * h);
 
-		pd[0] = w;
-		pd[1] = h;
+		pd.write[0] = w;
+		pd.write[1] = h;
 
 		PoolVector<uint8_t>::Read r = img->get_data().read();
 
-		long *wr = &pd[2];
+		long *wr = &pd.write[2];
 		uint8_t const *pr = r.ptr();
 
 		for (int i = 0; i < w * h; i++) {

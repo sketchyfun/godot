@@ -64,6 +64,11 @@ namespace Godot
             return ResourceLoader.Load(path);
         }
 
+        public static T Load<T>(string path) where T : Godot.Resource
+        {
+            return (T) ResourceLoader.Load(path);
+        }
+
         public static void Print(params object[] what)
         {
             NativeCalls.godot_icall_Godot_print(what);
@@ -186,11 +191,6 @@ namespace Godot
         public static string Var2Str(object var)
         {
             return NativeCalls.godot_icall_Godot_var2str(var);
-        }
-
-        public static WeakRef WeakRef(Object obj)
-        {
-            return NativeCalls.godot_icall_Godot_weakref(Object.GetPtr(obj));
         }
     }
 }

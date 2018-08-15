@@ -554,42 +554,12 @@ BulletPhysicsDirectSpaceState *SpaceBullet::get_direct_state() {
 
 btScalar calculateGodotCombinedRestitution(const btCollisionObject *body0, const btCollisionObject *body1) {
 
-	const PhysicsServer::CombineMode cm = static_cast<RigidBodyBullet *>(body0->getUserPointer())->get_restitution_combine_mode();
-
-	switch (cm) {
-		case PhysicsServer::COMBINE_MODE_INHERIT:
-			if (static_cast<RigidBodyBullet *>(body1->getUserPointer())->get_restitution_combine_mode() != PhysicsServer::COMBINE_MODE_INHERIT)
-				return calculateGodotCombinedRestitution(body1, body0);
-			// else use MAX [This is used when the two bodies doesn't use physical material]
-		case PhysicsServer::COMBINE_MODE_MAX:
-			return MAX(body0->getRestitution(), body1->getRestitution());
-		case PhysicsServer::COMBINE_MODE_MIN:
-			return MIN(body0->getRestitution(), body1->getRestitution());
-		case PhysicsServer::COMBINE_MODE_MULTIPLY:
-			return body0->getRestitution() * body1->getRestitution();
-		default: // Is always PhysicsServer::COMBINE_MODE_AVERAGE:
-			return (body0->getRestitution() + body1->getRestitution()) / 2;
-	}
+	return CLAMP(body0->getRestitution() + body1->getRestitution(), 0, 1);
 }
 
 btScalar calculateGodotCombinedFriction(const btCollisionObject *body0, const btCollisionObject *body1) {
 
-	const PhysicsServer::CombineMode cm = static_cast<RigidBodyBullet *>(body0->getUserPointer())->get_friction_combine_mode();
-
-	switch (cm) {
-		case PhysicsServer::COMBINE_MODE_INHERIT:
-			if (static_cast<RigidBodyBullet *>(body1->getUserPointer())->get_friction_combine_mode() != PhysicsServer::COMBINE_MODE_INHERIT)
-				return calculateGodotCombinedFriction(body1, body0);
-			// else use MULTIPLY [This is used when the two bodies doesn't use physical material]
-		case PhysicsServer::COMBINE_MODE_MULTIPLY:
-			return body0->getFriction() * body1->getFriction();
-		case PhysicsServer::COMBINE_MODE_MAX:
-			return MAX(body0->getFriction(), body1->getFriction());
-		case PhysicsServer::COMBINE_MODE_MIN:
-			return MIN(body0->getFriction(), body1->getFriction());
-		default: // Is always PhysicsServer::COMBINE_MODE_AVERAGE:
-			return (body0->getFriction() * body1->getFriction()) / 2;
-	}
+	return ABS(MIN(body0->getFriction(), body1->getFriction()));
 }
 
 void SpaceBullet::create_empty_world(bool p_create_soft_world) {
@@ -686,7 +656,7 @@ void SpaceBullet::check_ghost_overlaps() {
 
 		/// 1. Reset all states
 		for (i = area->overlappingObjects.size() - 1; 0 <= i; --i) {
-			AreaBullet::OverlappingObjectData &otherObj = area->overlappingObjects[i];
+			AreaBullet::OverlappingObjectData &otherObj = area->overlappingObjects.write[i];
 			// This check prevent the overwrite of ENTER state
 			// if this function is called more times before dispatchCallbacks
 			if (otherObj.state != AreaBullet::OVERLAP_STATE_ENTER) {
@@ -795,19 +765,20 @@ void SpaceBullet::check_body_collision() {
 				Vector3 collisionWorldPosition;
 				Vector3 collisionLocalPosition;
 				Vector3 normalOnB;
+				float appliedImpulse = pt.m_appliedImpulse;
 				B_TO_G(pt.m_normalWorldOnB, normalOnB);
 
 				if (bodyA->can_add_collision()) {
 					B_TO_G(pt.getPositionWorldOnB(), collisionWorldPosition);
 					/// pt.m_localPointB Doesn't report the exact point in local space
 					B_TO_G(pt.getPositionWorldOnB() - contactManifold->getBody1()->getWorldTransform().getOrigin(), collisionLocalPosition);
-					bodyA->add_collision_object(bodyB, collisionWorldPosition, collisionLocalPosition, normalOnB, pt.m_index1, pt.m_index0);
+					bodyA->add_collision_object(bodyB, collisionWorldPosition, collisionLocalPosition, normalOnB, appliedImpulse, pt.m_index1, pt.m_index0);
 				}
 				if (bodyB->can_add_collision()) {
 					B_TO_G(pt.getPositionWorldOnA(), collisionWorldPosition);
 					/// pt.m_localPointA Doesn't report the exact point in local space
 					B_TO_G(pt.getPositionWorldOnA() - contactManifold->getBody0()->getWorldTransform().getOrigin(), collisionLocalPosition);
-					bodyB->add_collision_object(bodyA, collisionWorldPosition, collisionLocalPosition, normalOnB * -1, pt.m_index0, pt.m_index1);
+					bodyB->add_collision_object(bodyA, collisionWorldPosition, collisionLocalPosition, normalOnB * -1, appliedImpulse * -1, pt.m_index0, pt.m_index1);
 				}
 
 #ifdef DEBUG_ENABLED

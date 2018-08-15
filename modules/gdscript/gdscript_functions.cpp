@@ -1098,7 +1098,7 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 
 			for (Map<StringName, GDScript::MemberInfo>::Element *E = gd_ref->member_indices.front(); E; E = E->next()) {
 				if (d.has(E->key())) {
-					ins->members[E->get().index] = d[E->key()];
+					ins->members.write[E->get().index] = d[E->key()];
 				}
 			}
 
@@ -1412,7 +1412,7 @@ bool GDScriptFunctions::is_deterministic(Function p_func) {
 
 MethodInfo GDScriptFunctions::get_info(Function p_func) {
 
-#ifdef TOOLS_ENABLED
+#ifdef DEBUG_ENABLED
 	//using a switch, so the compiler generates a jumptable
 
 	switch (p_func) {

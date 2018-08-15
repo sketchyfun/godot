@@ -240,7 +240,7 @@ void Node::_propagate_enter_tree() {
 
 void Node::_propagate_exit_tree() {
 
-	//block while removing children
+//block while removing children
 
 #ifdef DEBUG_ENABLED
 
@@ -723,6 +723,17 @@ const Map<StringName, MultiplayerAPI::RPCMode>::Element *Node::get_node_rpc_mode
 
 const Map<StringName, MultiplayerAPI::RPCMode>::Element *Node::get_node_rset_mode(const StringName &p_property) {
 	return data.rpc_properties.find(p_property);
+}
+
+bool Node::can_process_notification(int p_what) const {
+	switch (p_what) {
+		case NOTIFICATION_PHYSICS_PROCESS: return data.physics_process;
+		case NOTIFICATION_PROCESS: return data.idle_process;
+		case NOTIFICATION_INTERNAL_PROCESS: return data.idle_process_internal;
+		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: return data.physics_process_internal;
+	}
+
+	return true;
 }
 
 bool Node::can_process() const {
@@ -1402,11 +1413,6 @@ bool Node::is_greater_than(const Node *p_node) const {
 	}
 
 	return res;
-}
-
-bool Node::has_priority_higher_than(const Node *p_node) const {
-	ERR_FAIL_NULL_V(p_node, false);
-	return data.process_priority > p_node->data.process_priority;
 }
 
 void Node::get_owned_by(Node *p_by, List<Node *> *p_owned) {
@@ -2549,6 +2555,9 @@ void Node::clear_internal_tree_resource_paths() {
 
 String Node::get_configuration_warning() const {
 
+	if (get_script_instance()) {
+		return get_script_instance()->call("_get_configuration_warning");
+	}
 	return String();
 }
 
@@ -2757,6 +2766,7 @@ void Node::_bind_methods() {
 	BIND_VMETHOD(MethodInfo("_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	BIND_VMETHOD(MethodInfo("_unhandled_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	BIND_VMETHOD(MethodInfo("_unhandled_key_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEventKey")));
+	BIND_VMETHOD(MethodInfo(Variant::STRING, "_get_configuration_warning"));
 
 	//ClassDB::bind_method(D_METHOD("get_child",&Node::get_child,PH("index")));
 	//ClassDB::bind_method(D_METHOD("get_node",&Node::get_node,PH("path")));

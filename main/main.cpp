@@ -265,7 +265,7 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -s, --script <script>            Run a script.\n");
 	OS::get_singleton()->print("  --check-only                     Only parse for errors and quit (use with --script).\n");
 #ifdef TOOLS_ENABLED
-	OS::get_singleton()->print("  --export <target>                Export the project using the given export target. Export only main pack if path ends with .pck or .zip'.\n");
+	OS::get_singleton()->print("  --export <target>                Export the project using the given export target. Export only main pack if path ends with .pck or .zip.\n");
 	OS::get_singleton()->print("  --export-debug <target>          Like --export, but use debug template.\n");
 	OS::get_singleton()->print("  --doctool <path>                 Dump the engine API reference to the given <path> in XML format, merging if existing files are found.\n");
 	OS::get_singleton()->print("  --no-docbase                     Disallow dumping the base types (used with --doctool).\n");
@@ -1257,14 +1257,14 @@ bool Main::start() {
 #endif
 		} else if (args[i].length() && args[i][0] != '-' && game_path == "") {
 			game_path = args[i];
+		} else if (args[i] == "--check-only") {
+			check_only = true;
 		}
 		//parameters that have an argument to the right
 		else if (i < (args.size() - 1)) {
 			bool parsed_pair = true;
 			if (args[i] == "-s" || args[i] == "--script") {
 				script = args[i + 1];
-			} else if (args[i] == "--check-only") {
-				check_only = true;
 			} else if (args[i] == "--test") {
 				test = args[i + 1];
 #ifdef TOOLS_ENABLED
@@ -1734,8 +1734,11 @@ bool Main::iteration() {
 	int physics_fps = Engine::get_singleton()->get_iterations_per_second();
 	float frame_slice = 1.0 / physics_fps;
 
+	float time_scale = Engine::get_singleton()->get_time_scale();
+
 	MainFrameTime advance = main_timer_sync.advance(frame_slice, physics_fps);
 	double step = advance.idle_step;
+	double scaled_step = step * time_scale;
 
 	Engine::get_singleton()->_frame_step = step;
 
@@ -1756,8 +1759,6 @@ bool Main::iteration() {
 		step -= (advance.physics_steps - max_physics_steps) * frame_slice;
 		advance.physics_steps = max_physics_steps;
 	}
-
-	float time_scale = Engine::get_singleton()->get_time_scale();
 
 	bool exit = false;
 
@@ -1805,11 +1806,11 @@ bool Main::iteration() {
 
 		if ((!force_redraw_requested) && OS::get_singleton()->is_in_low_processor_usage_mode()) {
 			if (VisualServer::get_singleton()->has_changed()) {
-				VisualServer::get_singleton()->draw(); // flush visual commands
+				VisualServer::get_singleton()->draw(true, scaled_step); // flush visual commands
 				Engine::get_singleton()->frames_drawn++;
 			}
 		} else {
-			VisualServer::get_singleton()->draw(); // flush visual commands
+			VisualServer::get_singleton()->draw(true, scaled_step); // flush visual commands
 			Engine::get_singleton()->frames_drawn++;
 			force_redraw_requested = false;
 		}

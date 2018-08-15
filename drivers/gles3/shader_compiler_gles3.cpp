@@ -341,6 +341,7 @@ String ShaderCompilerGLES3::_dump_node_code(SL::Node *p_node, int p_level, Gener
 
 			r_gen_code.texture_uniforms.resize(max_texture_uniforms);
 			r_gen_code.texture_hints.resize(max_texture_uniforms);
+			r_gen_code.texture_types.resize(max_texture_uniforms);
 
 			Vector<int> uniform_sizes;
 			Vector<int> uniform_alignments;
@@ -365,17 +366,18 @@ String ShaderCompilerGLES3::_dump_node_code(SL::Node *p_node, int p_level, Gener
 				if (SL::is_sampler_type(E->get().type)) {
 					r_gen_code.vertex_global += ucode;
 					r_gen_code.fragment_global += ucode;
-					r_gen_code.texture_uniforms[E->get().texture_order] = _mkid(E->key());
-					r_gen_code.texture_hints[E->get().texture_order] = E->get().hint;
+					r_gen_code.texture_uniforms.write[E->get().texture_order] = _mkid(E->key());
+					r_gen_code.texture_hints.write[E->get().texture_order] = E->get().hint;
+					r_gen_code.texture_types.write[E->get().texture_order] = E->get().type;
 				} else {
 					if (!uses_uniforms) {
 
 						r_gen_code.defines.push_back(String("#define USE_MATERIAL\n").ascii());
 						uses_uniforms = true;
 					}
-					uniform_defines[E->get().order] = ucode;
-					uniform_sizes[E->get().order] = _get_datatype_size(E->get().type);
-					uniform_alignments[E->get().order] = _get_datatype_alignment(E->get().type);
+					uniform_defines.write[E->get().order] = ucode;
+					uniform_sizes.write[E->get().order] = _get_datatype_size(E->get().type);
+					uniform_alignments.write[E->get().order] = _get_datatype_alignment(E->get().type);
 				}
 
 				p_actions.uniforms->insert(E->key(), E->get());
@@ -699,6 +701,11 @@ String ShaderCompilerGLES3::_dump_node_code(SL::Node *p_node, int p_level, Gener
 					code = "return;";
 				}
 			} else if (cfnode->flow_op == SL::FLOW_OP_DISCARD) {
+
+				if (p_actions.usage_flag_pointers.has("DISCARD") && !used_flag_pointers.has("DISCARD")) {
+					*p_actions.usage_flag_pointers["DISCARD"] = true;
+					used_flag_pointers.insert("DISCARD");
+				}
 
 				code = "discard;";
 			} else if (cfnode->flow_op == SL::FLOW_OP_CONTINUE) {

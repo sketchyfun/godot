@@ -40,9 +40,7 @@ String GDMonoClass::get_full_name(MonoClass *p_mono_class) {
 	MonoReflectionType *type_obj = mono_type_get_object(mono_domain_get(), get_mono_type(p_mono_class));
 
 	MonoException *exc = NULL;
-	GD_MONO_BEGIN_RUNTIME_INVOKE;
-	MonoString *str = mono_object_to_string((MonoObject *)type_obj, (MonoObject **)&exc);
-	GD_MONO_END_RUNTIME_INVOKE;
+	MonoString *str = GDMonoUtils::object_to_string((MonoObject *)type_obj, &exc);
 	UNLIKELY_UNHANDLED_EXCEPTION(exc);
 
 	return GDMonoMarshal::mono_string_to_godot(str);
@@ -322,6 +320,12 @@ GDMonoMethod *GDMonoClass::get_method_with_desc(const String &p_description, boo
 	return get_method(method);
 }
 
+void *GDMonoClass::get_method_thunk(const StringName &p_name, int p_params_count) {
+
+	GDMonoMethod *method = get_method(p_name, p_params_count);
+	return method ? method->get_thunk() : NULL;
+}
+
 GDMonoField *GDMonoClass::get_field(const StringName &p_name) {
 
 	Map<StringName, GDMonoField *>::Element *result = fields.find(p_name);
@@ -497,7 +501,7 @@ GDMonoClass::~GDMonoClass() {
 					}
 				}
 
-				deleted_methods[offset] = method;
+				deleted_methods.write[offset] = method;
 				++offset;
 
 				memdelete(method);

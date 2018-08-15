@@ -66,6 +66,7 @@ public:
 	virtual void add_central_force(const Vector3 &p_force) = 0;
 	virtual void add_force(const Vector3 &p_force, const Vector3 &p_pos) = 0;
 	virtual void add_torque(const Vector3 &p_torque) = 0;
+	virtual void apply_central_impulse(const Vector3 &p_j) = 0;
 	virtual void apply_impulse(const Vector3 &p_pos, const Vector3 &p_j) = 0;
 	virtual void apply_torque_impulse(const Vector3 &p_j) = 0;
 
@@ -76,6 +77,7 @@ public:
 
 	virtual Vector3 get_contact_local_position(int p_contact_idx) const = 0;
 	virtual Vector3 get_contact_local_normal(int p_contact_idx) const = 0;
+	virtual float get_contact_impulse(int p_contact_idx) const = 0;
 	virtual int get_contact_local_shape(int p_contact_idx) const = 0;
 
 	virtual RID get_contact_collider(int p_contact_idx) const = 0;
@@ -399,19 +401,6 @@ public:
 	virtual void body_set_param(RID p_body, BodyParameter p_param, float p_value) = 0;
 	virtual float body_get_param(RID p_body, BodyParameter p_param) const = 0;
 
-	enum CombineMode {
-		COMBINE_MODE_MAX,
-		COMBINE_MODE_MIN,
-		COMBINE_MODE_MULTIPLY,
-		COMBINE_MODE_AVERAGE,
-
-		COMBINE_MODE_INHERIT /// Inherit from other body or use COMBINE_MODE_MAX (Restitution) COMBINE_MODE_MULTIPLY (Friction)
-	};
-
-	/// p_param accept only Bounce and Friction
-	virtual void body_set_combine_mode(RID p_body, BodyParameter p_param, CombineMode p_mode) = 0;
-	virtual CombineMode body_get_combine_mode(RID p_body, BodyParameter p_param) const = 0;
-
 	virtual void body_set_kinematic_safe_margin(RID p_body, real_t p_margin) = 0;
 	virtual real_t body_get_kinematic_safe_margin(RID p_body) const = 0;
 
@@ -434,6 +423,11 @@ public:
 	virtual void body_set_applied_torque(RID p_body, const Vector3 &p_torque) = 0;
 	virtual Vector3 body_get_applied_torque(RID p_body) const = 0;
 
+	virtual void body_add_central_force(RID p_body, const Vector3 &p_force) = 0;
+	virtual void body_add_force(RID p_body, const Vector3 &p_force, const Vector3 &p_pos) = 0;
+	virtual void body_add_torque(RID p_body, const Vector3 &p_torque) = 0;
+
+	virtual void body_apply_central_impulse(RID p_body, const Vector3 &p_impulse) = 0;
 	virtual void body_apply_impulse(RID p_body, const Vector3 &p_pos, const Vector3 &p_impulse) = 0;
 	virtual void body_apply_torque_impulse(RID p_body, const Vector3 &p_impulse) = 0;
 	virtual void body_set_axis_velocity(RID p_body, const Vector3 &p_axis_velocity) = 0;

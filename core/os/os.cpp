@@ -33,6 +33,7 @@
 #include "dir_access.h"
 #include "input.h"
 #include "os/file_access.h"
+#include "os/midi_driver.h"
 #include "project_settings.h"
 #include "servers/audio_server.h"
 #include "version_generated.gen.h"
@@ -576,6 +577,13 @@ bool OS::has_feature(const String &p_feature) {
 	if (p_feature == "release")
 		return true;
 #endif
+#ifdef TOOLS_ENABLED
+	if (p_feature == "editor")
+		return true;
+#else
+	if (p_feature == "standalone")
+		return true;
+#endif
 
 	if (sizeof(void *) == 8 && p_feature == "64") {
 		return true;
@@ -670,6 +678,15 @@ bool OS::is_restart_on_exit_set() const {
 
 List<String> OS::get_restart_on_exit_arguments() const {
 	return restart_commandline;
+}
+
+PoolStringArray OS::get_connected_midi_inputs() {
+
+	if (MIDIDriver::get_singleton())
+		return MIDIDriver::get_singleton()->get_connected_inputs();
+
+	PoolStringArray list;
+	return list;
 }
 
 OS::OS() {

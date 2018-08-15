@@ -68,7 +68,7 @@
 			<return type="Array">
 			</return>
 			<description>
-				Returns an array of all cells containing a tile from the tileset (i.e. a tile index different from [code]-1[/code]).
+				Returns a [Vector2] array with the positions of all cells containing a tile from the tileset (i.e. a tile index different from [code]-1[/code]).
 			</description>
 		</method>
 		<method name="get_used_cells_by_id" qualifiers="const">
@@ -155,6 +155,16 @@
 				Optionally, the tile can also be flipped, transposed, or given autotile coordinates.
 				Note that data such as navigation polygons and collision shapes are not immediately updated for performance reasons.
 				If you need these to be immediately updated, you can call [method update_dirty_quadrants].
+			</description>
+		</method>
+		<method name="set_celld">
+			<return type="void">
+			</return>
+			<argument index="0" name="position" type="Vector2">
+			</argument>
+			<argument index="1" name="data" type="Dictionary">
+			</argument>
+			<description>
 			</description>
 		</method>
 		<method name="set_cellv">

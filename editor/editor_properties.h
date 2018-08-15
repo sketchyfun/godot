@@ -54,6 +54,7 @@ class EditorPropertyText : public EditorProperty {
 
 	bool updating;
 	void _text_changed(const String &p_string);
+	void _text_entered(const String &p_string);
 
 protected:
 	static void _bind_methods();
@@ -117,6 +118,25 @@ public:
 	void setup(const Vector<String> &p_extensions, bool p_folder, bool p_global);
 	virtual void update_property();
 	EditorPropertyPath();
+};
+
+class EditorPropertyClassName : public EditorProperty {
+	GDCLASS(EditorPropertyClassName, EditorProperty)
+private:
+	CreateDialog *dialog;
+	Button *property;
+	String selected_type;
+	String base_type;
+	void _property_selected();
+	void _dialog_created();
+
+protected:
+	static void _bind_methods();
+
+public:
+	void setup(const String &p_base_type, const String &p_selected_type);
+	virtual void update_property();
+	EditorPropertyClassName();
 };
 
 class EditorPropertyMember : public EditorProperty {

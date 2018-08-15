@@ -119,6 +119,9 @@ void VisualShaderEditor::_update_graph() {
 	if (updating)
 		return;
 
+	if (visual_shader.is_null())
+		return;
+
 	graph->set_scroll_ofs(visual_shader->get_graph_offset() * EDSCALE);
 
 	VisualShader::Type type = VisualShader::Type(edit_type->get_selected());
@@ -190,7 +193,7 @@ void VisualShaderEditor::_update_graph() {
 		}
 
 		for (int i = 0; i < plugins.size(); i++) {
-			custom_editor = plugins[i]->create_editor(vsnode);
+			custom_editor = plugins.write[i]->create_editor(vsnode);
 			if (custom_editor) {
 				break;
 			}

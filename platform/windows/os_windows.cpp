@@ -1219,6 +1219,10 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	AudioDriverManager::initialize(p_audio_driver);
 
+#ifdef WINMIDI_ENABLED
+	driver_midi.open();
+#endif
+
 	TRACKMOUSEEVENT tme;
 	tme.cbSize = sizeof(TRACKMOUSEEVENT);
 	tme.dwFlags = TME_LEAVE;
@@ -1346,6 +1350,10 @@ void OS_Windows::set_main_loop(MainLoop *p_main_loop) {
 }
 
 void OS_Windows::finalize() {
+
+#ifdef WINMIDI_ENABLED
+	driver_midi.close();
+#endif
 
 	if (main_loop)
 		memdelete(main_loop);
@@ -2291,7 +2299,7 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 	Vector<CharType> modstr; //windows wants to change this no idea why
 	modstr.resize(cmdline.size());
 	for (int i = 0; i < cmdline.size(); i++)
-		modstr[i] = cmdline[i];
+		modstr.write[i] = cmdline[i];
 	int ret = CreateProcessW(NULL, modstr.ptrw(), NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL, si_w, &pi.pi);
 	ERR_FAIL_COND_V(ret == 0, ERR_CANT_FORK);
 
@@ -2301,6 +2309,8 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 		if (r_exitcode)
 			*r_exitcode = ret;
 
+		CloseHandle(pi.pi.hProcess);
+		CloseHandle(pi.pi.hThread);
 	} else {
 
 		ProcessID pid = pi.pi.dwProcessId;
@@ -2314,17 +2324,15 @@ Error OS_Windows::execute(const String &p_path, const List<String> &p_arguments,
 
 Error OS_Windows::kill(const ProcessID &p_pid) {
 
-	HANDLE h;
+	ERR_FAIL_COND_V(!process_map->has(p_pid), FAILED);
 
-	if (process_map->has(p_pid)) {
-		h = (*process_map)[p_pid].pi.hProcess;
-		process_map->erase(p_pid);
-	} else {
+	const PROCESS_INFORMATION pi = (*process_map)[p_pid].pi;
+	process_map->erase(p_pid);
 
-		ERR_FAIL_COND_V(!process_map->has(p_pid), FAILED);
-	};
+	const int ret = TerminateProcess(pi.hProcess, 0);
 
-	int ret = TerminateProcess(h, 0);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
 
 	return ret != 0 ? OK : FAILED;
 };
@@ -2362,7 +2370,7 @@ void OS_Windows::set_icon(const Ref<Image> &p_icon) {
 	int icon_len = 40 + h * w * 4;
 	Vector<BYTE> v;
 	v.resize(icon_len);
-	BYTE *icon_bmp = &v[0];
+	BYTE *icon_bmp = v.ptrw();
 
 	encode_uint32(40, &icon_bmp[0]);
 	encode_uint32(w, &icon_bmp[4]);
@@ -2781,23 +2789,17 @@ bool OS_Windows::is_disable_crash_handler() const {
 }
 
 Error OS_Windows::move_to_trash(const String &p_path) {
-	SHFILEOPSTRUCTA sf;
-	TCHAR *from = new TCHAR[p_path.length() + 2];
-	strcpy(from, p_path.utf8().get_data());
-	from[p_path.length()] = 0;
-	from[p_path.length() + 1] = 0;
-
+	SHFILEOPSTRUCTW sf;
 	sf.hwnd = hWnd;
 	sf.wFunc = FO_DELETE;
-	sf.pFrom = from;
+	sf.pFrom = p_path.c_str();
 	sf.pTo = NULL;
 	sf.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION;
 	sf.fAnyOperationsAborted = FALSE;
 	sf.hNameMappings = NULL;
 	sf.lpszProgressTitle = NULL;
 
-	int ret = SHFileOperation(&sf);
-	delete[] from;
+	int ret = SHFileOperationW(&sf);
 
 	if (ret) {
 		ERR_PRINTS("SHFileOperation error: " + itos(ret));

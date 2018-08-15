@@ -254,6 +254,11 @@ public:
 
 	Array get_colliding_bodies() const;
 
+	void add_central_force(const Vector3 &p_force);
+	void add_force(const Vector3 &p_force, const Vector3 &p_pos);
+	void add_torque(const Vector3 &p_torque);
+
+	void apply_central_impulse(const Vector3 &p_impulse);
 	void apply_impulse(const Vector3 &p_pos, const Vector3 &p_impulse);
 	void apply_torque_impulse(const Vector3 &p_impulse);
 
@@ -552,6 +557,7 @@ protected:
 
 private:
 	static Skeleton *find_skeleton_parent(Node *p_parent);
+
 	void _fix_joint_offset();
 	void _reload_joint();
 

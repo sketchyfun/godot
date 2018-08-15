@@ -188,10 +188,6 @@ public:
 	virtual void body_set_param(RID p_body, BodyParameter p_param, real_t p_value);
 	virtual real_t body_get_param(RID p_body, BodyParameter p_param) const;
 
-	/// p_param accept only Bounce and Friction
-	virtual void body_set_combine_mode(RID p_body, BodyParameter p_param, CombineMode p_mode);
-	virtual CombineMode body_get_combine_mode(RID p_body, BodyParameter p_param) const;
-
 	virtual void body_set_kinematic_safe_margin(RID p_body, real_t p_margin);
 	virtual real_t body_get_kinematic_safe_margin(RID p_body) const;
 
@@ -204,6 +200,11 @@ public:
 	virtual void body_set_applied_torque(RID p_body, const Vector3 &p_torque);
 	virtual Vector3 body_get_applied_torque(RID p_body) const;
 
+	virtual void body_add_central_force(RID p_body, const Vector3 &p_force);
+	virtual void body_add_force(RID p_body, const Vector3 &p_force, const Vector3 &p_pos);
+	virtual void body_add_torque(RID p_body, const Vector3 &p_torque);
+
+	virtual void body_apply_central_impulse(RID p_body, const Vector3 &p_impulse);
 	virtual void body_apply_impulse(RID p_body, const Vector3 &p_pos, const Vector3 &p_impulse);
 	virtual void body_apply_torque_impulse(RID p_body, const Vector3 &p_impulse);
 	virtual void body_set_axis_velocity(RID p_body, const Vector3 &p_axis_velocity);

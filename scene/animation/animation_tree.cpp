@@ -78,9 +78,9 @@ float AnimationNode::blend_input(int p_input, float p_time, bool p_seek, float p
 		return 0;
 	}
 
-	inputs[p_input].last_pass = state->last_pass;
+	inputs.write[p_input].last_pass = state->last_pass;
 
-	return _blend_node(node, p_time, p_seek, p_blend, p_filter, p_optimize, &inputs[p_input].activity);
+	return _blend_node(node, p_time, p_seek, p_blend, p_filter, p_optimize, &inputs.write[p_input].activity);
 }
 
 float AnimationNode::blend_node(Ref<AnimationNode> p_node, float p_time, bool p_seek, float p_blend, FilterAction p_filter, bool p_optimize) {
@@ -221,7 +221,7 @@ StringName AnimationNode::get_input_connection(int p_input) {
 void AnimationNode::set_input_connection(int p_input, const StringName &p_connection) {
 
 	ERR_FAIL_INDEX(p_input, inputs.size());
-	inputs[p_input].connected_to = p_connection;
+	inputs.write[p_input].connected_to = p_connection;
 }
 
 String AnimationNode::get_caption() const {
@@ -248,7 +248,7 @@ void AnimationNode::add_input(const String &p_name) {
 void AnimationNode::set_input_name(int p_input, const String &p_name) {
 	ERR_FAIL_INDEX(p_input, inputs.size());
 	ERR_FAIL_COND(p_name.find(".") != -1 || p_name.find("/") != -1);
-	inputs[p_input].name = p_name;
+	inputs.write[p_input].name = p_name;
 	emit_changed();
 }
 
@@ -1199,6 +1199,11 @@ void AnimationTree::_process_graph(float p_delta) {
 	}
 }
 
+void AnimationTree::advance(float p_time) {
+
+	_process_graph(p_time);
+}
+
 void AnimationTree::_notification(int p_what) {
 
 	if (active && p_what == NOTIFICATION_INTERNAL_PHYSICS_PROCESS && process_mode == ANIMATION_PROCESS_PHYSICS) {
@@ -1310,17 +1315,20 @@ void AnimationTree::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_root_motion_transform"), &AnimationTree::get_root_motion_transform);
 
+	ClassDB::bind_method(D_METHOD("advance", "delta"), &AnimationTree::advance);
+
 	ClassDB::bind_method(D_METHOD("_node_removed"), &AnimationTree::_node_removed);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "tree_root", PROPERTY_HINT_RESOURCE_TYPE, "AnimationRootNode", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_DO_NOT_SHARE_ON_DUPLICATE), "set_tree_root", "get_tree_root");
 	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "anim_player", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "AnimationPlayer"), "set_animation_player", "get_animation_player");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "active"), "set_active", "is_active");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "process_mode", PROPERTY_HINT_ENUM, "Physics,Idle"), "set_process_mode", "get_process_mode");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "process_mode", PROPERTY_HINT_ENUM, "Physics,Idle,Manual"), "set_process_mode", "get_process_mode");
 	ADD_GROUP("Root Motion", "root_motion_");
 	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "root_motion_track"), "set_root_motion_track", "get_root_motion_track");
 
 	BIND_ENUM_CONSTANT(ANIMATION_PROCESS_PHYSICS);
 	BIND_ENUM_CONSTANT(ANIMATION_PROCESS_IDLE);
+	BIND_ENUM_CONSTANT(ANIMATION_PROCESS_MANUAL);
 }
 
 AnimationTree::AnimationTree() {
