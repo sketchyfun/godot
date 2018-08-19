@@ -3551,6 +3551,9 @@ RID RasterizerStorageGLES2::particles_get_draw_pass_mesh(RID p_particles, int p_
 	return RID();
 }
 
+void RasterizerStorageGLES2::manual_update(float p_delta){
+}
+
 void RasterizerStorageGLES2::update_particles() {
 }
 

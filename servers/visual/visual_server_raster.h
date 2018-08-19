@@ -395,6 +395,7 @@ public:
 	/* PARTICLES */
 
 	BIND0R(RID, particles_create)
+	BIND1(manual_update, float)
 
 	BIND2(particles_set_emitting, RID, bool)
 	BIND1R(bool, particles_get_emitting, RID)

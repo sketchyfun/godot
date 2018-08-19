@@ -1223,6 +1223,7 @@ public:
 	SelfList<Particles>::List particle_update_list;
 
 	void update_particles();
+	void manual_update(float p_delta);
 
 	mutable RID_Owner<Particles> particles_owner;
 

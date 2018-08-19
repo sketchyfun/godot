@@ -1032,6 +1032,7 @@ public:
 
 	/* PARTICLES */
 	void update_particles();
+	void manual_update(float p_delta);
 
 	virtual RID particles_create();
 
