@@ -39,7 +39,7 @@ uniform float lifetime;
 uniform mat4 emission_transform;
 uniform uint random_seed;
 
-
+out highp float active;
 out highp vec4 out_color; //tfb:
 out highp vec4 out_velocity_active; //tfb:
 out highp vec4 out_custom; //tfb:
@@ -105,6 +105,7 @@ void main() {
 	restart_phase*= (1.0-explosiveness);
 	bool restart=false;
 	bool shader_active = velocity_active.a > 0.5;
+	restart = active < 0.5;
 
 	if (system_phase > prev_system_phase) {
 		// restart_phase >= prev_system_phase is used so particles emit in the first frame they are processed
