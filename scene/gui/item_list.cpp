@@ -971,7 +971,7 @@ void ItemList::_notification(int p_what) {
 		{
 			// do a binary search to find the first item whose rect reaches below clip.position.y
 			int lo = 0;
-			int hi = items.size();
+			int hi = items.size()-1;
 			while (lo < hi) {
 				const int mid = (lo + hi) / 2;
 				const Rect2 &rcache = items[mid].rect_cache;
@@ -993,10 +993,10 @@ void ItemList::_notification(int p_what) {
 			Rect2 rcache = items[i].rect_cache;
 
 			if (rcache.position.y > clip.position.y + clip.size.y)
-				break; // done
+			        break; // done
 
 			if (!clip.intersects(rcache))
-				continue;
+			        continue;
 
 			if (current_columns == 1) {
 				rcache.size.width = width - rcache.position.x;
@@ -1079,7 +1079,6 @@ void ItemList::_notification(int p_what) {
 			}
 
 			if (items[i].text != "") {
-
 				int max_len = -1;
 
 				Vector2 size = font->get_string_size(items[i].text);
