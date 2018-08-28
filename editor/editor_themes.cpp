@@ -173,7 +173,7 @@ void editor_register_and_generate_icons(Ref<Theme> p_theme, bool p_dark_theme = 
 	const Color error_color = p_theme->get_color("error_color", "Editor");
 	const Color success_color = p_theme->get_color("success_color", "Editor");
 	const Color warning_color = p_theme->get_color("warning_color", "Editor");
-	dark_icon_color_dictionary[Color::html("#ff5d5d")] = error_color;
+	dark_icon_color_dictionary[Color::html("#ff0000")] = error_color;
 	dark_icon_color_dictionary[Color::html("#45ff8b")] = success_color;
 	dark_icon_color_dictionary[Color::html("#dbab09")] = warning_color;
 
@@ -238,7 +238,7 @@ void editor_register_and_generate_icons(Ref<Theme> p_theme, bool p_dark_theme = 
 
 	clock_t end_time = clock();
 #else
-	print_line("Sorry no icons for you");
+	print_line("SVG support disabled, editor icons won't be rendered.");
 #endif
 }
 
@@ -380,12 +380,6 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 	theme->set_color("warning_color", "Editor", warning_color);
 	theme->set_color("error_color", "Editor", error_color);
 	theme->set_color("property_color", "Editor", property_color);
-
-	// 2d grid color
-	const Color grid_minor_color = mono_color * Color(1.0, 1.0, 1.0, 0.07);
-	const Color grid_major_color = Color(font_color_disabled.r, font_color_disabled.g, font_color_disabled.b, 0.15);
-	theme->set_color("grid_major_color", "Editor", grid_major_color);
-	theme->set_color("grid_minor_color", "Editor", grid_minor_color);
 
 	const int thumb_size = EDITOR_DEF("filesystem/file_dialog/thumbnail_size", 64);
 	theme->set_constant("scale", "Editor", EDSCALE);
@@ -971,8 +965,8 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 
 	// GraphEdit
 	theme->set_stylebox("bg", "GraphEdit", style_tree_bg);
-	theme->set_color("grid_major", "GraphEdit", grid_major_color);
-	theme->set_color("grid_minor", "GraphEdit", grid_minor_color);
+	theme->set_color("grid_major", "GraphEdit", Color(1.0, 1.0, 1.0, 0.15));
+	theme->set_color("grid_minor", "GraphEdit", Color(1.0, 1.0, 1.0, 0.07));
 	theme->set_color("activity", "GraphEdit", accent_color);
 	theme->set_icon("minus", "GraphEdit", theme->get_icon("ZoomLess", "EditorIcons"));
 	theme->set_icon("more", "GraphEdit", theme->get_icon("ZoomMore", "EditorIcons"));

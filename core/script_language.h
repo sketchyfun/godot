@@ -311,11 +311,13 @@ public:
 
 	virtual void *alloc_instance_binding_data(Object *p_object) { return NULL; } //optional, not used by all languages
 	virtual void free_instance_binding_data(void *p_data) {} //optional, not used by all languages
+	virtual void refcount_incremented_instance_binding(Object *p_object) {} //optional, not used by all languages
+	virtual bool refcount_decremented_instance_binding(Object *p_object) { return true; } //return true if it can die //optional, not used by all languages
 
 	virtual void frame();
 
 	virtual bool handles_global_class_type(const String &p_type) const { return false; }
-	virtual String get_global_class_name(const String &p_path, String *r_base_type = NULL) const { return String(); }
+	virtual String get_global_class_name(const String &p_path, String *r_base_type = NULL, String *r_icon_path = NULL) const { return String(); }
 
 	virtual ~ScriptLanguage() {}
 };

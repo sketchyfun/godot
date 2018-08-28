@@ -262,6 +262,7 @@ void ParticlesEditor::_notification(int p_notification) {
 
 	if (p_notification == NOTIFICATION_ENTER_TREE) {
 		options->set_icon(options->get_popup()->get_icon("Particles", "EditorIcons"));
+		get_tree()->connect("node_removed", this, "_node_removed");
 	}
 }
 
@@ -335,7 +336,6 @@ void ParticlesEditor::_generate_aabb() {
 		OS::get_singleton()->delay_usec(1000);
 	}
 
-	running = 0.0;
 	AABB rect;
 
 	while (running < time) {
@@ -445,6 +445,7 @@ void ParticlesEditor::_bind_methods() {
 
 	ClassDB::bind_method("_menu_option", &ParticlesEditor::_menu_option);
 	ClassDB::bind_method("_generate_aabb", &ParticlesEditor::_generate_aabb);
+	ClassDB::bind_method("_node_removed", &ParticlesEditor::_node_removed);
 }
 
 ParticlesEditor::ParticlesEditor() {

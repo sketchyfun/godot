@@ -806,6 +806,10 @@ void ProjectSettingsEditor::popup_project_settings() {
 	plugin_settings->update_plugins();
 }
 
+void ProjectSettingsEditor::update_plugins() {
+	plugin_settings->update_plugins();
+}
+
 void ProjectSettingsEditor::_item_selected(const String &p_path) {
 
 	String selected_path = p_path;
@@ -887,7 +891,6 @@ void ProjectSettingsEditor::_item_del() {
 		return;
 	}
 
-	print_line("to delete.. " + property);
 	undo_redo->create_action(TTR("Delete Item"));
 
 	Variant value = ProjectSettings::get_singleton()->get(property);
@@ -1003,6 +1006,7 @@ void ProjectSettingsEditor::_copy_to_platform_about_to_show() {
 
 	Set<String> presets;
 
+	presets.insert("bptc");
 	presets.insert("s3tc");
 	presets.insert("etc");
 	presets.insert("etc2");

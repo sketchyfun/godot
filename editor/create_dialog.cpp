@@ -157,6 +157,18 @@ Ref<Texture> CreateDialog::_get_editor_icon(const String &p_type) const {
 		return get_icon(p_type, "EditorIcons");
 	}
 
+	if (ScriptServer::is_global_class(p_type)) {
+		String icon_path = EditorNode::get_editor_data().script_class_get_icon_path(p_type);
+		RES icon;
+		if (FileAccess::exists(icon_path)) {
+			icon = ResourceLoader::load(icon_path);
+		}
+		if (!icon.is_valid()) {
+			icon = get_icon(ScriptServer::get_global_class_base(p_type), "EditorIcons");
+		}
+		return icon;
+	}
+
 	const Map<String, Vector<EditorData::CustomType> > &p_map = EditorNode::get_editor_data().get_custom_types();
 	for (const Map<String, Vector<EditorData::CustomType> >::Element *E = p_map.front(); E; E = E->next()) {
 		const Vector<EditorData::CustomType> &ct = E->value();
@@ -180,7 +192,7 @@ void CreateDialog::add_type(const String &p_type, HashMap<String, TreeItem *> &p
 		return;
 
 	bool cpp_type = ClassDB::class_exists(p_type);
-	EditorData &ed = EditorNode::get_singleton()->get_editor_data();
+	EditorData &ed = EditorNode::get_editor_data();
 
 	if (p_type == base_type)
 		return;
@@ -262,13 +274,7 @@ void CreateDialog::add_type(const String &p_type, HashMap<String, TreeItem *> &p
 	const String &description = EditorHelp::get_doc_data()->class_list[p_type].brief_description;
 	item->set_tooltip(0, description);
 
-	if (cpp_type && has_icon(p_type, "EditorIcons")) {
-
-		item->set_icon(0, get_icon(p_type, "EditorIcons"));
-	} else if (!cpp_type && has_icon(ScriptServer::get_global_class_base(p_type), "EditorIcons")) {
-
-		item->set_icon(0, get_icon(ScriptServer::get_global_class_base(p_type), "EditorIcons"));
-	}
+	item->set_icon(0, _get_editor_icon(p_type));
 
 	p_types[p_type] = item;
 }
@@ -287,7 +293,7 @@ void CreateDialog::_update_search() {
 	HashMap<String, TreeItem *> types;
 
 	TreeItem *root = search_options->create_item();
-	EditorData &ed = EditorNode::get_singleton()->get_editor_data();
+	EditorData &ed = EditorNode::get_editor_data();
 
 	root->set_text(0, base_type);
 	if (has_icon(base_type, "EditorIcons")) {
@@ -330,7 +336,7 @@ void CreateDialog::_update_search() {
 					break;
 				}
 
-				type = ClassDB::get_parent_class(type);
+				type = cpp_type ? ClassDB::get_parent_class(type) : ed.script_class_get_base(type);
 			}
 
 			if (found)
@@ -490,16 +496,8 @@ Object *CreateDialog::instance_selected() {
 			custom = md;
 
 		if (custom != String()) {
-
 			if (ScriptServer::is_global_class(custom)) {
-				RES script = ResourceLoader::load(ScriptServer::get_global_class_path(custom));
-				ERR_FAIL_COND_V(!script.is_valid(), NULL);
-
-				Object *obj = ClassDB::instance(ScriptServer::get_global_class_base(custom));
-				ERR_FAIL_COND_V(!obj, NULL);
-
-				obj->set_script(script.get_ref_ptr());
-				return obj;
+				return EditorNode::get_editor_data().script_class_instance(custom);
 			}
 			return EditorNode::get_editor_data().instance_custom_type(selected->get_text(0), custom);
 		} else {
@@ -587,7 +585,7 @@ void CreateDialog::_history_selected() {
 	if (!item)
 		return;
 
-	search_box->set_text(item->get_text(0));
+	search_box->set_text(item->get_text(0).get_slicec(' ', 0));
 	_update_search();
 }
 
@@ -597,7 +595,7 @@ void CreateDialog::_favorite_selected() {
 	if (!item)
 		return;
 
-	search_box->set_text(item->get_text(0));
+	search_box->set_text(item->get_text(0).get_slicec(' ', 0));
 	_update_search();
 }
 

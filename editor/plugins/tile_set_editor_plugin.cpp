@@ -498,7 +498,7 @@ void TileSetEditor::_on_tileset_toolbar_button_pressed(int p_index) {
 		} break;
 		case TOOL_TILESET_REMOVE_TEXTURE: {
 			if (get_current_texture().is_valid()) {
-				cd->set_text(TTR("Remove Selected Textue and ALL TILES wich uses it?"));
+				cd->set_text(TTR("Remove selected texture and ALL TILES which use it?"));
 				cd->popup_centered(Size2(300, 60));
 			} else {
 				err_dialog->set_text(TTR("You haven't selected a texture to remove."));
@@ -900,12 +900,13 @@ void TileSetEditor::_on_workspace_overlay_draw() {
 				else if (tileset->tile_get_tile_mode(t_id) == TileSet::ATLAS_TILE)
 					c = COLOR_ATLAS;
 				c.a = tile_names_opacity;
+				String tile_id_name = String::num(t_id, 0) + ": " + tileset->tile_get_name(t_id);
 				Ref<Font> font = get_font("font", "Label");
-				region.set_size(font->get_string_size(tileset->tile_get_name(t_id)));
+				region.set_size(font->get_string_size(tile_id_name));
 				workspace_overlay->draw_rect(region, c);
 				region.position.y += region.size.y - 2;
 				c = Color(0.1, 0.1, 0.1, tile_names_opacity);
-				workspace_overlay->draw_string(font, region.position, tileset->tile_get_name(t_id), c);
+				workspace_overlay->draw_string(font, region.position, tile_id_name, c);
 			}
 		}
 	}
@@ -1714,16 +1715,18 @@ void TileSetEditor::draw_polygon_shapes() {
 
 					Vector<Vector2> polygon;
 					Vector<Color> colors;
+					Vector2 anchor = WORKSPACE_MARGIN;
+					anchor += tileset->tile_get_region(get_current_tile()).position;
 					for (int j = 0; j < shape->get_polygon().size(); j++) {
-						polygon.push_back(shape->get_polygon()[j]);
+						polygon.push_back(shape->get_polygon()[j] + anchor);
 						colors.push_back(c_bg);
 					}
 					workspace->draw_polygon(polygon, colors);
 
 					for (int j = 0; j < shape->get_polygon().size() - 1; j++) {
-						workspace->draw_line(shape->get_polygon()[j], shape->get_polygon()[j + 1], c_border, 1, true);
+						workspace->draw_line(shape->get_polygon()[j] + anchor, shape->get_polygon()[j + 1] + anchor, c_border, 1, true);
 					}
-					workspace->draw_line(shape->get_polygon()[shape->get_polygon().size() - 1], shape->get_polygon()[0], c_border, 1, true);
+					workspace->draw_line(shape->get_polygon()[shape->get_polygon().size() - 1] + anchor, shape->get_polygon()[0] + anchor, c_border, 1, true);
 					if (shape == edited_occlusion_shape) {
 						draw_handles = true;
 					}
@@ -1787,10 +1790,11 @@ void TileSetEditor::draw_polygon_shapes() {
 
 					Vector<Vector2> polygon;
 					Vector<Color> colors;
-
+					Vector2 anchor = WORKSPACE_MARGIN;
+					anchor += tileset->tile_get_region(get_current_tile()).position;
 					PoolVector<Vector2> vertices = shape->get_vertices();
 					for (int j = 0; j < shape->get_polygon(0).size(); j++) {
-						polygon.push_back(vertices[shape->get_polygon(0)[j]]);
+						polygon.push_back(vertices[shape->get_polygon(0)[j]] + anchor);
 						colors.push_back(c_bg);
 					}
 					workspace->draw_polygon(polygon, colors);
@@ -1798,7 +1802,7 @@ void TileSetEditor::draw_polygon_shapes() {
 					if (shape->get_polygon_count() > 0) {
 						PoolVector<Vector2> vertices = shape->get_vertices();
 						for (int j = 0; j < shape->get_polygon(0).size() - 1; j++) {
-							workspace->draw_line(vertices[shape->get_polygon(0)[j]], vertices[shape->get_polygon(0)[j + 1]], c_border, 1, true);
+							workspace->draw_line(vertices[shape->get_polygon(0)[j]] + anchor, vertices[shape->get_polygon(0)[j + 1]] + anchor, c_border, 1, true);
 						}
 						if (shape == edited_navigation_shape) {
 							draw_handles = true;
@@ -1953,6 +1957,8 @@ void TileSetEditor::close_shape(const Vector2 &shape_anchor) {
 
 void TileSetEditor::select_coord(const Vector2 &coord) {
 	current_shape = PoolVector2Array();
+	if (get_current_tile() == -1)
+		return;
 	Rect2 current_tile_region = tileset->tile_get_region(get_current_tile());
 	current_tile_region.position += WORKSPACE_MARGIN;
 	if (tileset->tile_get_tile_mode(get_current_tile()) == TileSet::SINGLE_TILE) {
@@ -2037,8 +2043,10 @@ Vector2 TileSetEditor::snap_point(const Vector2 &point) {
 	anchor += tileset->tile_get_region(get_current_tile()).position;
 	anchor += WORKSPACE_MARGIN;
 	Rect2 region(anchor, tile_size);
-	if (tileset->tile_get_tile_mode(get_current_tile()) == TileSet::SINGLE_TILE)
+	if (tileset->tile_get_tile_mode(get_current_tile()) == TileSet::SINGLE_TILE) {
 		region.position = tileset->tile_get_region(get_current_tile()).position + WORKSPACE_MARGIN;
+		region.size = tileset->tile_get_region(get_current_tile()).size;
+	}
 
 	if (tools[TOOL_GRID_SNAP]->is_pressed()) {
 		p.x = Math::snap_scalar_seperation(snap_offset.x, snap_step.x, p.x, snap_separation.x);
@@ -2253,6 +2261,9 @@ bool TilesetEditorContext::_set(const StringName &p_name, const Variant &p_value
 			tileset_editor->workspace_overlay->update();
 		}
 		return v;
+	} else if (name == "tileset_script") {
+		tileset->set_script(p_value);
+		return true;
 	}
 
 	tileset_editor->err_dialog->set_text(TTR("This property can't be changed."));
@@ -2301,6 +2312,9 @@ bool TilesetEditorContext::_get(const StringName &p_name, Variant &r_ret) const 
 	} else if (name == "selected_occlusion") {
 		r_ret = tileset_editor->edited_occlusion_shape;
 		v = true;
+	} else if (name == "tileset_script") {
+		r_ret = tileset->get_script();
+		v = true;
 	}
 	return v;
 }
@@ -2345,6 +2359,9 @@ void TilesetEditorContext::_get_property_list(List<PropertyInfo> *p_list) const 
 	if (tileset_editor->edit_mode == TileSetEditor::EDITMODE_OCCLUSION && tileset_editor->edited_occlusion_shape.is_valid()) {
 		p_list->push_back(PropertyInfo(Variant::OBJECT, "selected_occlusion", PROPERTY_HINT_RESOURCE_TYPE, tileset_editor->edited_occlusion_shape->get_class()));
 	}
+	if (!tileset.is_null()) {
+		p_list->push_back(PropertyInfo(Variant::OBJECT, "tileset_script", PROPERTY_HINT_RESOURCE_TYPE, "Script"));
+	}
 }
 
 TilesetEditorContext::TilesetEditorContext(TileSetEditor *p_tileset_editor) {
@@ -2381,11 +2398,9 @@ TileSetEditorPlugin::TileSetEditorPlugin(EditorNode *p_node) {
 	editor = p_node;
 	tileset_editor = memnew(TileSetEditor(p_node));
 
-	tileset_editor_button =
-			p_node->add_bottom_panel_item(TTR("Tile Set"), tileset_editor);
-	tileset_editor_button->set_tooltip(TTR("Tile Set Editor"));
-
 	tileset_editor->set_custom_minimum_size(Size2(0, 200) * EDSCALE);
 	tileset_editor->hide();
+
+	tileset_editor_button = p_node->add_bottom_panel_item(TTR("Tile Set"), tileset_editor);
 	tileset_editor_button->hide();
 }

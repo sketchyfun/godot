@@ -240,7 +240,7 @@ void Node::_propagate_enter_tree() {
 
 void Node::_propagate_exit_tree() {
 
-//block while removing children
+	//block while removing children
 
 #ifdef DEBUG_ENABLED
 
@@ -2082,9 +2082,7 @@ void Node::_duplicate_and_reown(Node *p_new_parent, const Map<Node *, Node *> &p
 	} else {
 
 		Object *obj = ClassDB::instance(get_class());
-		if (!obj) {
-			print_line("could not duplicate: " + String(get_class()));
-		}
+		ERR_EXPLAIN("Node: Could not duplicate: " + String(get_class()));
 		ERR_FAIL_COND(!obj);
 		node = Object::cast_to<Node>(obj);
 		if (!node)
@@ -2179,9 +2177,7 @@ Node *Node::duplicate_and_reown(const Map<Node *, Node *> &p_reown_map) const {
 	Node *node = NULL;
 
 	Object *obj = ClassDB::instance(get_class());
-	if (!obj) {
-		print_line("could not duplicate: " + String(get_class()));
-	}
+	ERR_EXPLAIN("Node: Could not duplicate: " + String(get_class()));
 	ERR_FAIL_COND_V(!obj, NULL);
 	node = Object::cast_to<Node>(obj);
 	if (!node)
@@ -2472,7 +2468,7 @@ static void _Node_debug_sn(Object *p_obj) {
 		path = n->get_name();
 	else
 		path = String(p->get_name()) + "/" + p->get_path_to(n);
-	print_line(itos(p_obj->get_instance_id()) + "- Stray Node: " + path + " (Type: " + n->get_class() + ")");
+	print_line(itos(p_obj->get_instance_id()) + " - Stray Node: " + path + " (Type: " + n->get_class() + ")");
 }
 
 void Node::_print_stray_nodes() {
@@ -2555,7 +2551,7 @@ void Node::clear_internal_tree_resource_paths() {
 
 String Node::get_configuration_warning() const {
 
-	if (get_script_instance()) {
+	if (get_script_instance() && get_script_instance()->has_method("_get_configuration_warning")) {
 		return get_script_instance()->call("_get_configuration_warning");
 	}
 	return String();
