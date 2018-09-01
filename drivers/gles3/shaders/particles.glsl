@@ -154,6 +154,7 @@ void main() {
 		out_color=vec4(1.0);
 		out_velocity_active=vec4(0.0);
 		out_custom=vec4(0.0);
+		is_active = 1.0;
 		if (!restart)
 			shader_active=false;
 
