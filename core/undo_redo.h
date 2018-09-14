@@ -113,7 +113,8 @@ public:
 	bool undo();
 	String get_current_action_name() const;
 	void clear_history();
-
+	int get_history_size();
+	int get_current_action_index();
 	uint64_t get_version() const;
 
 	void set_commit_notify_callback(CommitNotifyCallback p_callback, void *p_ud);
