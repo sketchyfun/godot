@@ -31,7 +31,7 @@
 #include "collision_polygon_2d.h"
 
 #include "collision_object_2d.h"
-#include "engine.h"
+#include "core/engine.h"
 #include "scene/resources/concave_polygon_shape_2d.h"
 #include "scene/resources/convex_polygon_shape_2d.h"
 
@@ -247,7 +247,7 @@ Vector<Point2> CollisionPolygon2D::get_polygon() const {
 
 void CollisionPolygon2D::set_build_mode(BuildMode p_mode) {
 
-	ERR_FAIL_INDEX(p_mode, 2);
+	ERR_FAIL_INDEX((int)p_mode, 2);
 	build_mode = p_mode;
 	if (parent) {
 		_build_polygon();

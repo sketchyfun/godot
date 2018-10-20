@@ -29,15 +29,15 @@
 /*************************************************************************/
 
 #include "control.h"
-#include "project_settings.h"
+#include "core/project_settings.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/viewport.h"
 #include "servers/visual_server.h"
 
-#include "message_queue.h"
-#include "os/keyboard.h"
-#include "os/os.h"
-#include "print_string.h"
+#include "core/message_queue.h"
+#include "core/os/keyboard.h"
+#include "core/os/os.h"
+#include "core/print_string.h"
 #include "scene/gui/label.h"
 #include "scene/gui/panel.h"
 #include "scene/scene_string_names.h"
@@ -769,7 +769,7 @@ void Control::force_drag(const Variant &p_data, Control *p_control) {
 void Control::set_drag_preview(Control *p_control) {
 
 	ERR_FAIL_COND(!is_inside_tree());
-	ERR_FAIL_COND(get_viewport()->gui_is_dragging());
+	ERR_FAIL_COND(!get_viewport()->gui_is_dragging());
 	get_viewport()->_gui_set_drag_preview(this, p_control);
 }
 
@@ -1079,7 +1079,7 @@ bool Control::has_constant_override(const StringName &p_name) const {
 bool Control::has_icon(const StringName &p_name, const StringName &p_type) const {
 
 	if (p_type == StringName() || p_type == "") {
-		if (has_icon_override(p_name) == true)
+		if (has_icon_override(p_name))
 			return true;
 	}
 
@@ -1113,7 +1113,7 @@ bool Control::has_icon(const StringName &p_name, const StringName &p_type) const
 bool Control::has_shader(const StringName &p_name, const StringName &p_type) const {
 
 	if (p_type == StringName() || p_type == "") {
-		if (has_shader_override(p_name) == true)
+		if (has_shader_override(p_name))
 			return true;
 	}
 
@@ -1146,7 +1146,7 @@ bool Control::has_shader(const StringName &p_name, const StringName &p_type) con
 bool Control::has_stylebox(const StringName &p_name, const StringName &p_type) const {
 
 	if (p_type == StringName() || p_type == "") {
-		if (has_stylebox_override(p_name) == true)
+		if (has_stylebox_override(p_name))
 			return true;
 	}
 
@@ -1179,7 +1179,7 @@ bool Control::has_stylebox(const StringName &p_name, const StringName &p_type) c
 bool Control::has_font(const StringName &p_name, const StringName &p_type) const {
 
 	if (p_type == StringName() || p_type == "") {
-		if (has_font_override(p_name) == true)
+		if (has_font_override(p_name))
 			return true;
 	}
 
@@ -1213,7 +1213,7 @@ bool Control::has_font(const StringName &p_name, const StringName &p_type) const
 bool Control::has_color(const StringName &p_name, const StringName &p_type) const {
 
 	if (p_type == StringName() || p_type == "") {
-		if (has_color_override(p_name) == true)
+		if (has_color_override(p_name))
 			return true;
 	}
 
@@ -1247,7 +1247,7 @@ bool Control::has_color(const StringName &p_name, const StringName &p_type) cons
 bool Control::has_constant(const StringName &p_name, const StringName &p_type) const {
 
 	if (p_type == StringName() || p_type == "") {
-		if (has_constant_override(p_name) == true)
+		if (has_constant_override(p_name))
 			return true;
 	}
 
@@ -1993,7 +1993,7 @@ Control *Control::find_prev_valid_focus() const {
 
 				if (!from) {
 
-					ERR_EXPLAIN("Prev focus node is not a control: " + n->get_name());
+					ERR_EXPLAIN("Previous focus node is not a control: " + n->get_name());
 					ERR_FAIL_V(NULL);
 				}
 			} else {
@@ -2062,8 +2062,11 @@ void Control::grab_focus() {
 	if (!is_inside_tree()) {
 		ERR_FAIL_COND(!is_inside_tree());
 	}
-	if (data.focus_mode == FOCUS_NONE)
+
+	if (data.focus_mode == FOCUS_NONE) {
+		WARN_PRINT("This control can't grab focus. Use set_focus_mode() to allow a control to get focus.");
 		return;
+	}
 
 	get_viewport()->_gui_control_grab_focus(this);
 }
@@ -2232,13 +2235,13 @@ String Control::_get_tooltip() const {
 
 void Control::set_focus_neighbour(Margin p_margin, const NodePath &p_neighbour) {
 
-	ERR_FAIL_INDEX(p_margin, 4);
+	ERR_FAIL_INDEX((int)p_margin, 4);
 	data.focus_neighbour[p_margin] = p_neighbour;
 }
 
 NodePath Control::get_focus_neighbour(Margin p_margin) const {
 
-	ERR_FAIL_INDEX_V(p_margin, 4, NodePath());
+	ERR_FAIL_INDEX_V((int)p_margin, 4, NodePath());
 	return data.focus_neighbour[p_margin];
 }
 
@@ -2874,7 +2877,7 @@ void Control::_bind_methods() {
 
 	ADD_GROUP("Mouse", "mouse_");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "mouse_filter", PROPERTY_HINT_ENUM, "Stop,Pass,Ignore"), "set_mouse_filter", "get_mouse_filter");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "mouse_default_cursor_shape", PROPERTY_HINT_ENUM, "Arrow,Ibeam,Pointing hand,Cross,Wait,Busy,Drag,Can drop,Forbidden,Vertical resize,Horizontal resize,Secondary diagonal resize,Main diagonal resize,Move,Vertial split,Horizontal split,Help"), "set_default_cursor_shape", "get_default_cursor_shape");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "mouse_default_cursor_shape", PROPERTY_HINT_ENUM, "Arrow,Ibeam,Pointing hand,Cross,Wait,Busy,Drag,Can drop,Forbidden,Vertical resize,Horizontal resize,Secondary diagonal resize,Main diagonal resize,Move,Vertical split,Horizontal split,Help"), "set_default_cursor_shape", "get_default_cursor_shape");
 
 	ADD_GROUP("Size Flags", "size_flags_");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "size_flags_horizontal", PROPERTY_HINT_FLAGS, "Fill,Expand,Shrink Center,Shrink End"), "set_h_size_flags", "get_h_size_flags");
@@ -2956,7 +2959,7 @@ void Control::_bind_methods() {
 	BIND_ENUM_CONSTANT(ANCHOR_END);
 
 	ADD_SIGNAL(MethodInfo("resized"));
-	ADD_SIGNAL(MethodInfo("gui_input", PropertyInfo(Variant::OBJECT, "ev", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
+	ADD_SIGNAL(MethodInfo("gui_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	ADD_SIGNAL(MethodInfo("mouse_entered"));
 	ADD_SIGNAL(MethodInfo("mouse_exited"));
 	ADD_SIGNAL(MethodInfo("focus_entered"));

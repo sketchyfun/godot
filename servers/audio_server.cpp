@@ -29,10 +29,10 @@
 /*************************************************************************/
 
 #include "audio_server.h"
-#include "io/resource_loader.h"
-#include "os/file_access.h"
-#include "os/os.h"
-#include "project_settings.h"
+#include "core/io/resource_loader.h"
+#include "core/os/file_access.h"
+#include "core/os/os.h"
+#include "core/project_settings.h"
 #include "scene/resources/audio_stream_sample.h"
 #include "servers/audio/audio_driver_dummy.h"
 #include "servers/audio/effects/audio_effect_compressor.h"
@@ -189,7 +189,7 @@ void AudioDriverManager::initialize(int p_driver) {
 		}
 	}
 
-	if (driver_count > 1 && AudioDriver::get_singleton()->get_name() == "Dummy") {
+	if (driver_count > 1 && String(AudioDriver::get_singleton()->get_name()) == "Dummy") {
 		WARN_PRINT("All audio drivers failed, falling back to the dummy driver.");
 	}
 }
@@ -1297,6 +1297,7 @@ void AudioServer::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("bus_layout_changed"));
 
 	BIND_ENUM_CONSTANT(SPEAKER_MODE_STEREO);
+	BIND_ENUM_CONSTANT(SPEAKER_SURROUND_31);
 	BIND_ENUM_CONSTANT(SPEAKER_SURROUND_51);
 	BIND_ENUM_CONSTANT(SPEAKER_SURROUND_71);
 }

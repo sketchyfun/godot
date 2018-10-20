@@ -30,8 +30,8 @@
 
 #include "audio_driver_rtaudio.h"
 
-#include "os/os.h"
-#include "project_settings.h"
+#include "core/os/os.h"
+#include "core/project_settings.h"
 
 #ifdef RTAUDIO_ENABLED
 
@@ -128,7 +128,7 @@ Error AudioDriverRtAudio::init() {
 			active = true;
 
 			break;
-		} catch (RtAudioError &e) {
+		} catch (RtAudioError) {
 			// try with less channels
 			ERR_PRINT("Unable to open audio, retrying with fewer channels...");
 

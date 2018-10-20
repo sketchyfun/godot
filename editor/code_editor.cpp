@@ -30,10 +30,10 @@
 
 #include "code_editor.h"
 
+#include "core/os/keyboard.h"
 #include "editor/editor_scale.h"
 #include "editor_node.h"
 #include "editor_settings.h"
-#include "os/keyboard.h"
 #include "scene/gui/margin_container.h"
 #include "scene/gui/separator.h"
 #include "scene/resources/dynamic_font.h"
@@ -44,7 +44,7 @@ void GotoLineDialog::popup_find_line(TextEdit *p_edit) {
 
 	line->set_text(itos(text_editor->cursor_get_line()));
 	line->select_all();
-	popup_centered(Size2(180, 80));
+	popup_centered(Size2(180, 80) * EDSCALE);
 	line->grab_focus();
 }
 
@@ -65,16 +65,20 @@ void GotoLineDialog::ok_pressed() {
 GotoLineDialog::GotoLineDialog() {
 
 	set_title(TTR("Go to Line"));
+
+	VBoxContainer *vbc = memnew(VBoxContainer);
+	vbc->set_anchor_and_margin(MARGIN_LEFT, ANCHOR_BEGIN, 8 * EDSCALE);
+	vbc->set_anchor_and_margin(MARGIN_TOP, ANCHOR_BEGIN, 8 * EDSCALE);
+	vbc->set_anchor_and_margin(MARGIN_RIGHT, ANCHOR_END, -8 * EDSCALE);
+	vbc->set_anchor_and_margin(MARGIN_BOTTOM, ANCHOR_END, -8 * EDSCALE);
+	add_child(vbc);
+
 	Label *l = memnew(Label);
 	l->set_text(TTR("Line Number:"));
-	l->set_position(Point2(5, 5));
-	add_child(l);
+	vbc->add_child(l);
 
 	line = memnew(LineEdit);
-	line->set_anchor(MARGIN_RIGHT, ANCHOR_END);
-	line->set_begin(Point2(15, 22));
-	line->set_end(Point2(-15, 35));
-	add_child(line);
+	vbc->add_child(line);
 	register_text_enter(line);
 	text_editor = NULL;
 
@@ -374,7 +378,7 @@ void FindReplaceBar::_hide_bar() {
 void FindReplaceBar::_show_search() {
 
 	show();
-	search_text->grab_focus();
+	search_text->call_deferred("grab_focus");
 
 	if (text_edit->is_selection_active() && !selection_only->is_pressed()) {
 		search_text->set_text(text_edit->get_selection_text());
@@ -1035,6 +1039,8 @@ void CodeTextEditor::delete_lines() {
 		int to_line = text_editor->get_selection_to_line();
 		int from_line = text_editor->get_selection_from_line();
 		int count = Math::abs(to_line - from_line) + 1;
+
+		text_editor->cursor_set_line(to_line, false);
 		while (count) {
 			text_editor->set_line(text_editor->cursor_get_line(), "");
 			text_editor->backspace_at_cursor();

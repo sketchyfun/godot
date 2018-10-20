@@ -29,7 +29,7 @@
 /*************************************************************************/
 
 #include "animated_sprite.h"
-#include "os/os.h"
+#include "core/os/os.h"
 #include "scene/scene_string_names.h"
 
 #define NORMAL_SUFFIX "_normal"
@@ -395,15 +395,17 @@ void AnimatedSprite::_notification(int p_what) {
 					int fc = frames->get_frame_count(animation);
 					if (frame >= fc - 1) {
 						if (frames->get_animation_loop(animation)) {
+							emit_signal(SceneStringNames::get_singleton()->animation_finished);
 							frame = 0;
 						} else {
+							if (!is_over) {
+								emit_signal(SceneStringNames::get_singleton()->animation_finished);
+								is_over = true;
+							}
 							frame = fc - 1;
 						}
 					} else {
 						frame++;
-						if (frame == fc - 1) {
-							emit_signal(SceneStringNames::get_singleton()->animation_finished);
-						}
 					}
 
 					update();
@@ -625,6 +627,7 @@ void AnimatedSprite::_reset_timeout() {
 		return;
 
 	timeout = _get_frame_duration();
+	is_over = false;
 }
 
 void AnimatedSprite::set_animation(const StringName &p_animation) {
@@ -712,4 +715,5 @@ AnimatedSprite::AnimatedSprite() {
 	playing = false;
 	animation = "default";
 	timeout = 0;
+	is_over = false;
 }

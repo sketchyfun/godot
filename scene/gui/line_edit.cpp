@@ -29,12 +29,12 @@
 /*************************************************************************/
 
 #include "line_edit.h"
+#include "core/message_queue.h"
+#include "core/os/keyboard.h"
+#include "core/os/os.h"
+#include "core/print_string.h"
+#include "core/translation.h"
 #include "label.h"
-#include "message_queue.h"
-#include "os/keyboard.h"
-#include "os/os.h"
-#include "print_string.h"
-#include "translation.h"
 
 #ifdef TOOLS_ENABLED
 #include "editor/editor_scale.h"
@@ -527,7 +527,7 @@ void LineEdit::_gui_input(Ref<InputEvent> p_event) {
 
 void LineEdit::set_align(Align p_align) {
 
-	ERR_FAIL_INDEX(p_align, 4);
+	ERR_FAIL_INDEX((int)p_align, 4);
 	align = p_align;
 	update();
 }

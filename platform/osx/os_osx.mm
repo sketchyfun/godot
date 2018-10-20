@@ -30,15 +30,15 @@
 
 #include "os_osx.h"
 
+#include "core/os/keyboard.h"
+#include "core/print_string.h"
+#include "core/version_generated.gen.h"
 #include "dir_access_osx.h"
 #include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles3/rasterizer_gles3.h"
 #include "main/main.h"
-#include "os/keyboard.h"
-#include "print_string.h"
 #include "sem_osx.h"
 #include "servers/visual/visual_server_raster.h"
-#include "version_generated.gen.h"
 
 #include <mach-o/dyld.h>
 
@@ -75,11 +75,6 @@
 #define NSWindowStyleMaskClosable NSClosableWindowMask
 #define NSWindowStyleMaskBorderless NSBorderlessWindowMask
 #endif
-
-static NSRect convertRectToBacking(NSRect contentRect) {
-
-	return [OS_OSX::singleton->window_view convertRectToBacking:contentRect];
-}
 
 static void get_key_modifier_state(unsigned int p_osx_state, Ref<InputEventWithModifiers> state) {
 
@@ -271,7 +266,7 @@ static Vector2 get_mouse_pos(NSEvent *event) {
 		float newDisplayScale = OS_OSX::singleton->is_hidpi_allowed() ? newBackingScaleFactor : 1.0;
 
 		const NSRect contentRect = [OS_OSX::singleton->window_view frame];
-		const NSRect fbRect = contentRect; //convertRectToBacking(contentRect);
+		const NSRect fbRect = contentRect;
 
 		OS_OSX::singleton->window_size.width = fbRect.size.width * newDisplayScale;
 		OS_OSX::singleton->window_size.height = fbRect.size.height * newDisplayScale;
@@ -292,7 +287,7 @@ static Vector2 get_mouse_pos(NSEvent *event) {
 	[OS_OSX::singleton->context update];
 
 	const NSRect contentRect = [OS_OSX::singleton->window_view frame];
-	const NSRect fbRect = contentRect; //convertRectToBacking(contentRect);
+	const NSRect fbRect = contentRect;
 
 	float displayScale = OS_OSX::singleton->_display_scale();
 	OS_OSX::singleton->window_size.width = fbRect.size.width * displayScale;
@@ -1604,7 +1599,9 @@ void OS_OSX::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, c
 		}
 
 		ERR_FAIL_COND(!texture.is_valid());
+		ERR_FAIL_COND(p_hotspot.x < 0 || p_hotspot.y < 0);
 		ERR_FAIL_COND(texture_size.width > 256 || texture_size.height > 256);
+		ERR_FAIL_COND(p_hotspot.x > texture_size.width || p_hotspot.y > texture_size.height);
 
 		image = texture->get_data();
 
@@ -1660,8 +1657,10 @@ void OS_OSX::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, c
 		[cursors[p_shape] release];
 		cursors[p_shape] = cursor;
 
-		if (p_shape == CURSOR_ARROW) {
-			[cursor set];
+		if (p_shape == cursor_shape) {
+			if (mouse_mode == MOUSE_MODE_VISIBLE || mouse_mode == MOUSE_MODE_CONFINED) {
+				[cursor set];
+			}
 		}
 
 		[imgrep release];
@@ -1669,8 +1668,10 @@ void OS_OSX::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, c
 	} else {
 		// Reset to default system cursor
 		cursors[p_shape] = NULL;
+
+		CursorShape c = cursor_shape;
 		cursor_shape = CURSOR_MAX;
-		set_cursor_shape(p_shape);
+		set_cursor_shape(c);
 	}
 }
 
@@ -1858,28 +1859,30 @@ bool OS_OSX::can_draw() const {
 
 void OS_OSX::set_clipboard(const String &p_text) {
 
-	NSArray *types = [NSArray arrayWithObjects:NSStringPboardType, nil];
+	NSString *copiedString = [NSString stringWithUTF8String:p_text.utf8().get_data()];
+	NSArray *copiedStringArray = [NSArray arrayWithObject:copiedString];
 
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-	[pasteboard declareTypes:types owner:nil];
-	[pasteboard setString:[NSString stringWithUTF8String:p_text.utf8().get_data()]
-				  forType:NSStringPboardType];
+	[pasteboard clearContents];
+	[pasteboard writeObjects:copiedStringArray];
 }
 
 String OS_OSX::get_clipboard() const {
 
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+	NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
+	NSDictionary *options = [NSDictionary dictionary];
 
-	if (![[pasteboard types] containsObject:NSStringPboardType]) {
+	BOOL ok = [pasteboard canReadObjectForClasses:classArray options:options];
+
+	if (!ok) {
 		return "";
 	}
 
-	NSString *object = [pasteboard stringForType:NSStringPboardType];
-	if (!object) {
-		return "";
-	}
+	NSArray *objectsToPaste = [pasteboard readObjectsForClasses:classArray options:options];
+	NSString *string = [objectsToPaste objectAtIndex:0];
 
-	char *utfs = strdup([object UTF8String]);
+	char *utfs = strdup([string UTF8String]);
 	String ret;
 	ret.parse_utf8(utfs);
 	free(utfs);

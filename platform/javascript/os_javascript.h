@@ -32,10 +32,10 @@
 #define OS_JAVASCRIPT_H
 
 #include "audio_driver_javascript.h"
+#include "drivers/unix/os_unix.h"
 #include "main/input_default.h"
 #include "servers/audio_server.h"
 #include "servers/visual/rasterizer.h"
-#include "unix/os_unix.h"
 
 #include <emscripten/html5.h>
 
@@ -135,6 +135,7 @@ public:
 
 	virtual void alert(const String &p_alert, const String &p_title = "ALERT!");
 	virtual void set_window_title(const String &p_title);
+	virtual void set_icon(const Ref<Image> &p_icon);
 	String get_executable_path() const;
 	virtual Error shell_open(String p_uri);
 	virtual String get_name();

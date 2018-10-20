@@ -31,16 +31,16 @@
 #ifndef EDITOR_EXPORT_H
 #define EDITOR_EXPORT_H
 
-#include "os/dir_access.h"
-#include "resource.h"
+#include "core/os/dir_access.h"
+#include "core/resource.h"
 #include "scene/main/node.h"
 #include "scene/main/timer.h"
 #include "scene/resources/texture.h"
 
-class EditorProgress;
 class FileAccess;
 class EditorExportPlatform;
 class EditorFileSystemDirectory;
+struct EditorProgress;
 
 class EditorExportPreset : public Reference {
 

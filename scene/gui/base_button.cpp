@@ -29,9 +29,7 @@
 /*************************************************************************/
 
 #include "base_button.h"
-
-#include "os/keyboard.h"
-#include "print_string.h"
+#include "core/os/keyboard.h"
 #include "scene/main/viewport.h"
 #include "scene/scene_string_names.h"
 
@@ -316,6 +314,14 @@ void BaseButton::set_disabled(bool p_disabled) {
 		return;
 
 	status.disabled = p_disabled;
+	if (p_disabled) {
+		if (!toggle_mode) {
+			status.pressed = false;
+		}
+		status.press_attempt = false;
+		status.pressing_inside = false;
+		status.pressing_button = 0;
+	}
 	update();
 	_change_notify("disabled");
 }
@@ -361,8 +367,9 @@ BaseButton::DrawMode BaseButton::get_draw_mode() const {
 		return DRAW_DISABLED;
 	};
 
-	//print_line("press attempt: "+itos(status.press_attempt)+" hover: "+itos(status.hovering)+" pressed: "+itos(status.pressed));
-	if (status.press_attempt == false && status.hovering) {
+	if (!status.press_attempt && status.hovering) {
+		if (status.pressed)
+			return DRAW_HOVER_PRESSED;
 
 		return DRAW_HOVER;
 	} else {
@@ -538,6 +545,7 @@ void BaseButton::_bind_methods() {
 	BIND_ENUM_CONSTANT(DRAW_PRESSED);
 	BIND_ENUM_CONSTANT(DRAW_HOVER);
 	BIND_ENUM_CONSTANT(DRAW_DISABLED);
+	BIND_ENUM_CONSTANT(DRAW_HOVER_PRESSED);
 
 	BIND_ENUM_CONSTANT(ACTION_MODE_BUTTON_PRESS);
 	BIND_ENUM_CONSTANT(ACTION_MODE_BUTTON_RELEASE);

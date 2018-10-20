@@ -30,7 +30,7 @@
 
 #include "node_2d.h"
 
-#include "message_queue.h"
+#include "core/message_queue.h"
 #include "scene/gui/control.h"
 #include "scene/main/viewport.h"
 #include "servers/visual_server.h"
@@ -202,12 +202,6 @@ Size2 Node2D::get_scale() const {
 		((Node2D *)this)->_update_xform_values();
 
 	return _scale;
-}
-
-void Node2D::_notification(int p_what) {
-
-	switch (p_what) {
-	}
 }
 
 Transform2D Node2D::get_transform() const {

@@ -30,11 +30,11 @@
 
 #include "scene_tree_editor.h"
 
+#include "core/message_queue.h"
+#include "core/print_string.h"
 #include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
 #include "editor_node.h"
-#include "message_queue.h"
-#include "print_string.h"
 #include "scene/gui/label.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
@@ -73,7 +73,7 @@ void SceneTreeEditor::_cell_button_pressed(Object *p_item, int p_column, int p_i
 		undo_redo->create_action(TTR("Toggle Visible"));
 		_toggle_visible(n);
 		List<Node *> selection = editor_selection->get_selected_node_list();
-		if (selection.size() > 1) {
+		if (selection.size() > 1 && selection.find(n) != NULL) {
 			for (List<Node *>::Element *E = selection.front(); E; E = E->next()) {
 				Node *nv = E->get();
 				ERR_FAIL_COND(!nv);
@@ -186,11 +186,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent) {
 			item->set_collapsed(true);
 	}
 
-	Ref<Texture> icon;
-	if (p_node->has_meta("_editor_icon"))
-		icon = p_node->get_meta("_editor_icon");
-	else
-		icon = get_icon((has_icon(p_node->get_class(), "EditorIcons") ? p_node->get_class() : String("Object")), "EditorIcons");
+	Ref<Texture> icon = EditorNode::get_singleton()->get_object_icon(p_node, "Node");
 	item->set_icon(0, icon);
 	item->set_metadata(0, p_node->get_path());
 

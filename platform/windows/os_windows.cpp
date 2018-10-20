@@ -28,27 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+// Must include Winsock before windows.h (included by os_windows.h)
+#include "drivers/unix/net_socket_posix.h"
+
 #include "os_windows.h"
 
+#include "core/io/marshalls.h"
+#include "core/version_generated.gen.h"
 #include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles3/rasterizer_gles3.h"
 #include "drivers/windows/dir_access_windows.h"
 #include "drivers/windows/file_access_windows.h"
 #include "drivers/windows/mutex_windows.h"
-#include "drivers/windows/packet_peer_udp_winsock.h"
 #include "drivers/windows/rw_lock_windows.h"
 #include "drivers/windows/semaphore_windows.h"
-#include "drivers/windows/stream_peer_tcp_winsock.h"
-#include "drivers/windows/tcp_server_winsock.h"
 #include "drivers/windows/thread_windows.h"
-#include "io/marshalls.h"
 #include "joypad.h"
 #include "lang_table.h"
 #include "main/main.h"
 #include "servers/audio_server.h"
 #include "servers/visual/visual_server_raster.h"
 #include "servers/visual/visual_server_wrap_mt.h"
-#include "version_generated.gen.h"
 #include "windows_terminal_logger.h"
 
 #include <process.h>
@@ -219,9 +219,7 @@ void OS_Windows::initialize_core() {
 	DirAccess::make_default<DirAccessWindows>(DirAccess::ACCESS_USERDATA);
 	DirAccess::make_default<DirAccessWindows>(DirAccess::ACCESS_FILESYSTEM);
 
-	TCPServerWinsock::make_default();
-	StreamPeerTCPWinsock::make_default();
-	PacketPeerUDPWinsock::make_default();
+	NetSocketPosix::make_default();
 
 	// We need to know how often the clock is updated
 	if (!QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second))
@@ -249,7 +247,11 @@ bool OS_Windows::can_draw() const {
 
 #define MI_WP_SIGNATURE 0xFF515700
 #define SIGNATURE_MASK 0xFFFFFF00
+// Keeping the name suggested by Microsoft, but this macro really answers:
+// Is this mouse event emulated from touch or pen input?
 #define IsPenEvent(dw) (((dw)&SIGNATURE_MASK) == MI_WP_SIGNATURE)
+// This one tells whether the event comes from touchscreen (and not from pen)
+#define IsTouchEvent(dw) (IsPenEvent(dw) && ((dw)&0x80))
 
 void OS_Windows::_touch_event(bool p_pressed, float p_x, float p_y, int idx) {
 
@@ -456,7 +458,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 					*/
 				}
 
-				if (window_has_focus && main_loop)
+				if (window_has_focus && main_loop && mm->get_relative() != Vector2())
 					input->parse_input_event(mm);
 			}
 			delete[] lpb;
@@ -469,7 +471,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			if (input->is_emulating_mouse_from_touch()) {
 				// Universal translation enabled; ignore OS translation
 				LPARAM extra = GetMessageExtraInfo();
-				if (IsPenEvent(extra)) {
+				if (IsTouchEvent(extra)) {
 					break;
 				}
 			}
@@ -560,7 +562,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			if (input->is_emulating_mouse_from_touch()) {
 				// Universal translation enabled; ignore OS translations for left button
 				LPARAM extra = GetMessageExtraInfo();
-				if (IsPenEvent(extra)) {
+				if (IsTouchEvent(extra)) {
 					break;
 				}
 			}
@@ -695,7 +697,7 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			last_button_state = mb->get_button_mask();
 			mb->set_position(Vector2(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
 
-			if (mouse_mode == MOUSE_MODE_CAPTURED) {
+			if (mouse_mode == MOUSE_MODE_CAPTURED && !use_raw_input) {
 
 				mb->set_position(Vector2(old_x, old_y));
 			}
@@ -1202,7 +1204,14 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);
 
-	char *windowid = getenv("GODOT_WINDOWID");
+	char *windowid;
+#ifdef MINGW_ENABLED
+	windowid = getenv("GODOT_WINDOWID");
+#else
+	size_t len;
+	_dupenv_s(&windowid, &len, "GODOT_WINDOWID");
+#endif
+
 	if (windowid) {
 
 // strtoull on mingw
@@ -1211,6 +1220,7 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 #else
 		hWnd = (HWND)_strtoui64(windowid, NULL, 0);
 #endif
+		free(windowid);
 		SetLastError(0);
 		user_proc = (WNDPROC)GetWindowLongPtr(hWnd, GWLP_WNDPROC);
 		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)(WNDPROC)::WndProc);
@@ -1510,9 +1520,7 @@ void OS_Windows::finalize_core() {
 	timeEndPeriod(1);
 
 	memdelete(process_map);
-
-	TCPServerWinsock::cleanup();
-	StreamPeerTCPWinsock::cleanup();
+	NetSocketPosix::cleanup();
 }
 
 void OS_Windows::alert(const String &p_alert, const String &p_title) {
@@ -1707,6 +1715,15 @@ void OS_Windows::set_window_position(const Point2 &p_position) {
 	RECT r;
 	GetWindowRect(hWnd, &r);
 	MoveWindow(hWnd, p_position.x, p_position.y, r.right - r.left, r.bottom - r.top, TRUE);
+
+	// Don't let the mouse leave the window when moved
+	if (mouse_mode == MOUSE_MODE_CONFINED) {
+		RECT rect;
+		GetClientRect(hWnd, &rect);
+		ClientToScreen(hWnd, (POINT *)&rect.left);
+		ClientToScreen(hWnd, (POINT *)&rect.right);
+		ClipCursor(&rect);
+	}
 }
 Size2 OS_Windows::get_window_size() const {
 
@@ -1735,7 +1752,7 @@ void OS_Windows::set_window_size(const Size2 p_size) {
 	RECT rect;
 	GetWindowRect(hWnd, &rect);
 
-	if (video_mode.borderless_window == false) {
+	if (!video_mode.borderless_window) {
 		RECT crect;
 		GetClientRect(hWnd, &crect);
 
@@ -2248,7 +2265,9 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 		}
 
 		ERR_FAIL_COND(!texture.is_valid());
+		ERR_FAIL_COND(p_hotspot.x < 0 || p_hotspot.y < 0);
 		ERR_FAIL_COND(texture_size.width > 256 || texture_size.height > 256);
+		ERR_FAIL_COND(p_hotspot.x > texture_size.width || p_hotspot.y > texture_size.height);
 
 		image = texture->get_data();
 
@@ -2300,8 +2319,10 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 
 		cursors[p_shape] = CreateIconIndirect(&iconinfo);
 
-		if (p_shape == CURSOR_ARROW) {
-			SetCursor(cursors[p_shape]);
+		if (p_shape == cursor_shape) {
+			if (mouse_mode == MOUSE_MODE_VISIBLE || mouse_mode == MOUSE_MODE_CONFINED) {
+				SetCursor(cursors[p_shape]);
+			}
 		}
 
 		if (hAndMask != NULL) {
@@ -2317,8 +2338,10 @@ void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shap
 	} else {
 		// Reset to default system cursor
 		cursors[p_shape] = NULL;
+
+		CursorShape c = cursor_shape;
 		cursor_shape = CURSOR_MAX;
-		set_cursor_shape(p_shape);
+		set_cursor_shape(c);
 	}
 }
 
@@ -2531,7 +2554,16 @@ void OS_Windows::set_icon(const Ref<Image> &p_icon) {
 
 bool OS_Windows::has_environment(const String &p_var) const {
 
+#ifdef MINGW_ENABLED
 	return _wgetenv(p_var.c_str()) != NULL;
+#else
+	wchar_t *env;
+	size_t len;
+	_wdupenv_s(&env, &len, p_var.c_str());
+	const bool has_env = env != NULL;
+	free(env);
+	return has_env;
+#endif
 };
 
 String OS_Windows::get_environment(const String &p_var) const {
@@ -2722,7 +2754,7 @@ void OS_Windows::run() {
 	while (!force_quit) {
 
 		process_events(); // get rid of pending events
-		if (Main::iteration() == true)
+		if (Main::iteration())
 			break;
 	};
 
@@ -2911,7 +2943,7 @@ bool OS_Windows::is_disable_crash_handler() const {
 Error OS_Windows::move_to_trash(const String &p_path) {
 	SHFILEOPSTRUCTW sf;
 	WCHAR *from = new WCHAR[p_path.length() + 2];
-	wcscpy(from, p_path.c_str());
+	wcscpy_s(from, p_path.length() + 1, p_path.c_str());
 	from[p_path.length() + 1] = 0;
 
 	sf.hwnd = hWnd;

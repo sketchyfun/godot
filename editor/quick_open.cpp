@@ -30,9 +30,9 @@
 
 #include "quick_open.h"
 
-#include "os/keyboard.h"
+#include "core/os/keyboard.h"
 
-void EditorQuickOpen::popup(const StringName &p_base, bool p_enable_multi, bool p_add_dirs, bool p_dontclear) {
+void EditorQuickOpen::popup_dialog(const StringName &p_base, bool p_enable_multi, bool p_add_dirs, bool p_dontclear) {
 
 	add_directories = p_add_dirs;
 	popup_centered_ratio(0.6);

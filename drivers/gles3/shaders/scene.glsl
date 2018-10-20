@@ -2,6 +2,8 @@
 
 #define M_PI 3.14159265359
 
+#define SHADER_IS_SRGB false
+
 /*
 from VisualServer:
 
@@ -528,6 +530,7 @@ VERTEX_SHADER_CODE
 
 [fragment]
 
+
 /* texture unit usage, N is max_texture_unity-N
 
 1-skeleton
@@ -546,6 +549,7 @@ VERTEX_SHADER_CODE
 uniform highp mat4 world_transform;
 
 #define M_PI 3.14159265359
+#define SHADER_IS_SRGB false
 
 /* Varyings */
 
@@ -943,13 +947,14 @@ float GTR1(float NdotH, float a)
     return (a2-1.0) / (M_PI*log(a2)*t);
 }
 
-vec3 metallic_to_specular_color(float metallic, float specular, vec3 albedo) {
-	float dielectric = (0.034 * 2.0) * specular;
-	// energy conservation
-	return mix(vec3(dielectric), albedo, metallic); // TODO: reference?
+vec3 F0(float metallic, float specular, vec3 albedo) {
+	float dielectric = 0.16 * specular * specular;
+	// use albedo * metallic as colored specular reflectance at 0 angle for metallic materials;
+	// see https://google.github.io/filament/Filament.md.html
+	return mix(vec3(dielectric), albedo, vec3(metallic));
 }
 
-void light_compute(vec3 N, vec3 L, vec3 V, vec3 B, vec3 T, vec3 light_color, vec3 attenuation, vec3 diffuse_color, vec3 transmission, float specular_blob_intensity, float roughness, float metallic, float rim, float rim_tint, float clearcoat, float clearcoat_gloss, float anisotropy, inout vec3 diffuse_light, inout vec3 specular_light) {
+void light_compute(vec3 N, vec3 L, vec3 V, vec3 B, vec3 T, vec3 light_color, vec3 attenuation, vec3 diffuse_color, vec3 transmission, float specular_blob_intensity, float roughness, float metallic, float specular, float rim, float rim_tint, float clearcoat, float clearcoat_gloss, float anisotropy, inout vec3 diffuse_light, inout vec3 specular_light) {
 
 #if defined(USE_LIGHT_SHADER_CODE)
 //light is written by the light shader
@@ -1049,17 +1054,28 @@ LIGHT_SHADER_CODE
 
 #if defined(SPECULAR_BLINN)
 
+		//normalized blinn
 		vec3 H = normalize(V + L);
-		float cNdotH = max(dot(N,H), 0.0 );
-		float intensity = pow( cNdotH, (1.0-roughness) * 256.0);
+		float cNdotH = max(dot(N, H), 0.0);
+		float cVdotH = max(dot(V, H), 0.0);
+		float cLdotH = max(dot(L, H), 0.0);
+		float shininess = exp2(15.0 * (1.0 - roughness) + 1.0) * 0.25;
+		float blinn = pow(cNdotH, shininess);
+		blinn *= (shininess + 8.0) / (8.0 * 3.141592654);
+		float intensity = (blinn) / max(4.0 * cNdotV * cNdotL, 0.75);
+
 		specular_light += light_color * intensity * specular_blob_intensity * attenuation;
 
 #elif defined(SPECULAR_PHONG)
 
-		 vec3 R = normalize(-reflect(L,N));
-		 float cRdotV = max(0.0,dot(R,V));
-		 float intensity = pow( cRdotV, (1.0-roughness) * 256.0);
-		 specular_light += light_color * intensity * specular_blob_intensity * attenuation;
+		vec3 R = normalize(-reflect(L, N));
+		float cRdotV = max(0.0, dot(R, V));
+		float shininess = exp2(15.0 * (1.0 - roughness) + 1.0) * 0.25;
+		float phong = pow(cRdotV, shininess);
+		phong *= (shininess + 8.0) / (8.0 * 3.141592654);
+		float intensity = (phong) / max(4.0 * cNdotV * cNdotL, 0.75);
+
+		specular_light += light_color * intensity * specular_blob_intensity * attenuation;
 
 #elif defined(SPECULAR_TOON)
 
@@ -1083,13 +1099,12 @@ LIGHT_SHADER_CODE
 
 # if defined(LIGHT_USE_ANISOTROPY)
 
-		float aspect = sqrt(1.0-anisotropy*0.9);
-		float rx = roughness/aspect;
-		float ry = roughness*aspect;
-		float ax = rx*rx;
-		float ay = ry*ry;
-		float XdotH = dot( T, H );
-		float YdotH = dot( B, H );
+		float alpha = roughness * roughness;
+		float aspect = sqrt(1.0 - anisotropy * 0.9);
+		float ax = alpha / aspect;
+		float ay = alpha * aspect;
+		float XdotH = dot(T, H);
+		float YdotH = dot(B, H);
 		float D = D_GGX_anisotropic(cNdotH, ax, ay, XdotH, YdotH);
 		float G = G_GGX_anisotropic_2cos(cNdotL, ax, ay, XdotH, YdotH) * G_GGX_anisotropic_2cos(cNdotV, ax, ay, XdotH, YdotH);
 
@@ -1099,11 +1114,11 @@ LIGHT_SHADER_CODE
 		float G = G_GGX_2cos(cNdotL, alpha) * G_GGX_2cos(cNdotV, alpha);
 # endif
 		// F
-		float F0 = 1.0; // FIXME
+		vec3 f0 = F0(metallic, specular, diffuse_color);
 		float cLdotH5 = SchlickFresnel(cLdotH);
-		float F = mix(cLdotH5, 1.0, F0);
+		vec3 F = mix(vec3(cLdotH5), vec3(1.0), f0);
 
-		float specular_brdf_NL = cNdotL * D * F * G;
+		vec3 specular_brdf_NL = cNdotL * D * F * G;
 
 		specular_light += specular_brdf_NL * light_color * specular_blob_intensity * attenuation;
 #endif
@@ -1139,22 +1154,23 @@ float sample_shadow(highp sampler2DShadow shadow, vec2 shadow_pixel_size, vec2 p
 
 #ifdef SHADOW_MODE_PCF_13
 
-	float avg=textureProj(shadow,vec4(pos,depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(shadow_pixel_size.x,0.0),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(-shadow_pixel_size.x,0.0),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(0.0,shadow_pixel_size.y),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(0.0,-shadow_pixel_size.y),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(shadow_pixel_size.x,shadow_pixel_size.y),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(-shadow_pixel_size.x,shadow_pixel_size.y),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(shadow_pixel_size.x,-shadow_pixel_size.y),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(-shadow_pixel_size.x,-shadow_pixel_size.y),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(shadow_pixel_size.x*2.0,0.0),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(-shadow_pixel_size.x*2.0,0.0),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(0.0,shadow_pixel_size.y*2.0),depth,1.0));
-	avg+=textureProj(shadow,vec4(pos+vec2(0.0,-shadow_pixel_size.y*2.0),depth,1.0));
-	return avg*(1.0/13.0);
+	float avg = textureProj(shadow, vec4(pos, depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(shadow_pixel_size.x, 0.0), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(-shadow_pixel_size.x, 0.0), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(0.0, shadow_pixel_size.y), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(0.0, -shadow_pixel_size.y), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(shadow_pixel_size.x, shadow_pixel_size.y), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(-shadow_pixel_size.x, shadow_pixel_size.y), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(shadow_pixel_size.x, -shadow_pixel_size.y), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(-shadow_pixel_size.x, -shadow_pixel_size.y), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(shadow_pixel_size.x * 2.0, 0.0), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(-shadow_pixel_size.x * 2.0, 0.0), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(0.0, shadow_pixel_size.y * 2.0), depth, 1.0));
+	avg += textureProj(shadow, vec4(pos + vec2(0.0, -shadow_pixel_size.y * 2.0), depth, 1.0));
+	return avg * (1.0 / 13.0);
+#endif
 
-#elif defined(SHADOW_MODE_PCF_5)
+#ifdef SHADOW_MODE_PCF_5
 
 	float avg=textureProj(shadow,vec4(pos,depth,1.0));
 	avg+=textureProj(shadow,vec4(pos+vec2(shadow_pixel_size.x,0.0),depth,1.0));
@@ -1163,7 +1179,9 @@ float sample_shadow(highp sampler2DShadow shadow, vec2 shadow_pixel_size, vec2 p
 	avg+=textureProj(shadow,vec4(pos+vec2(0.0,-shadow_pixel_size.y),depth,1.0));
 	return avg*(1.0/5.0);
 
-#else
+#endif
+
+#if !defined(SHADOW_MODE_PCF_5) || !defined(SHADOW_MODE_PCF_13)
 
 	return textureProj(shadow,vec4(pos,depth,1.0));
 
@@ -1208,7 +1226,8 @@ vec3 light_transmittance(float translucency,vec3 light_vec, vec3 normal, vec3 po
 }
 #endif
 
-void light_process_omni(int idx, vec3 vertex, vec3 eye_vec,vec3 normal,vec3 binormal, vec3 tangent, vec3 albedo, vec3 transmission, float roughness, float metallic, float rim, float rim_tint, float clearcoat, float clearcoat_gloss, float anisotropy, float p_blob_intensity, inout vec3 diffuse_light, inout vec3 specular_light) {
+
+void light_process_omni(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 binormal, vec3 tangent, vec3 albedo, vec3 transmission, float roughness, float metallic, float specular, float rim, float rim_tint, float clearcoat, float clearcoat_gloss, float anisotropy, float p_blob_intensity, inout vec3 diffuse_light, inout vec3 specular_light) {
 
 	vec3 light_rel_vec = omni_lights[idx].light_pos_inv_radius.xyz-vertex;
 	float light_length = length( light_rel_vec );
@@ -1264,12 +1283,10 @@ void light_process_omni(int idx, vec3 vertex, vec3 eye_vec,vec3 normal,vec3 bino
 		light_attenuation*=mix(omni_lights[idx].shadow_color_contact.rgb,vec3(1.0),shadow);
 	}
 #endif //SHADOWS_DISABLED
-
-	light_compute(normal,normalize(light_rel_vec),eye_vec,binormal,tangent,omni_lights[idx].light_color_energy.rgb,light_attenuation,albedo,transmission,omni_lights[idx].light_params.z*p_blob_intensity,roughness,metallic,rim * omni_attenuation,rim_tint,clearcoat,clearcoat_gloss,anisotropy,diffuse_light,specular_light);
-
+	light_compute(normal, normalize(light_rel_vec), eye_vec, binormal, tangent, omni_lights[idx].light_color_energy.rgb, light_attenuation, albedo, transmission, omni_lights[idx].light_params.z * p_blob_intensity, roughness, metallic, specular, rim * omni_attenuation, rim_tint, clearcoat, clearcoat_gloss, anisotropy, diffuse_light, specular_light);
 }
 
-void light_process_spot(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 binormal, vec3 tangent,vec3 albedo, vec3 transmission,float roughness, float metallic, float rim, float rim_tint, float clearcoat, float clearcoat_gloss,float anisotropy,float p_blob_intensity, inout vec3 diffuse_light, inout vec3 specular_light) {
+void light_process_spot(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 binormal, vec3 tangent, vec3 albedo, vec3 transmission, float roughness, float metallic, float specular, float rim, float rim_tint, float clearcoat, float clearcoat_gloss, float anisotropy, float p_blob_intensity, inout vec3 diffuse_light, inout vec3 specular_light) {
 
 	vec3 light_rel_vec = spot_lights[idx].light_pos_inv_radius.xyz-vertex;
 	float light_length = length( light_rel_vec );
@@ -1302,8 +1319,7 @@ void light_process_spot(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 bi
 	}
 #endif //SHADOWS_DISABLED
 
-	light_compute(normal,normalize(light_rel_vec),eye_vec,binormal,tangent,spot_lights[idx].light_color_energy.rgb,light_attenuation,albedo,transmission,spot_lights[idx].light_params.z*p_blob_intensity,roughness,metallic,rim * spot_attenuation,rim_tint,clearcoat,clearcoat_gloss,anisotropy,diffuse_light,specular_light);
-
+	light_compute(normal, normalize(light_rel_vec), eye_vec, binormal, tangent, spot_lights[idx].light_color_energy.rgb, light_attenuation, albedo, transmission, spot_lights[idx].light_params.z * p_blob_intensity, roughness, metallic, specular, rim * spot_attenuation, rim_tint, clearcoat, clearcoat_gloss, anisotropy, diffuse_light, specular_light);
 }
 
 void reflection_process(int idx, vec3 vertex, vec3 normal,vec3 binormal, vec3 tangent,float roughness,float anisotropy,vec3 ambient,vec3 skybox, inout highp vec4 reflection_accum,inout highp vec4 ambient_accum) {
@@ -1365,9 +1381,9 @@ void reflection_process(int idx, vec3 vertex, vec3 normal,vec3 binormal, vec3 ta
 
 		reflection_accum+=reflection;
 	}
-#ifndef USE_LIGHTMAP
-	if (reflections[idx].ambient.a>0.0) { //compute ambient using skybox
 
+#if !defined(USE_LIGHTMAP) && !defined(USE_LIGHTMAP_CAPTURE)
+	if (reflections[idx].ambient.a > 0.0) { //compute ambient using skybox
 
 		vec3 local_amb_vec = (reflections[idx].local_matrix * vec4(normal,0.0)).xyz;
 
@@ -1966,7 +1982,7 @@ FRAGMENT_SHADER_CODE
 	specular_light*=mix(vec3(1.0),light_attenuation,specular_light_interp.a);
 
 #else
-	light_compute(normal,-light_direction_attenuation.xyz,eye_vec,binormal,tangent,light_color_energy.rgb,light_attenuation,albedo,transmission,light_params.z*specular_blob_intensity,roughness,metallic,rim,rim_tint,clearcoat,clearcoat_gloss,anisotropy,diffuse_light,specular_light);
+	light_compute(normal, -light_direction_attenuation.xyz, eye_vec, binormal, tangent, light_color_energy.rgb, light_attenuation, albedo, transmission, light_params.z * specular_blob_intensity, roughness, metallic, specular, rim, rim_tint, clearcoat, clearcoat_gloss, anisotropy, diffuse_light, specular_light);
 #endif
 
 
@@ -2033,11 +2049,12 @@ FRAGMENT_SHADER_CODE
 	} else {
 		specular_light+=env_reflection_light;
 	}
-#ifndef USE_LIGHTMAP
-	if (ambient_accum.a>0.0) {
-		ambient_light=ambient_accum.rgb/ambient_accum.a;
+#if !defined(USE_LIGHTMAP) && !defined(USE_LIGHTMAP_CAPTURE)
+	if (ambient_accum.a > 0.0) {
+		ambient_light = ambient_accum.rgb / ambient_accum.a;
 	}
 #endif
+
 
 
 #ifdef USE_VERTEX_LIGHTING
@@ -2045,12 +2062,12 @@ FRAGMENT_SHADER_CODE
 	diffuse_light*=albedo;
 #else
 
-	for(int i=0;i<omni_light_count;i++) {
-		light_process_omni(omni_light_indices[i],vertex,eye_vec,normal,binormal,tangent,albedo,transmission,roughness,metallic,rim,rim_tint,clearcoat,clearcoat_gloss,anisotropy,specular_blob_intensity,diffuse_light,specular_light);
+	for (int i = 0; i < omni_light_count; i++) {
+		light_process_omni(omni_light_indices[i], vertex, eye_vec, normal, binormal, tangent, albedo, transmission, roughness, metallic, specular, rim, rim_tint, clearcoat, clearcoat_gloss, anisotropy, specular_blob_intensity, diffuse_light, specular_light);
 	}
 
-	for(int i=0;i<spot_light_count;i++) {
-		light_process_spot(spot_light_indices[i],vertex,eye_vec,normal,binormal,tangent,albedo,transmission,roughness,metallic,rim,rim_tint,clearcoat,clearcoat_gloss,anisotropy,specular_blob_intensity,diffuse_light,specular_light);
+	for (int i = 0; i < spot_light_count; i++) {
+		light_process_spot(spot_light_indices[i], vertex, eye_vec, normal, binormal, tangent, albedo, transmission, roughness, metallic, specular, rim, rim_tint, clearcoat, clearcoat_gloss, anisotropy, specular_blob_intensity, diffuse_light, specular_light);
 	}
 
 #endif //USE_VERTEX_LIGHTING
@@ -2074,12 +2091,9 @@ FRAGMENT_SHADER_CODE
 	diffuse_light*=ao_light_affect;
 #endif
 
-
-
-	//energy conservation
-	diffuse_light *= 1.0-metallic; // TODO: avoid all diffuse and ambient light calculations when metallic == 1 up to this point
-	ambient_light *= 1.0-metallic;
-
+	// base color remapping
+	diffuse_light *= 1.0 - metallic; // TODO: avoid all diffuse and ambient light calculations when metallic == 1 up to this point
+	ambient_light *= 1.0 - metallic;
 
 	{
 
@@ -2092,12 +2106,12 @@ FRAGMENT_SHADER_CODE
 		const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022);
 		const vec4 c1 = vec4( 1.0, 0.0425, 1.04, -0.04);
 		vec4 r = roughness * c0 + c1;
-		float ndotv = clamp(dot(normal,eye_vec),0.0,1.0);
-		float a004 = min( r.x * r.x, exp2( -9.28 * ndotv ) ) * r.x + r.y;
-		vec2 AB = vec2( -1.04, 1.04 ) * a004 + r.zw;
+		float ndotv = clamp(dot(normal, eye_vec), 0.0, 1.0);
+		float a004 = min(r.x * r.x, exp2(-9.28 * ndotv)) * r.x + r.y;
+		vec2 env = vec2(-1.04, 1.04) * a004 + r.zw;
 
-		vec3 specular_color = metallic_to_specular_color(metallic, specular, albedo);
-		specular_light *= AB.x * specular_color + AB.y;
+		vec3 f0 = F0(metallic, specular, albedo);
+		specular_light *= env.x * f0 + env.y;
 #endif
 
 	}

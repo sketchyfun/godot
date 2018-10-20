@@ -31,8 +31,8 @@
 #ifndef VISUAL_SERVER_RASTER_H
 #define VISUAL_SERVER_RASTER_H
 
-#include "allocators.h"
-#include "octree.h"
+#include "core/allocators.h"
+#include "core/math/octree.h"
 #include "servers/visual/rasterizer.h"
 #include "servers/visual_server.h"
 #include "visual_server_canvas.h"
@@ -59,7 +59,6 @@ class VisualServerRaster : public VisualServer {
 	};
 
 	static int changes;
-	bool draw_extra_frame;
 	RID test_cube;
 
 	int black_margin[4];
@@ -203,6 +202,7 @@ public:
 
 	BIND3(material_set_param, RID, const StringName &, const Variant &)
 	BIND2RC(Variant, material_get_param, RID, const StringName &)
+	BIND2RC(Variant, material_get_param_default, RID, const StringName &)
 
 	BIND2(material_set_render_priority, RID, int)
 	BIND2(material_set_line_width, RID, float)
@@ -336,6 +336,7 @@ public:
 	BIND2(reflection_probe_set_enable_box_projection, RID, bool)
 	BIND2(reflection_probe_set_enable_shadows, RID, bool)
 	BIND2(reflection_probe_set_cull_mask, RID, uint32_t)
+	BIND2(reflection_probe_set_resolution, RID, int)
 
 	/* BAKED LIGHT API */
 
@@ -575,6 +576,8 @@ public:
 	BIND2(canvas_item_set_visible, RID, bool)
 	BIND2(canvas_item_set_light_mask, RID, int)
 
+	BIND2(canvas_item_set_update_when_visible, RID, bool)
+
 	BIND2(canvas_item_set_transform, RID, const Transform2D &)
 	BIND2(canvas_item_set_clip, RID, bool)
 	BIND2(canvas_item_set_distance_field_mode, RID, bool)
@@ -686,6 +689,8 @@ public:
 	virtual void set_debug_generate_wireframes(bool p_generate);
 
 	virtual void call_set_use_vsync(bool p_enable);
+
+	virtual bool is_low_end() const;
 
 	VisualServerRaster();
 	~VisualServerRaster();

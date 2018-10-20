@@ -31,10 +31,10 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include "resource.h"
+#include "core/resource.h"
+#include "core/self_list.h"
 #include "scene/resources/shader.h"
 #include "scene/resources/texture.h"
-#include "self_list.h"
 #include "servers/visual/shader_language.h"
 #include "servers/visual_server.h"
 /**
@@ -85,6 +85,8 @@ protected:
 	bool _set(const StringName &p_name, const Variant &p_value);
 	bool _get(const StringName &p_name, Variant &r_ret) const;
 	void _get_property_list(List<PropertyInfo> *p_list) const;
+	bool property_can_revert(const String &p_name);
+	Variant property_get_revert(const String &p_name);
 
 	static void _bind_methods();
 
@@ -284,7 +286,7 @@ private:
 		mk.key = 0;
 		for (int i = 0; i < FEATURE_MAX; i++) {
 			if (features[i]) {
-				mk.feature_mask |= (1 << i);
+				mk.feature_mask |= ((uint64_t)1 << i);
 			}
 		}
 		mk.detail_uv = detail_uv;
@@ -293,7 +295,7 @@ private:
 		mk.cull_mode = cull_mode;
 		for (int i = 0; i < FLAG_MAX; i++) {
 			if (flags[i]) {
-				mk.flags |= (1 << i);
+				mk.flags |= ((uint64_t)1 << i);
 			}
 		}
 		mk.detail_blend_mode = detail_blend_mode;
@@ -439,6 +441,8 @@ private:
 	};
 
 	static Ref<SpatialMaterial> materials_for_2d[MAX_MATERIALS_FOR_2D]; //used by Sprite3D and other stuff
+
+	void _validate_high_end(const String &text, PropertyInfo &property) const;
 
 protected:
 	static void _bind_methods();

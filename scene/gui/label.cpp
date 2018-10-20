@@ -29,9 +29,9 @@
 /*************************************************************************/
 
 #include "label.h"
-#include "print_string.h"
-#include "project_settings.h"
-#include "translation.h"
+#include "core/print_string.h"
+#include "core/project_settings.h"
+#include "core/translation.h"
 
 void Label::set_autowrap(bool p_autowrap) {
 
@@ -295,14 +295,13 @@ Size2 Label::get_minimum_size() const {
 
 	Size2 min_style = get_stylebox("normal")->get_minimum_size();
 
+	// don't want to mutable everything
+	if (word_cache_dirty)
+		const_cast<Label *>(this)->regenerate_word_cache();
+
 	if (autowrap)
 		return Size2(1, clip ? 1 : minsize.height) + min_style;
 	else {
-
-		// don't want to mutable everything
-		if (word_cache_dirty)
-			const_cast<Label *>(this)->regenerate_word_cache();
-
 		Size2 ms = minsize;
 		if (clip)
 			ms.width = 1;
@@ -512,7 +511,7 @@ void Label::regenerate_word_cache() {
 
 void Label::set_align(Align p_align) {
 
-	ERR_FAIL_INDEX(p_align, 4);
+	ERR_FAIL_INDEX((int)p_align, 4);
 	align = p_align;
 	update();
 }
@@ -524,7 +523,7 @@ Label::Align Label::get_align() const {
 
 void Label::set_valign(VAlign p_align) {
 
-	ERR_FAIL_INDEX(p_align, 4);
+	ERR_FAIL_INDEX((int)p_align, 4);
 	valign = p_align;
 	update();
 }
