@@ -105,9 +105,11 @@ layout(std140) uniform SceneData { // ubo:0
 	highp float fog_height_min;
 	highp float fog_height_max;
 	highp float fog_height_curve;
+
 };
 
 uniform highp mat4 world_transform;
+
 
 #ifdef USE_LIGHT_DIRECTIONAL
 
@@ -140,7 +142,9 @@ struct LightData {
 	mediump vec4 light_clamp;
 	mediump vec4 shadow_color_contact;
 	highp mat4 shadow_matrix;
+
 };
+
 
 layout(std140) uniform OmniLightData { //ubo:4
 
@@ -153,6 +157,7 @@ layout(std140) uniform SpotLightData { //ubo:5
 };
 
 #ifdef USE_FORWARD_LIGHTING
+
 
 uniform int omni_light_indices[MAX_FORWARD_LIGHTS];
 uniform int omni_light_count;
@@ -176,6 +181,7 @@ void light_compute(vec3 N, vec3 L, vec3 V, vec3 light_color, float roughness, in
 		float dotNH = max(dot(N, H), 0.0);
 		float intensity = (roughness >= 1.0 ? 1.0 : pow(dotNH, (1.0 - roughness) * 256.0));
 		specular += light_color * intensity;
+
 	}
 }
 
@@ -204,6 +210,7 @@ void light_process_spot(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, float r
 	light_compute(normal, normalize(light_rel_vec), eye_vec, spot_lights[idx].light_color_energy.rgb * light_attenuation, roughness, diffuse, specular);
 }
 
+
 #endif
 
 /* Varyings */
@@ -223,10 +230,12 @@ out vec2 uv_interp;
 out vec2 uv2_interp;
 #endif
 
+
 #if defined(ENABLE_TANGENT_INTERP) || defined(ENABLE_NORMALMAP) || defined(LIGHT_USE_ANISOTROPY)
 out vec3 tangent_interp;
 out vec3 binormal_interp;
 #endif
+
 
 #if defined(USE_MATERIAL)
 
@@ -270,6 +279,7 @@ void main() {
 
 	mat4 world_matrix = world_transform;
 
+
 #ifdef USE_INSTANCING
 
 	{
@@ -279,6 +289,7 @@ void main() {
 #endif
 
 	vec3 normal = normal_attrib * normal_mult;
+
 
 #if defined(ENABLE_TANGENT_INTERP) || defined(ENABLE_NORMALMAP) || defined(LIGHT_USE_ANISOTROPY)
 	vec3 tangent = tangent_attrib.xyz;
@@ -293,6 +304,7 @@ void main() {
 #endif
 
 #endif
+
 
 #if defined(ENABLE_TANGENT_INTERP) || defined(ENABLE_NORMALMAP) || defined(LIGHT_USE_ANISOTROPY)
 
@@ -339,6 +351,7 @@ void main() {
 //defines that make writing custom shaders easier
 #define projection_matrix local_projection
 #define world_transform world_matrix
+
 
 #ifdef USE_SKELETON
 	{
@@ -427,12 +440,15 @@ VERTEX_SHADER_CODE
 	vertex_interp = vertex.xyz;
 	normal_interp = normal;
 
+
 #if defined(ENABLE_TANGENT_INTERP) || defined(ENABLE_NORMALMAP) || defined(LIGHT_USE_ANISOTROPY)
 	tangent_interp = tangent;
 	binormal_interp = binormal;
 #endif
 
+
 #ifdef RENDER_DEPTH
+
 
 #ifdef RENDER_DEPTH_DUAL_PARABOLOID
 
@@ -451,6 +467,7 @@ VERTEX_SHADER_CODE
 	vtx.z = vtx.z * 2.0 - 1.0;
 
 	vertex_interp = vtx;
+
 
 #else
 
@@ -510,7 +527,9 @@ VERTEX_SHADER_CODE
 
 #endif //USE_LIGHT_DIRECTIONAL
 
+
 #endif // USE_VERTEX_LIGHTING
+
 }
 
 /* clang-format off */
@@ -560,6 +579,7 @@ in vec3 binormal_interp;
 in highp vec3 vertex_interp;
 in vec3 normal_interp;
 
+
 /* PBR CHANNELS */
 
 #ifdef USE_RADIANCE_MAP
@@ -568,6 +588,7 @@ layout(std140) uniform Radiance { // ubo:2
 
 	mat4 radiance_inverse_xform;
 	float radiance_ambient_contribution;
+
 };
 
 #define RADIANCE_MAX_LOD 5.0
@@ -620,6 +641,8 @@ vec3 textureDualParaboloid(sampler2D p_tex, vec3 p_vec, float p_roughness) {
 #endif
 
 /* Material Uniforms */
+
+
 
 #if defined(USE_MATERIAL)
 
@@ -722,6 +745,7 @@ struct LightData {
 	mediump vec4 light_clamp;
 	mediump vec4 shadow_color_contact;
 	highp mat4 shadow_matrix;
+
 };
 
 layout(std140) uniform OmniLightData { // ubo:4
@@ -765,6 +789,7 @@ uniform int reflection_indices[MAX_FORWARD_LIGHTS];
 uniform int reflection_count;
 
 #endif
+
 
 #if defined(SCREEN_TEXTURE_USED)
 
@@ -855,6 +880,7 @@ float contact_shadow_compute(vec3 pos, vec3 dir, float max_distance) {
 
 #endif
 
+
 // This returns the G_GGX function divided by 2 cos_theta_m, where in practice cos_theta_m is either N.L or N.V.
 // We're dividing this factor off because the overall term we'll end up looks like
 // (see, for example, the first unnumbered equation in B. Burley, "Physically Based Shading at Disney", SIGGRAPH 2012):
@@ -937,11 +963,8 @@ void light_compute(vec3 N, vec3 L, vec3 V, vec3 B, vec3 T, vec3 light_color, vec
 	vec3 light = L;
 	vec3 view = V;
 
-	/* clang-format off */
-
 LIGHT_SHADER_CODE
 
-	/* clang-format on */
 
 #else
 	float NdotL = dot(N, L);
@@ -956,6 +979,7 @@ LIGHT_SHADER_CODE
 		float diffuse_brdf_NL; // BRDF times N.L for calculating diffuse radiance
 #endif
 
+
 #if defined(DIFFUSE_LAMBERT_WRAP)
 		// energy conserving lambert wrap shader
 		diffuse_brdf_NL = max(0.0, (NdotL + roughness) / ((1.0 + roughness) * (1.0 + roughness)));
@@ -965,6 +989,7 @@ LIGHT_SHADER_CODE
 		{
 			// see http://mimosa-pudica.net/improved-oren-nayar.html
 			float LdotV = dot(L, V);
+
 
 			float s = LdotV - NdotL * NdotV;
 			float t = mix(1.0, max(NdotL, NdotV), step(0.0, s));
@@ -983,6 +1008,7 @@ LIGHT_SHADER_CODE
 #elif defined(DIFFUSE_BURLEY)
 
 		{
+
 
 			vec3 H = normalize(V + L);
 			float cLdotH = max(0.0, dot(L, H));
@@ -1013,13 +1039,16 @@ LIGHT_SHADER_CODE
 		diffuse_light += light_color * diffuse_color * (vec3(1.0 / M_PI) - diffuse_brdf_NL) * transmission * attenuation;
 #endif
 
+
 #if defined(LIGHT_USE_RIM)
 		float rim_light = pow(max(0.0, 1.0 - cNdotV), max(0.0, (1.0 - roughness) * 16.0));
 		diffuse_light += rim_light * rim * mix(vec3(1.0), diffuse_color, rim_tint) * light_color;
 #endif
 	}
 
+
 	if (roughness > 0.0) { // FIXME: roughness == 0 should not disable specular light entirely
+
 
 		// D
 
@@ -1108,6 +1137,7 @@ LIGHT_SHADER_CODE
 			float Fr = mix(.04, 1.0, cLdotH5);
 			float Gr = G_GGX_2cos(cNdotL, .25) * G_GGX_2cos(cNdotV, .25);
 
+
 			float specular_brdf_NL = 0.25 * clearcoat * Gr * Fr * Dr * cNdotL;
 
 			specular_light += specular_brdf_NL * light_color * specular_blob_intensity * attenuation;
@@ -1115,8 +1145,10 @@ LIGHT_SHADER_CODE
 #endif
 	}
 
+
 #endif //defined(USE_LIGHT_SHADER_CODE)
 }
+
 
 float sample_shadow(highp sampler2DShadow shadow, vec2 shadow_pixel_size, vec2 pos, float depth, vec4 clamp_rect) {
 
@@ -1154,6 +1186,7 @@ float sample_shadow(highp sampler2DShadow shadow, vec2 shadow_pixel_size, vec2 p
 	return textureProj(shadow, vec4(pos, depth, 1.0));
 
 #endif
+
 }
 
 #ifdef RENDER_DEPTH_DUAL_PARABOLOID
@@ -1161,6 +1194,8 @@ float sample_shadow(highp sampler2DShadow shadow, vec2 shadow_pixel_size, vec2 p
 in highp float dp_clip;
 
 #endif
+
+
 
 #if 0
 // need to save texture depth for this
@@ -1190,6 +1225,7 @@ vec3 light_transmittance(float translucency,vec3 light_vec, vec3 normal, vec3 po
 	return profile * clamp(0.3 + dot(light_vec, normal),0.0,1.0);
 }
 #endif
+
 
 void light_process_omni(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 binormal, vec3 tangent, vec3 albedo, vec3 transmission, float roughness, float metallic, float specular, float rim, float rim_tint, float clearcoat, float clearcoat_gloss, float anisotropy, float p_blob_intensity, inout vec3 diffuse_light, inout vec3 specular_light) {
 
@@ -1225,6 +1261,7 @@ void light_process_omni(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 bi
 				clamp_rect.y += clamp_rect.w;
 			}
 			*/
+
 		}
 
 		splane.xy /= splane.z;
@@ -1340,6 +1377,7 @@ void reflection_process(int idx, vec3 vertex, vec3 normal, vec3 binormal, vec3 t
 
 		reflection_accum += reflection;
 	}
+
 #if !defined(USE_LIGHTMAP) && !defined(USE_LIGHTMAP_CAPTURE)
 	if (reflections[idx].ambient.a > 0.0) { //compute ambient using skybox
 
@@ -1518,6 +1556,7 @@ void gi_probe_compute(mediump sampler3D probe, mat4 probe_xform, vec3 bounds, ve
 	out_spec += vec4(irr_light * blend, blend);
 }
 
+
 void gi_probes_compute(vec3 pos, vec3 normal, float roughness, inout vec3 out_specular, inout vec3 out_ambient) {
 
 	roughness = roughness * roughness;
@@ -1561,6 +1600,8 @@ void gi_probes_compute(vec3 pos, vec3 normal, float roughness, inout vec3 out_sp
 
 #endif
 
+
+
 void main() {
 
 #ifdef RENDER_DEPTH_DUAL_PARABOLOID
@@ -1579,10 +1620,16 @@ void main() {
 	float roughness = 1.0;
 	float rim = 0.0;
 	float rim_tint = 0.0;
-	float clearcoat = 0.0;
-	float clearcoat_gloss = 0.0;
-	float anisotropy = 0.0;
-	vec2 anisotropy_flow = vec2(1.0, 0.0);
+	float clearcoat=0.0;
+	float clearcoat_gloss=0.0;
+	float anisotropy = 1.0;
+	vec2 anisotropy_flow = vec2(1.0,0.0);
+	float shadow = 0.0;
+#if defined(USE_LIGHT_DIRECTIONAL)
+	vec3 light = -light_direction_attenuation.xyz;
+#else
+	vec3 light = vec3(0.0);
+#endif
 
 #if defined(ENABLE_AO)
 	float ao = 1.0;
@@ -1596,6 +1643,7 @@ void main() {
 #else
 	float side = 1.0;
 #endif
+
 
 #if defined(ALPHA_SCISSOR_USED)
 	float alpha_scissor = 0.5;
@@ -1637,8 +1685,16 @@ void main() {
 	float sss_strength = 0.0;
 #endif
 
-	{
-		/* clang-format off */
+#if !defined(LIGHT_USE_PSSM4) && !defined(LIGHT_USE_PSSM2) && defined(USE_LIGHT_DIRECTIONAL)
+	{ //regular orthogonal
+		highp vec4 my_splane=(shadow_matrix1 * vec4(vertex,1.0));
+		vec3 my_pssm_coord=my_splane.xyz/my_splane.w;
+		shadow = sample_shadow(directional_shadow,directional_shadow_pixel_size,my_pssm_coord.xy,my_pssm_coord.z,light_clamp);
+	}
+#endif
+
+{
+
 
 FRAGMENT_SHADER_CODE
 
@@ -1720,9 +1776,11 @@ FRAGMENT_SHADER_CODE
 			ref_vec = normalize((radiance_inverse_xform * vec4(ref_vec, 0.0)).xyz);
 			vec3 radiance = textureDualParaboloid(radiance_map, ref_vec, roughness) * bg_energy;
 			env_reflection_light = radiance;
+
 		}
 		//no longer a cubemap
 		//vec3 radiance = textureLod(radiance_cube, r, lod).xyz * ( brdf.x + brdf.y);
+
 	}
 #ifndef USE_LIGHTMAP
 	{
@@ -1777,6 +1835,7 @@ FRAGMENT_SHADER_CODE
 		vec3 pssm_coord2;
 		bool use_blend = true;
 #endif
+
 
 #ifdef LIGHT_USE_PSSM4
 
@@ -1887,6 +1946,7 @@ FRAGMENT_SHADER_CODE
 		light_attenuation = mix(mix(shadow_color_contact.rgb, vec3(1.0), shadow), vec3(1.0), pssm_fade);
 	}
 
+
 #endif // !defined(SHADOWS_DISABLED)
 #endif //LIGHT_DIRECTIONAL_SHADOW
 
@@ -1897,6 +1957,7 @@ FRAGMENT_SHADER_CODE
 #else
 	light_compute(normal, -light_direction_attenuation.xyz, eye_vec, binormal, tangent, light_color_energy.rgb, light_attenuation, albedo, transmission, light_params.z * specular_blob_intensity, roughness, metallic, specular, rim, rim_tint, clearcoat, clearcoat_gloss, anisotropy, diffuse_light, specular_light);
 #endif
+
 
 #endif //#USE_LIGHT_DIRECTIONAL
 
@@ -1941,6 +2002,7 @@ FRAGMENT_SHADER_CODE
 		} else {
 			ambient_light = captured.rgb;
 		}
+
 	}
 #endif
 
@@ -1963,6 +2025,8 @@ FRAGMENT_SHADER_CODE
 	}
 #endif
 
+
+
 #ifdef USE_VERTEX_LIGHTING
 
 	diffuse_light *= albedo;
@@ -1979,6 +2043,9 @@ FRAGMENT_SHADER_CODE
 #endif //USE_VERTEX_LIGHTING
 
 #endif
+
+
+
 
 #ifdef RENDER_DEPTH
 //nothing happens, so a tree-ssa optimizer will result in no fragment shader :)
@@ -2016,6 +2083,7 @@ FRAGMENT_SHADER_CODE
 		vec3 f0 = F0(metallic, specular, albedo);
 		specular_light *= env.x * f0 + env.y;
 #endif
+
 	}
 
 	if (fog_color_enabled.a > 0.5) {
@@ -2051,7 +2119,9 @@ FRAGMENT_SHADER_CODE
 
 		float rev_amount = 1.0 - fog_amount;
 
+
 		emission = emission * rev_amount + fog_color * fog_amount;
+
 		ambient_light *= rev_amount;
 		specular_light *= rev_amount;
 		diffuse_light *= rev_amount;
@@ -2059,11 +2129,14 @@ FRAGMENT_SHADER_CODE
 
 #ifdef USE_MULTIPLE_RENDER_TARGETS
 
+
 #ifdef SHADELESS
 	diffuse_buffer = vec4(albedo.rgb, 0.0);
 	specular_buffer = vec4(0.0);
 
 #else
+
+
 
 	//approximate ambient scale for SSAO, since we will lack full ambient
 	float max_emission = max(emission.r, max(emission.g, emission.b));
@@ -2086,7 +2159,9 @@ FRAGMENT_SHADER_CODE
 	sss_buffer = sss_strength;
 #endif
 
+
 #else //USE_MULTIPLE_RENDER_TARGETS
+
 
 #ifdef SHADELESS
 	frag_color = vec4(albedo, alpha);
@@ -2096,5 +2171,10 @@ FRAGMENT_SHADER_CODE
 
 #endif //USE_MULTIPLE_RENDER_TARGETS
 
+
+
 #endif //RENDER_DEPTH
+
+
 }
+
