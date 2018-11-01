@@ -1225,6 +1225,8 @@ public:
 
 	SelfList<Particles>::List particle_update_list;
 
+	bool manual_updates = false;
+	void set_manual_update(bool enabled);
 	void update_particles();
 	void manual_update(float p_delta);
 

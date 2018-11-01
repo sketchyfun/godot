@@ -6138,6 +6138,11 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 	//*/
 }
 
+void RasterizerStorageGLES3::set_manual_update(bool enabled){
+	manual_updates = enabled;
+}
+
+
 void RasterizerStorageGLES3::manual_update(float p_delta){
 	glEnable(GL_RASTERIZER_DISCARD);
 
@@ -7934,7 +7939,8 @@ void RasterizerStorageGLES3::update_dirty_resources() {
 	update_dirty_skeletons();
 	update_dirty_shaders();
 	update_dirty_materials();
-	//update_particles();
+	if (!manual_updates)
+		update_particles();
 }
 
 RasterizerStorageGLES3::RasterizerStorageGLES3() {
