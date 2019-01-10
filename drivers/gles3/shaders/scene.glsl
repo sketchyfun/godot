@@ -1714,7 +1714,6 @@ void main() {
 		shadow = sample_shadow(directional_shadow,directional_shadow_pixel_size,my_pssm_coord.xy,my_pssm_coord.z,light_clamp);
 	}
 #endif
-
 	{
 
 FRAGMENT_SHADER_CODE
