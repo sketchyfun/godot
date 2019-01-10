@@ -40,7 +40,7 @@
 
 #define ZOOM_SCALE 1.2
 
-#define MIN_ZOOM (((1 / ZOOM_SCALE) / ZOOM_SCALE) / ZOOM_SCALE)
+#define MIN_ZOOM ((((1 / ZOOM_SCALE) / ZOOM_SCALE) / ZOOM_SCALE) / 4.0)
 #define MAX_ZOOM (1 * ZOOM_SCALE * ZOOM_SCALE * ZOOM_SCALE)
 
 bool GraphEditFilter::has_point(const Point2 &p_point) const {

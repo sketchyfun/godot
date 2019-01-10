@@ -362,6 +362,14 @@ String UndoRedo::get_current_action_name() const {
 	return actions[current_action].name;
 }
 
+int UndoRedo::get_history_size() {
+	return actions.size();
+}
+
+ int UndoRedo::get_current_action_index() {
+	return current_action;
+}
+
 uint64_t UndoRedo::get_version() const {
 
 	return version;
@@ -512,6 +520,8 @@ void UndoRedo::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_do_reference", "object"), &UndoRedo::add_do_reference);
 	ClassDB::bind_method(D_METHOD("add_undo_reference", "object"), &UndoRedo::add_undo_reference);
 	ClassDB::bind_method(D_METHOD("clear_history", "increase_version"), &UndoRedo::clear_history, DEFVAL(true));
+	ClassDB::bind_method(D_METHOD("get_history_size"), &UndoRedo::get_history_size);
+	ClassDB::bind_method(D_METHOD("get_current_action_index"), &UndoRedo::get_current_action_index);
 	ClassDB::bind_method(D_METHOD("get_current_action_name"), &UndoRedo::get_current_action_name);
 	ClassDB::bind_method(D_METHOD("get_version"), &UndoRedo::get_version);
 	ClassDB::bind_method(D_METHOD("redo"), &UndoRedo::redo);

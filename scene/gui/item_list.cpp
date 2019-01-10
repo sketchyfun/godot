@@ -998,7 +998,7 @@ void ItemList::_notification(int p_what) {
 		{
 			// do a binary search to find the first item whose rect reaches below clip.position.y
 			int lo = 0;
-			int hi = items.size();
+			int hi = items.size()-1;
 			while (lo < hi) {
 				const int mid = (lo + hi) / 2;
 				const Rect2 &rcache = items[mid].rect_cache;

@@ -80,6 +80,9 @@ ShaderTypes::ShaderTypes() {
 	shader_modes[VS::SHADER_SPATIAL].functions["vertex"].built_ins["TIME"] = constt(ShaderLanguage::TYPE_FLOAT);
 	shader_modes[VS::SHADER_SPATIAL].functions["vertex"].built_ins["VIEWPORT_SIZE"] = constt(ShaderLanguage::TYPE_VEC2);
 	shader_modes[VS::SHADER_SPATIAL].functions["vertex"].built_ins["OUTPUT_IS_SRGB"] = constt(ShaderLanguage::TYPE_BOOL);
+	
+	shader_modes[VS::SHADER_SPATIAL].functions["fragment"].built_ins["LIGHT"] = constt(ShaderLanguage::TYPE_VEC3);
+	shader_modes[VS::SHADER_SPATIAL].functions["fragment"].built_ins["SHADOW"] = constt(ShaderLanguage::TYPE_FLOAT);
 
 	shader_modes[VS::SHADER_SPATIAL].functions["fragment"].built_ins["VERTEX"] = constt(ShaderLanguage::TYPE_VEC3);
 	shader_modes[VS::SHADER_SPATIAL].functions["fragment"].built_ins["FRAGCOORD"] = constt(ShaderLanguage::TYPE_VEC4);
@@ -258,6 +261,7 @@ ShaderTypes::ShaderTypes() {
 	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["VELOCITY"] = ShaderLanguage::TYPE_VEC3;
 	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["MASS"] = ShaderLanguage::TYPE_FLOAT;
 	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["ACTIVE"] = ShaderLanguage::TYPE_BOOL;
+	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["CUSTOM_ACTIVE"] = ShaderLanguage::TYPE_FLOAT;
 	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["RESTART"] = constt(ShaderLanguage::TYPE_BOOL);
 	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["CUSTOM"] = ShaderLanguage::TYPE_VEC4;
 	shader_modes[VS::SHADER_PARTICLES].functions["vertex"].built_ins["TRANSFORM"] = ShaderLanguage::TYPE_MAT4;
