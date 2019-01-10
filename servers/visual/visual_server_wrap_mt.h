@@ -330,7 +330,8 @@ public:
 	/* PARTICLES */
 
 	FUNCRID(particles)
-
+	FUNC1(set_manual_update, bool)
+	FUNC1(manual_update, float)
 	FUNC2(particles_set_emitting, RID, bool)
 	FUNC1R(bool, particles_get_emitting, RID)
 	FUNC2(particles_set_amount, RID, int)

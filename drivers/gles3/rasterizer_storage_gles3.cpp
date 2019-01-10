@@ -6439,6 +6439,197 @@ void RasterizerStorageGLES3::_particles_process(Particles *p_particles, float p_
 	//*/
 }
 
+void RasterizerStorageGLES3::set_manual_update(bool enabled){
+	manual_updates = enabled;
+}
+
+
+ void RasterizerStorageGLES3::manual_update(float p_delta){
+	glEnable(GL_RASTERIZER_DISCARD);
+
+ 	while (particle_update_list.first()) {
+
+ 		//use transform feedback to process particles
+
+ 		Particles *particles = particle_update_list.first()->self();
+
+ 		if (particles->restart_request) {
+			particles->emitting = true; //restart from zero
+			particles->prev_ticks = 0;
+			particles->phase = 0;
+			particles->prev_phase = 0;
+			particles->clear = true;
+			particles->particle_valid_histories[0] = false;
+			particles->particle_valid_histories[1] = false;
+			particles->restart_request = false;
+		}
+
+ 		if (particles->inactive && !particles->emitting) {
+
+ 			particle_update_list.remove(particle_update_list.first());
+			continue;
+		}
+
+ 		if (particles->emitting) {
+			if (particles->inactive) {
+				//restart system from scratch
+				particles->prev_ticks = 0;
+				particles->phase = 0;
+				particles->prev_phase = 0;
+				particles->clear = true;
+				particles->particle_valid_histories[0] = false;
+				particles->particle_valid_histories[1] = false;
+			}
+			particles->inactive = false;
+			particles->inactive_time = 0;
+		} else {
+			particles->inactive_time += particles->speed_scale * p_delta;
+			if (particles->inactive_time > particles->lifetime * 1.2) {
+				particles->inactive = true;
+				particle_update_list.remove(particle_update_list.first());
+				continue;
+			}
+		}
+
+ 		Material *material = material_owner.getornull(particles->process_material);
+		if (!material || !material->shader || material->shader->mode != VS::SHADER_PARTICLES) {
+
+ 			shaders.particles.set_custom_shader(0);
+		} else {
+			shaders.particles.set_custom_shader(material->shader->custom_code_id);
+
+ 			if (material->ubo_id) {
+
+ 				glBindBufferBase(GL_UNIFORM_BUFFER, 0, material->ubo_id);
+			}
+
+ 			int tc = material->textures.size();
+			RID *textures = material->textures.ptrw();
+			ShaderLanguage::ShaderNode::Uniform::Hint *texture_hints = material->shader->texture_hints.ptrw();
+
+ 			for (int i = 0; i < tc; i++) {
+
+ 				glActiveTexture(GL_TEXTURE0 + i);
+
+ 				GLenum target;
+				GLuint tex;
+
+ 				RasterizerStorageGLES3::Texture *t = texture_owner.getornull(textures[i]);
+
+ 				if (!t) {
+					//check hints
+					target = GL_TEXTURE_2D;
+
+ 					switch (texture_hints[i]) {
+						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK_ALBEDO:
+						case ShaderLanguage::ShaderNode::Uniform::HINT_BLACK: {
+							tex = resources.black_tex;
+						} break;
+						case ShaderLanguage::ShaderNode::Uniform::HINT_ANISO: {
+							tex = resources.aniso_tex;
+						} break;
+						case ShaderLanguage::ShaderNode::Uniform::HINT_NORMAL: {
+							tex = resources.normal_tex;
+						} break;
+						default: {
+							tex = resources.white_tex;
+						} break;
+					}
+				} else {
+
+ 					t = t->get_ptr(); //resolve for proxies
+					target = t->target;
+					tex = t->tex_id;
+				}
+
+ 				glBindTexture(target, tex);
+			}
+		}
+
+ 		shaders.particles.set_conditional(ParticlesShaderGLES3::USE_FRACTIONAL_DELTA, particles->fractional_delta);
+
+ 		shaders.particles.bind();
+
+ 		shaders.particles.set_uniform(ParticlesShaderGLES3::TOTAL_PARTICLES, particles->amount);
+		shaders.particles.set_uniform(ParticlesShaderGLES3::TIME, frame.time[0]);
+		shaders.particles.set_uniform(ParticlesShaderGLES3::EXPLOSIVENESS, particles->explosiveness);
+		shaders.particles.set_uniform(ParticlesShaderGLES3::LIFETIME, particles->lifetime);
+		shaders.particles.set_uniform(ParticlesShaderGLES3::ATTRACTOR_COUNT, 0);
+		shaders.particles.set_uniform(ParticlesShaderGLES3::EMITTING, particles->emitting);
+		shaders.particles.set_uniform(ParticlesShaderGLES3::RANDOMNESS, particles->randomness);
+
+ 		bool zero_time_scale = Engine::get_singleton()->get_time_scale() <= 0.0;
+
+ 		if (particles->clear && particles->pre_process_time > 0.0) {
+
+ 			float frame_time;
+			if (particles->fixed_fps > 0)
+				frame_time = 1.0 / particles->fixed_fps;
+			else
+				frame_time = 1.0 / 30.0;
+
+ 			float todo = particles->pre_process_time;
+
+ 			while (todo >= 0) {
+				_particles_process(particles, frame_time);
+				todo -= frame_time;
+			}
+		}
+
+ 		if (particles->fixed_fps > 0) {
+			float frame_time;
+			float decr;
+			if (zero_time_scale) {
+				frame_time = 0.0;
+				decr = 1.0 / particles->fixed_fps;
+			} else {
+				frame_time = 1.0 / particles->fixed_fps;
+				decr = frame_time;
+			}
+			float delta = p_delta;
+			if (delta > 0.1) { //avoid recursive stalls if fps goes below 10
+				delta = 0.1;
+			} else if (delta <= 0.0) { //unlikely but..
+				delta = 0.001;
+			}
+			float todo = particles->frame_remainder + delta;
+
+ 			while (todo >= frame_time) {
+				_particles_process(particles, frame_time);
+				todo -= decr;
+			}
+
+ 			particles->frame_remainder = todo;
+
+ 		} else {
+			if (zero_time_scale)
+				_particles_process(particles, 0.0);
+			else
+				_particles_process(particles, p_delta);
+		}
+
+ 		particle_update_list.remove(particle_update_list.first());
+
+ 		if (particles->histories_enabled) {
+
+ 			SWAP(particles->particle_buffer_histories[0], particles->particle_buffer_histories[1]);
+			SWAP(particles->particle_vao_histories[0], particles->particle_vao_histories[1]);
+			SWAP(particles->particle_valid_histories[0], particles->particle_valid_histories[1]);
+
+ 			//copy
+			glBindBuffer(GL_COPY_READ_BUFFER, particles->particle_buffers[0]);
+			glBindBuffer(GL_COPY_WRITE_BUFFER, particles->particle_buffer_histories[0]);
+			glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, particles->amount * 24 * sizeof(float));
+
+ 			particles->particle_valid_histories[0] = true;
+		}
+
+ 		particles->instance_change_notify(); //make sure shadows are updated
+	}
+
+ 	glDisable(GL_RASTERIZER_DISCARD);
+}
+
 void RasterizerStorageGLES3::update_particles() {
 
 	glEnable(GL_RASTERIZER_DISCARD);
@@ -8189,7 +8380,8 @@ void RasterizerStorageGLES3::update_dirty_resources() {
 	update_dirty_skeletons();
 	update_dirty_shaders();
 	update_dirty_materials();
-	update_particles();
+	if (!manual_updates)
+		update_particles();
 }
 
 RasterizerStorageGLES3::RasterizerStorageGLES3() {

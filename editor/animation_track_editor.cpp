@@ -1274,13 +1274,7 @@ void AnimationTrackEdit::_notification(int p_what) {
 				} else if (animation->track_get_type(track) == Animation::TYPE_ANIMATION) {
 					text = TTR("Anim Clips:");
 				} else {
-					Vector<StringName> sn = path.get_subnames();
-					for (int i = 0; i < sn.size(); i++) {
-						if (i > 0) {
-							text += ".";
-						}
-						text += sn[i];
-					}
+				    text += path.get_concatenated_subnames();
 				}
 				text_color.a *= 0.7;
 			} else if (node) {
@@ -1294,14 +1288,10 @@ void AnimationTrackEdit::_notification(int p_what) {
 				draw_texture(icon, Point2(ofs, int(get_size().height - icon->get_height()) / 2));
 				icon_cache = icon;
 
-				text = node->get_name();
+				text = String() + node->get_name() + ":" + path.get_concatenated_subnames();
 				ofs += hsep;
 				ofs += icon->get_width();
-				Vector<StringName> sn = path.get_subnames();
-				for (int i = 0; i < sn.size(); i++) {
-					text += ".";
-					text += sn[i];
-				}
+
 			} else {
 				icon_cache = type_icon;
 
@@ -4505,12 +4495,7 @@ void AnimationTrackEditor::_edit_menu_pressed(int p_option) {
 						icon = get_icon(node->get_class(), "EditorIcons");
 					}
 
-					text = node->get_name();
-					Vector<StringName> sn = path.get_subnames();
-					for (int j = 0; j < sn.size(); j++) {
-						text += ".";
-						text += sn[j];
-					}
+					text = String() + node->get_name() + ":" + path.get_concatenated_subnames();
 
 					path = NodePath(node->get_path().get_names(), path.get_subnames(), true); //store full path instead for copying
 				} else {
