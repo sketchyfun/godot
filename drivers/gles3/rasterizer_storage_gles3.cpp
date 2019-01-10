@@ -6462,7 +6462,7 @@ void RasterizerStorageGLES3::set_manual_update(bool enabled){
  			particles->particle_valid_histories[0] = true;
 		}
 
- 		particles->instance_change_notify(); //make sure shadows are updated
+ 		particles->instance_change_notify(true, false); //make sure shadows are updated
 	}
 
  	glDisable(GL_RASTERIZER_DISCARD);
