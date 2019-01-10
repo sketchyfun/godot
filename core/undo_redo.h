@@ -117,6 +117,8 @@ public:
 	bool undo();
 	String get_current_action_name() const;
 	void clear_history(bool p_increase_version = true);
+	int get_history_size();
+	int get_current_action_index();
 
 	uint64_t get_version() const;
 
