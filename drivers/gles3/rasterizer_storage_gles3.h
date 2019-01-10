@@ -1229,7 +1229,7 @@ public:
 
 	bool manual_updates = false;
 	void set_manual_update(bool enabled);
-	void update_particles();		void update_particles();
+	void update_particles();
 	void manual_update(float p_delta);
 
 	mutable RID_Owner<Particles> particles_owner;
