@@ -4467,6 +4467,12 @@ RID RasterizerStorageGLES2::particles_get_draw_pass_mesh(RID p_particles, int p_
 void RasterizerStorageGLES2::update_particles() {
 }
 
+void RasterizerStorageGLES2::set_manual_update(bool enabled){
+}
+
+ void RasterizerStorageGLES2::manual_update(float p_delta){
+}
+
 bool RasterizerStorageGLES2::particles_is_inactive(RID p_particles) const {
 	return true;
 }

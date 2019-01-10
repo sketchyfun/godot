@@ -1087,6 +1087,8 @@ public:
 
 	/* PARTICLES */
 	void update_particles();
+	void set_manual_update(bool enabled);
+	void manual_update(float p_delta);
 
 	virtual RID particles_create();
 

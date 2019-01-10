@@ -508,6 +508,8 @@ public:
 	/* PARTICLES */
 
 	virtual RID particles_create() = 0;
+	virtual void set_manual_update(bool enabled) = 0;
+	virtual void manual_update(float p_delta) = 0;
 
 	virtual void particles_set_emitting(RID p_particles, bool p_emitting) = 0;
 	virtual bool particles_get_emitting(RID p_particles) = 0;

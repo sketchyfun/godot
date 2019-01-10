@@ -4532,12 +4532,7 @@ void AnimationTrackEditor::_edit_menu_pressed(int p_option) {
 						icon = get_icon(node->get_class(), "EditorIcons");
 					}
 
-					text = node->get_name();
-					Vector<StringName> sn = path.get_subnames();
-					for (int j = 0; j < sn.size(); j++) {
-						text += ".";
-						text += sn[j];
-					}
+					text = String() + node->get_name() + ":" + path.get_concatenated_subnames();
 
 					path = NodePath(node->get_path().get_names(), path.get_subnames(), true); //store full path instead for copying
 				} else {

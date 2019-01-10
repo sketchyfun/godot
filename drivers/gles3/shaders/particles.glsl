@@ -38,6 +38,7 @@ uniform float lifetime;
 uniform mat4 emission_transform;
 uniform uint random_seed;
 
+out highp float is_active;
 out highp vec4 out_color; //tfb:
 out highp vec4 out_velocity_active; //tfb:
 out highp vec4 out_custom; //tfb:
@@ -154,6 +155,7 @@ void main() {
 		out_color = vec4(1.0);
 		out_velocity_active = vec4(0.0);
 		out_custom = vec4(0.0);
+		is_active = 1.0;
 		if (!restart)
 			shader_active = false;
 
