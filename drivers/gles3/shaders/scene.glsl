@@ -1715,6 +1715,8 @@ void main() {
 	}
 #endif
 
+	{
+
 FRAGMENT_SHADER_CODE
 
 		/* clang-format on */
