@@ -4210,6 +4210,7 @@ void RasterizerStorageGLES2::render_target_set_msaa(RID p_render_target, VS::Vie
 RID RasterizerStorageGLES2::canvas_light_shadow_buffer_create(int p_width) {
 
 	CanvasLightShadow *cls = memnew(CanvasLightShadow);
+
 	if (p_width > config.max_texture_size)
 		p_width = config.max_texture_size;
 
