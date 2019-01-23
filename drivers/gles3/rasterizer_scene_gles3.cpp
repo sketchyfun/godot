@@ -1832,6 +1832,7 @@ void RasterizerSceneGLES3::_render_geometry(RenderList::Element *e) {
 					storage->info.render.vertices_count += s->index_array_len * amount;
 				} else
 #endif
+
 						if (s->index_array_len > 0) {
 
 					glDrawElementsInstanced(gl_primitive[s->primitive], s->index_array_len, (s->array_len >= (1 << 16)) ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT, 0, amount);
@@ -2777,7 +2778,7 @@ void RasterizerSceneGLES3::_setup_directional_light(int p_index, const Transform
 
 			CameraMatrix shadow_mtx = rectm * bias * li->shadow_transform[j].camera * modelview;
 
-			store_camera(shadow_mtx, &ubo_data.shadow_matrix1[16 * j]);
+			store_camera(shadow_mtx, &ubo_data.shadow.matrix[16 * j]);
 
 			ubo_data.light_clamp[0] = atlas_rect.position.x;
 			ubo_data.light_clamp[1] = atlas_rect.position.y;
@@ -2888,7 +2889,7 @@ void RasterizerSceneGLES3::_setup_lights(RID *p_light_cull_result, int p_light_c
 
 					Transform proj = (p_camera_inverse_transform * li->transform).inverse();
 
-					store_transform(proj, ubo_data.shadow_matrix1);
+					store_transform(proj, ubo_data.shadow.matrix1);
 
 					ubo_data.light_params[3] = 1.0; //means it has shadow
 					ubo_data.light_clamp[0] = float(x) / atlas_size;
@@ -2977,7 +2978,7 @@ void RasterizerSceneGLES3::_setup_lights(RID *p_light_cull_result, int p_light_c
 
 					CameraMatrix shadow_mtx = rectm * bias * li->shadow_transform[0].camera * modelview;
 
-					store_camera(shadow_mtx, ubo_data.shadow_matrix1);
+					store_camera(shadow_mtx, ubo_data.shadow.matrix1);
 				}
 
 				li->light_index = state.spot_light_count;
@@ -3113,7 +3114,7 @@ void RasterizerSceneGLES3::_copy_screen(bool p_invalidate_color, bool p_invalida
 
 		GLenum attachments[2] = {
 			GL_COLOR_ATTACHMENT0,
-			GL_DEPTH_STENCIL_ATTACHMENT
+			GL_DEPTH_ATTACHMENT
 		};
 
 		glInvalidateFramebuffer(GL_FRAMEBUFFER, p_invalidate_depth ? 2 : 1, attachments);
@@ -4163,7 +4164,7 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, storage->frame.current_rt->buffers.fbo);
 			glReadBuffer(GL_COLOR_ATTACHMENT0);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, storage->frame.current_rt->fbo);
-			glBlitFramebuffer(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, 0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			glBlitFramebuffer(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, 0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			//bind depth for read
