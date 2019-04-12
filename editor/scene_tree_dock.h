@@ -126,7 +126,8 @@ class SceneTreeDock : public VBoxContainer {
 	ConfirmationDialog *editable_instance_remove_dialog;
 
 	ReparentDialog *reparent_dialog;
-	EditorQuickOpen *quick_open;
+	//EditorQuickOpen *quick_open;
+	EditorFileDialog *file;
 	EditorSubScene *import_subscene_dialog;
 	EditorFileDialog *new_scene_from_dialog;
 
