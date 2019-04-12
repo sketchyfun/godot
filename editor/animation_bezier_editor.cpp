@@ -453,8 +453,13 @@ void AnimationBezierTrackEdit::_notification(int p_what) {
 					ep.point_rect.size = bezier_icon->get_size();
 					if (selection.has(i)) {
 						draw_texture(selected_icon, ep.point_rect.position);
+<<<<<<< HEAD
 						draw_string(font, ep.point_rect.position + Vector2(8, -font->get_height() - 4), TTR("Time:") + " " + rtos(Math::stepify(offset, 0.001)), accent);
 						draw_string(font, ep.point_rect.position + Vector2(8, -8), TTR("Value:") + " " + rtos(Math::stepify(value, 0.001)), accent);
+=======
+						draw_string(font, ep.point_rect.position + Vector2(8,-font->get_height()-4), "Time: " + rtos(offset), accent);
+						draw_string(font, ep.point_rect.position + Vector2(8,-8), "Value: " + rtos(value), accent);
+>>>>>>> quick select dialog disabled, wrapping on bezier (disabled currently) and bezier track updates
 					} else {
 						draw_texture(bezier_icon, ep.point_rect.position);
 					}
