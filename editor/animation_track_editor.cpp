@@ -309,8 +309,8 @@ public:
 					setting = true;
 					undo_redo->create_action(TTR("Anim Change Keyframe Value"), UndoRedo::MERGE_ENDS);
 					Vector2 prev = animation->bezier_track_get_key_in_handle(track, key);
-					undo_redo->add_do_method(animation.ptr(), "bezier_track_set_in_handle", track, key, value);
-					undo_redo->add_undo_method(animation.ptr(), "bezier_track_set_in_handle", track, key, prev);
+					undo_redo->add_do_method(animation.ptr(), "bezier_track_set_key_in_handle", track, key, value);
+					undo_redo->add_undo_method(animation.ptr(), "bezier_track_set_key_in_handle", track, key, prev);
 					undo_redo->add_do_method(this, "_update_obj", animation);
 					undo_redo->add_undo_method(this, "_update_obj", animation);
 					undo_redo->commit_action();
@@ -325,8 +325,8 @@ public:
 					setting = true;
 					undo_redo->create_action(TTR("Anim Change Keyframe Value"), UndoRedo::MERGE_ENDS);
 					Vector2 prev = animation->bezier_track_get_key_out_handle(track, key);
-					undo_redo->add_do_method(animation.ptr(), "bezier_track_set_out_handle", track, key, value);
-					undo_redo->add_undo_method(animation.ptr(), "bezier_track_set_out_handle", track, key, prev);
+					undo_redo->add_do_method(animation.ptr(), "bezier_track_set_key_out_handle", track, key, value);
+					undo_redo->add_undo_method(animation.ptr(), "bezier_track_set_key_out_handle", track, key, prev);
 					undo_redo->add_do_method(this, "_update_obj", animation);
 					undo_redo->add_undo_method(this, "_update_obj", animation);
 					undo_redo->commit_action();
@@ -3526,7 +3526,10 @@ void AnimationTrackEditor::_animation_changed() {
 	if (key_edit && key_edit->setting) {
 		//if editing a key, just update the edited track, makes refresh less costly
 		if (key_edit->track < track_edits.size()) {
-			track_edits[key_edit->track]->update();
+			if(animation->track_get_type(key_edit->track) == Animation::TYPE_BEZIER)
+				bezier_edit->update();
+			else
+				track_edits[key_edit->track]->update();
 		}
 		return;
 	}
