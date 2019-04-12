@@ -54,12 +54,12 @@ void SceneTreeDock::_nodes_drag_begin() {
 	}
 }
 
-void SceneTreeDock::_quick_open() {
-	Vector<String> files = quick_open->get_selected_files();
-	for (int i = 0; i < files.size(); i++) {
-		instance(files[i]);
-	}
-}
+//void SceneTreeDock::_quick_open() {
+	//Vector<String> files = quick_open->get_selected_files();
+	//for (int i = 0; i < files.size(); i++) {
+		//instance(files[i]);
+	//}
+//}
 
 void SceneTreeDock::_input(Ref<InputEvent> p_event) {
 
@@ -366,8 +366,18 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				break;
 			}
 
-			quick_open->popup_dialog("PackedScene", true);
-			quick_open->set_title(TTR("Instance Child Scene"));
+			//quick_open->popup_dialog("PackedScene", true);
+			//quick_open->set_title(TTR("Instance Child Scene"));
+			file->set_mode(EditorFileDialog::MODE_OPEN_FILE);
+			List<String> extensions;
+			ResourceLoader::get_recognized_extensions_for_type("PackedScene", &extensions);	
+			file->clear_filters();	
+			for (int i = 0; i < extensions.size(); i++) {	
+
+ 				file->add_filter("*." + extensions[i] + " ; " + extensions[i].to_upper());	
+			}	
+
+ 			file->popup_centered_ratio();
 
 		} break;
 		case TOOL_REPLACE: {
@@ -2519,7 +2529,7 @@ void SceneTreeDock::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_new_scene_from"), &SceneTreeDock::_new_scene_from);
 	ClassDB::bind_method(D_METHOD("_nodes_dragged"), &SceneTreeDock::_nodes_dragged);
 	ClassDB::bind_method(D_METHOD("_files_dropped"), &SceneTreeDock::_files_dropped);
-	ClassDB::bind_method(D_METHOD("_quick_open"), &SceneTreeDock::_quick_open);
+	//ClassDB::bind_method(D_METHOD("_quick_open"), &SceneTreeDock::_quick_open);
 	ClassDB::bind_method(D_METHOD("_script_dropped"), &SceneTreeDock::_script_dropped);
 	ClassDB::bind_method(D_METHOD("_tree_rmb"), &SceneTreeDock::_tree_rmb);
 	ClassDB::bind_method(D_METHOD("_filter_changed"), &SceneTreeDock::_filter_changed);
@@ -2670,9 +2680,12 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor, Node *p_scene_root, EditorSel
 	accept = memnew(AcceptDialog);
 	add_child(accept);
 
-	quick_open = memnew(EditorQuickOpen);
-	add_child(quick_open);
-	quick_open->connect("quick_open", this, "_quick_open");
+	//quick_open = memnew(EditorQuickOpen);
+	//add_child(quick_open);
+	//quick_open->connect("quick_open", this, "_quick_open");
+	file = memnew(EditorFileDialog);
+	add_child(file);
+	file->connect("file_selected", this, "instance");
 	set_process_unhandled_key_input(true);
 
 	delete_dialog = memnew(ConfirmationDialog);

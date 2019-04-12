@@ -30,7 +30,7 @@
 
 #include "animation.h"
 #include "scene/scene_string_names.h"
-
+#include "core/math/math_funcs.h"
 #include "core/math/geometry.h"
 
 #define ANIM_MIN_LENGTH 0.001
@@ -2412,27 +2412,30 @@ float Animation::bezier_track_interpolate(int p_track, float p_time) const {
 
 	//there really is no looping interpolation on bezier
 
-	if (idx < 0) {
-		return bt->values[0].value.value;
+	if(!track->loop_wrap)
+	{
+		if (idx < 0) {
+			return bt->values[0].value.value;
+		}
+
+		if (idx >= bt->values.size() - 1) {
+			return bt->values[bt->values.size() - 1].value.value;
+		}
 	}
 
-	if (idx >= bt->values.size() - 1) {
-		return bt->values[bt->values.size() - 1].value.value;
-	}
-
-	float t = p_time - bt->values[idx].time;
+	float t = Math::wrapf(p_time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0.0, length);
 
 	int iterations = 10;
 
-	float duration = bt->values[idx + 1].time - bt->values[idx].time; // time duration between our two keyframes
+	float duration = Math::wrapf(bt->values[Math::wrapi(idx+1,0,bt->values.size())].time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0,length); // time duration between our two keyframes
 	float low = 0; // 0% of the current animation segment
 	float high = 1; // 100% of the current animation segment
 	float middle;
 
-	Vector2 start(0, bt->values[idx].value.value);
-	Vector2 start_out = start + bt->values[idx].value.out_handle;
-	Vector2 end(duration, bt->values[idx + 1].value.value);
-	Vector2 end_in = end + bt->values[idx + 1].value.in_handle;
+	Vector2 start(0, bt->values[Math::wrapi(idx,0,bt->values.size())].value.value);
+	Vector2 start_out = start + bt->values[Math::wrapi(idx,0,bt->values.size())].value.out_handle;
+	Vector2 end(duration, bt->values[Math::wrapi(idx+1,0,bt->values.size())].value.value);
+	Vector2 end_in = end + bt->values[Math::wrapi(idx+1,0,bt->values.size())].value.in_handle;
 
 	//narrow high and low as much as possible
 	for (int i = 0; i < iterations; i++) {
