@@ -3556,7 +3556,6 @@ void AnimationTrackEditor::_animation_changed() {
 	if (key_edit && key_edit->setting) {
 		//if editing a key, just update the edited track, makes refresh less costly
 		if (key_edit->track < track_edits.size()) {
-
 			if (animation->track_get_type(key_edit->track) == Animation::TYPE_BEZIER)
 				bezier_edit->update();
 			else
