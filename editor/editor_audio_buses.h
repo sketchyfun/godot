@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -231,6 +231,13 @@ private:
 			relative_position = n.relative_position;
 			db_value = n.db_value;
 			render_db_value = n.render_db_value;
+		}
+
+		_FORCE_INLINE_ AudioNotch operator=(const EditorAudioMeterNotches::AudioNotch &n) {
+			relative_position = n.relative_position;
+			db_value = n.db_value;
+			render_db_value = n.render_db_value;
+			return *this;
 		}
 
 		_FORCE_INLINE_ AudioNotch() {}

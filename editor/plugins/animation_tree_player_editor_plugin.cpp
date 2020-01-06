@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -511,9 +511,7 @@ void AnimationTreePlayerEditor::_draw_node(const StringName &p_node) {
 	font->draw_halign(ci, ofs + ascofs, HALIGN_CENTER, w, p_node, font_color);
 	ofs.y += h;
 
-	int count = 2; // title and name
 	int inputs = anim_tree->node_get_input_count(p_node);
-	count += inputs ? inputs : 1;
 
 	float icon_h_ofs = Math::floor((font->get_height() - slot_icon->get_height()) / 2.0) + 1;
 
@@ -618,7 +616,7 @@ AnimationTreePlayerEditor::ClickType AnimationTreePlayerEditor::_locate_click(co
 
 	for (const List<StringName>::Element *E = order.back(); E; E = E->prev()) {
 
-		StringName node = E->get();
+		const StringName &node = E->get();
 
 		AnimationTreePlayer::NodeType type = anim_tree->node_get_type(node);
 

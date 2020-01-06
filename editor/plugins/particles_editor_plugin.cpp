@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -55,8 +55,7 @@ bool ParticlesEditorBase::_generate(PoolVector<Vector3> &points, PoolVector<Vect
 
 		if (!triangle_area_map.size() || area_accum == 0) {
 
-			err_dialog->set_text(TTR("Faces contain no area!"));
-			err_dialog->popup_centered_minsize();
+			EditorNode::get_singleton()->show_warning(TTR("The geometry's faces don't contain any area."));
 			return false;
 		}
 
@@ -90,8 +89,7 @@ bool ParticlesEditorBase::_generate(PoolVector<Vector3> &points, PoolVector<Vect
 
 		if (gcount == 0) {
 
-			err_dialog->set_text(TTR("No faces!"));
-			err_dialog->popup_centered_minsize();
+			EditorNode::get_singleton()->show_warning(TTR("The geometry doesn't contain any faces."));
 			return false;
 		}
 
@@ -169,11 +167,16 @@ void ParticlesEditorBase::_node_selected(const NodePath &p_path) {
 	if (!sel)
 		return;
 
+	if (!sel->is_class("Spatial")) {
+
+		EditorNode::get_singleton()->show_warning(vformat(TTR("\"%s\" doesn't inherit from Spatial."), sel->get_name()));
+		return;
+	}
+
 	VisualInstance *vi = Object::cast_to<VisualInstance>(sel);
 	if (!vi) {
 
-		err_dialog->set_text(TTR("Node does not contain geometry."));
-		err_dialog->popup_centered_minsize();
+		EditorNode::get_singleton()->show_warning(vformat(TTR("\"%s\" doesn't contain geometry."), sel->get_name()));
 		return;
 	}
 
@@ -181,8 +184,7 @@ void ParticlesEditorBase::_node_selected(const NodePath &p_path) {
 
 	if (geometry.size() == 0) {
 
-		err_dialog->set_text(TTR("Node does not contain geometry (faces)."));
-		err_dialog->popup_centered_minsize();
+		EditorNode::get_singleton()->show_warning(vformat(TTR("\"%s\" doesn't contain face geometry."), sel->get_name()));
 		return;
 	}
 
@@ -197,7 +199,7 @@ void ParticlesEditorBase::_node_selected(const NodePath &p_path) {
 		}
 	}
 
-	w = PoolVector<Face3>::Write();
+	w.release();
 
 	emission_dialog->popup_centered(Size2(300, 130));
 }
@@ -230,9 +232,6 @@ ParticlesEditorBase::ParticlesEditorBase() {
 
 	emission_dialog->get_ok()->set_text(TTR("Create"));
 	emission_dialog->connect("confirmed", this, "_generate_emission_points");
-
-	err_dialog = memnew(ConfirmationDialog);
-	add_child(err_dialog);
 
 	emission_file_dialog = memnew(EditorFileDialog);
 	add_child(emission_file_dialog);
@@ -315,10 +314,15 @@ void ParticlesEditor::_menu_option(int p_option) {
 			UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
 			ur->create_action(TTR("Convert to CPUParticles"));
 			ur->add_do_method(EditorNode::get_singleton()->get_scene_tree_dock(), "replace_node", node, cpu_particles, true, false);
-			ur->add_do_reference(node);
+			ur->add_do_reference(cpu_particles);
 			ur->add_undo_method(EditorNode::get_singleton()->get_scene_tree_dock(), "replace_node", cpu_particles, node, false, false);
-			ur->add_undo_reference(this);
+			ur->add_undo_reference(node);
 			ur->commit_action();
+
+		} break;
+		case MENU_OPTION_RESTART: {
+
+			node->restart();
 
 		} break;
 	}
@@ -471,6 +475,8 @@ ParticlesEditor::ParticlesEditor() {
 	options->get_popup()->add_item(TTR("Create Emission Points From Node"), MENU_OPTION_CREATE_EMISSION_VOLUME_FROM_NODE);
 	options->get_popup()->add_separator();
 	options->get_popup()->add_item(TTR("Convert to CPUParticles"), MENU_OPTION_CONVERT_TO_CPU_PARTICLES);
+	options->get_popup()->add_separator();
+	options->get_popup()->add_item(TTR("Restart"), MENU_OPTION_RESTART);
 
 	options->get_popup()->connect("id_pressed", this, "_menu_option");
 

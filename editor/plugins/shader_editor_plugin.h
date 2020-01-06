@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -53,7 +53,7 @@ protected:
 	static void _bind_methods();
 	virtual void _load_theme_settings();
 
-	virtual void _code_complete_script(const String &p_code, List<String> *r_options);
+	virtual void _code_complete_script(const String &p_code, List<ScriptCodeCompletionOption> *r_options);
 
 public:
 	virtual void _validate_script();
@@ -94,12 +94,13 @@ class ShaderEditor : public PanelContainer {
 		BOOKMARK_GOTO_NEXT,
 		BOOKMARK_GOTO_PREV,
 		BOOKMARK_REMOVE_ALL,
-
+		HELP_DOCS,
 	};
 
 	MenuButton *edit_menu;
 	MenuButton *search_menu;
-	MenuButton *settings_menu;
+	PopupMenu *bookmarks_menu;
+	MenuButton *help_menu;
 	PopupMenu *context_menu;
 	uint64_t idle;
 
@@ -121,8 +122,11 @@ class ShaderEditor : public PanelContainer {
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
-	void _make_context_menu(bool p_selection);
+	void _make_context_menu(bool p_selection, Vector2 p_position);
 	void _text_edit_gui_input(const Ref<InputEvent> &ev);
+
+	void _update_bookmark_list();
+	void _bookmark_item_pressed(int p_idx);
 
 public:
 	void apply_shaders();

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -32,6 +32,7 @@
 
 #include "core/print_string.h"
 #include "editor_node.h"
+#include "editor_scale.h"
 #include "editor_settings.h"
 #include "plugins/script_editor_plugin.h"
 #include "scene/gui/label.h"
@@ -108,8 +109,8 @@ public:
 };
 
 /*
-Signal automatically called by parent dialog.
-*/
+ * Signal automatically called by parent dialog.
+ */
 void ConnectDialog::ok_pressed() {
 
 	if (dst_method->get_text() == "") {
@@ -134,8 +135,8 @@ void ConnectDialog::_cancel_pressed() {
 }
 
 /*
-Called each time a target node is selected within the target node tree.
-*/
+ * Called each time a target node is selected within the target node tree.
+ */
 void ConnectDialog::_tree_node_selected() {
 
 	Node *current = tree->get_selected();
@@ -148,8 +149,8 @@ void ConnectDialog::_tree_node_selected() {
 }
 
 /*
-Adds a new parameter bind to connection.
-*/
+ * Adds a new parameter bind to connection.
+ */
 void ConnectDialog::_add_bind() {
 
 	if (cdbinds->params.size() >= VARIANT_ARG_MAX)
@@ -184,8 +185,8 @@ void ConnectDialog::_add_bind() {
 }
 
 /*
-Remove parameter bind from connection.
-*/
+ * Remove parameter bind from connection.
+ */
 void ConnectDialog::_remove_bind() {
 
 	String st = bind_editor->get_selected_path();
@@ -265,18 +266,18 @@ bool ConnectDialog::get_oneshot() const {
 }
 
 /*
-Returns true if ConnectDialog is being used to edit an existing connection.
-*/
+ * Returns true if ConnectDialog is being used to edit an existing connection.
+ */
 bool ConnectDialog::is_editing() const {
 
 	return bEditMode;
 }
 
 /*
-Initialize ConnectDialog and populate fields with expected data.
-If creating a connection from scratch, sensible defaults are used.
-If editing an existing connection, previous data is retained.
-*/
+ * Initialize ConnectDialog and populate fields with expected data.
+ * If creating a connection from scratch, sensible defaults are used.
+ * If editing an existing connection, previous data is retained.
+ */
 void ConnectDialog::init(Connection c, bool bEdit) {
 
 	source = static_cast<Node *>(c.source);
@@ -413,10 +414,11 @@ ConnectDialog::ConnectDialog() {
 	vbc_right->add_margin_child(TTR("Extra Call Arguments:"), bind_editor, true);
 
 	HBoxContainer *dstm_hb = memnew(HBoxContainer);
-	vbc_left->add_margin_child("Receiver Method:", dstm_hb);
+	vbc_left->add_margin_child(TTR("Receiver Method:"), dstm_hb);
 
 	dst_method = memnew(LineEdit);
 	dst_method->set_h_size_flags(SIZE_EXPAND_FILL);
+	dst_method->connect("text_entered", this, "_builtin_text_entered");
 	dstm_hb->add_child(dst_method);
 
 	advanced = memnew(CheckButton);
@@ -459,6 +461,21 @@ ConnectDialog::~ConnectDialog() {
 
 //////////////////////////////////////////
 
+// Originally copied and adapted from EditorProperty, try to keep style in sync.
+Control *ConnectionsDockTree::make_custom_tooltip(const String &p_text) const {
+
+	EditorHelpBit *help_bit = memnew(EditorHelpBit);
+	help_bit->add_style_override("panel", get_stylebox("panel", "TooltipPanel"));
+	help_bit->get_rich_text()->set_fixed_size_to_width(360 * EDSCALE);
+
+	String text = TTR("Signal:") + " [u][b]" + p_text.get_slice("::", 0) + "[/b][/u]";
+	text += p_text.get_slice("::", 1).strip_edges() + "\n";
+	text += p_text.get_slice("::", 2).strip_edges();
+	help_bit->set_text(text);
+	help_bit->call_deferred("set_text", text); //hack so it uses proper theme once inside scene
+	return help_bit;
+}
+
 struct _ConnectionsDockMethodInfoSort {
 
 	_FORCE_INLINE_ bool operator()(const MethodInfo &a, const MethodInfo &b) const {
@@ -467,9 +484,9 @@ struct _ConnectionsDockMethodInfoSort {
 };
 
 /*
-Post-ConnectDialog callback for creating/editing connections.
-Creates or edits connections based on state of the ConnectDialog when "Connect" is pressed.
-*/
+ * Post-ConnectDialog callback for creating/editing connections.
+ * Creates or edits connections based on state of the ConnectDialog when "Connect" is pressed.
+ */
 void ConnectionsDock::_make_or_edit_connection() {
 
 	TreeItem *it = tree->get_selected();
@@ -514,7 +531,7 @@ void ConnectionsDock::_make_or_edit_connection() {
 		// Pick up args here before "it" is deleted by update_tree.
 		script_function_args = it->get_metadata(0).operator Dictionary()["args"];
 		for (int i = 0; i < cToMake.binds.size(); i++) {
-			script_function_args.append("extra_arg_" + itos(i));
+			script_function_args.append("extra_arg_" + itos(i) + ":" + Variant::get_type_name(cToMake.binds[i].get_type()));
 		}
 	}
 
@@ -537,8 +554,8 @@ void ConnectionsDock::_make_or_edit_connection() {
 }
 
 /*
-Creates single connection w/ undo-redo functionality.
-*/
+ * Creates single connection w/ undo-redo functionality.
+ */
 void ConnectionsDock::_connect(Connection cToMake) {
 
 	Node *source = static_cast<Node *>(cToMake.source);
@@ -560,8 +577,8 @@ void ConnectionsDock::_connect(Connection cToMake) {
 }
 
 /*
-Break single connection w/ undo-redo functionality.
-*/
+ * Break single connection w/ undo-redo functionality.
+ */
 void ConnectionsDock::_disconnect(TreeItem &item) {
 
 	Connection c = item.get_metadata(0);
@@ -580,9 +597,9 @@ void ConnectionsDock::_disconnect(TreeItem &item) {
 }
 
 /*
-Break all connections of currently selected signal.
-Can undo-redo as a single action.
-*/
+ * Break all connections of currently selected signal.
+ * Can undo-redo as a single action.
+ */
 void ConnectionsDock::_disconnect_all() {
 
 	TreeItem *item = tree->get_selected();
@@ -644,12 +661,12 @@ bool ConnectionsDock::_is_item_signal(TreeItem &item) {
 }
 
 /*
-Open connection dialog with TreeItem data to CREATE a brand-new connection.
-*/
+ * Open connection dialog with TreeItem data to CREATE a brand-new connection.
+ */
 void ConnectionsDock::_open_connection_dialog(TreeItem &item) {
 
 	String signal = item.get_metadata(0).operator Dictionary()["name"];
-	String signalname = signal;
+	const String &signalname = signal;
 	String midname = selectedNode->get_name();
 	for (int i = 0; i < midname.length(); i++) { //TODO: Regex filter may be cleaner.
 		CharType c = midname[i];
@@ -685,8 +702,8 @@ void ConnectionsDock::_open_connection_dialog(TreeItem &item) {
 }
 
 /*
-Open connection dialog with Connection data to EDIT an existing connection.
-*/
+ * Open connection dialog with Connection data to EDIT an existing connection.
+ */
 void ConnectionsDock::_open_connection_dialog(Connection cToEdit) {
 
 	Node *src = static_cast<Node *>(cToEdit.source);
@@ -700,8 +717,8 @@ void ConnectionsDock::_open_connection_dialog(Connection cToEdit) {
 }
 
 /*
-Open slot method location in script editor.
-*/
+ * Open slot method location in script editor.
+ */
 void ConnectionsDock::_go_to_script(TreeItem &item) {
 
 	if (_is_item_signal(item))
@@ -866,7 +883,6 @@ void ConnectionsDock::update_tree() {
 					icon = get_icon(scr->get_class(), "EditorIcons");
 				}
 			}
-
 		} else {
 
 			ClassDB::get_signal_list(base, &node_signals2, true);
@@ -874,6 +890,10 @@ void ConnectionsDock::update_tree() {
 				icon = get_icon(base, "EditorIcons");
 			}
 			name = base;
+		}
+
+		if (!icon.is_valid()) {
+			icon = get_icon("Object", "EditorIcons");
 		}
 
 		TreeItem *pitem = NULL;
@@ -892,11 +912,10 @@ void ConnectionsDock::update_tree() {
 
 			MethodInfo &mi = E->get();
 
-			String signaldesc;
-			signaldesc = mi.name + "(";
+			StringName signal_name = mi.name;
+			String signaldesc = "(";
 			PoolStringArray argnames;
 			if (mi.arguments.size()) {
-				signaldesc += " ";
 				for (int i = 0; i < mi.arguments.size(); i++) {
 
 					PropertyInfo &pi = mi.arguments[i];
@@ -909,24 +928,60 @@ void ConnectionsDock::update_tree() {
 					} else if (pi.type != Variant::NIL) {
 						tname = Variant::get_type_name(pi.type);
 					}
-					signaldesc += tname + " " + (pi.name == "" ? String("arg " + itos(i)) : pi.name);
+					signaldesc += (pi.name == "" ? String("arg " + itos(i)) : pi.name) + ": " + tname;
 					argnames.push_back(pi.name + ":" + tname);
 				}
-				signaldesc += " ";
 			}
-
 			signaldesc += ")";
 
 			TreeItem *item = tree->create_item(pitem);
-			item->set_text(0, signaldesc);
+			item->set_text(0, String(signal_name) + signaldesc);
 			Dictionary sinfo;
-			sinfo["name"] = mi.name;
+			sinfo["name"] = signal_name;
 			sinfo["args"] = argnames;
 			item->set_metadata(0, sinfo);
 			item->set_icon(0, get_icon("Signal", "EditorIcons"));
 
+			// Set tooltip with the signal's documentation.
+			{
+				String descr;
+				bool found = false;
+
+				Map<StringName, Map<StringName, String> >::Element *G = descr_cache.find(base);
+				if (G) {
+					Map<StringName, String>::Element *F = G->get().find(signal_name);
+					if (F) {
+						found = true;
+						descr = F->get();
+					}
+				}
+
+				if (!found) {
+					DocData *dd = EditorHelp::get_doc_data();
+					Map<String, DocData::ClassDoc>::Element *F = dd->class_list.find(base);
+					while (F && descr == String()) {
+						for (int i = 0; i < F->get().signals.size(); i++) {
+							if (F->get().signals[i].name == signal_name.operator String()) {
+								descr = F->get().signals[i].description.strip_edges();
+								break;
+							}
+						}
+						if (!F->get().inherits.empty()) {
+							F = dd->class_list.find(F->get().inherits);
+						} else {
+							break;
+						}
+					}
+					descr_cache[base][signal_name] = descr;
+				}
+
+				// "::" separators used in make_custom_tooltip for formatting.
+				item->set_tooltip(0, String(signal_name) + "::" + signaldesc + "::" + descr);
+			}
+
+			// List existing connections
 			List<Object::Connection> connections;
-			selectedNode->get_signal_connection_list(mi.name, &connections);
+			selectedNode->get_signal_connection_list(signal_name, &connections);
 
 			for (List<Object::Connection>::Element *F = connections.front(); F; F = F->next()) {
 
@@ -945,14 +1000,14 @@ void ConnectionsDock::update_tree() {
 					path += " (oneshot)";
 				if (c.binds.size()) {
 
-					path += " binds( ";
+					path += " binds(";
 					for (int i = 0; i < c.binds.size(); i++) {
 
 						if (i > 0)
 							path += ", ";
 						path += c.binds[i].operator String();
 					}
-					path += " )";
+					path += ")";
 				}
 
 				TreeItem *item2 = tree->create_item(item);
@@ -980,7 +1035,7 @@ ConnectionsDock::ConnectionsDock(EditorNode *p_editor) {
 
 	VBoxContainer *vbc = this;
 
-	tree = memnew(Tree);
+	tree = memnew(ConnectionsDockTree);
 	tree->set_columns(1);
 	tree->set_select_mode(Tree::SELECT_ROW);
 	tree->set_hide_root(true);

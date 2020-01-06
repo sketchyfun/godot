@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -527,8 +527,8 @@ public:
 				fog_transmit_enabled(true),
 				fog_transmit_curve(1),
 				fog_height_enabled(false),
-				fog_height_min(0),
-				fog_height_max(100),
+				fog_height_min(10),
+				fog_height_max(0),
 				fog_height_curve(1) {
 		}
 	};
@@ -669,8 +669,8 @@ public:
 			SORT_FLAG_SKELETON = 1,
 			SORT_FLAG_INSTANCING = 2,
 			MAX_DIRECTIONAL_LIGHTS = 16,
-			MAX_LIGHTS = 4096,
-			MAX_REFLECTIONS = 1024,
+			DEFAULT_MAX_LIGHTS = 4096,
+			DEFAULT_MAX_REFLECTIONS = 1024,
 
 			SORT_KEY_PRIORITY_SHIFT = 56,
 			SORT_KEY_PRIORITY_MASK = 0xFF,
@@ -701,6 +701,8 @@ public:
 		};
 
 		int max_elements;
+		int max_lights;
+		int max_reflections;
 
 		struct Element {
 
@@ -813,6 +815,8 @@ public:
 		RenderList() {
 
 			max_elements = DEFAULT_MAX_ELEMENTS;
+			max_lights = DEFAULT_MAX_LIGHTS;
+			max_reflections = DEFAULT_MAX_REFLECTIONS;
 		}
 
 		~RenderList() {
@@ -828,12 +832,12 @@ public:
 
 	_FORCE_INLINE_ void _set_cull(bool p_front, bool p_disabled, bool p_reverse_cull);
 
-	_FORCE_INLINE_ bool _setup_material(RasterizerStorageGLES3::Material *p_material, bool p_alpha_pass);
+	_FORCE_INLINE_ bool _setup_material(RasterizerStorageGLES3::Material *p_material, bool p_depth_pass, bool p_alpha_pass);
 	_FORCE_INLINE_ void _setup_geometry(RenderList::Element *e, const Transform &p_view_transform);
 	_FORCE_INLINE_ void _render_geometry(RenderList::Element *e);
 	_FORCE_INLINE_ void _setup_light(RenderList::Element *e, const Transform &p_view_transform);
 
-	void _render_list(RenderList::Element **p_elements, int p_element_count, const Transform &p_view_transform, const CameraMatrix &p_projection, GLuint p_base_env, bool p_reverse_cull, bool p_alpha_pass, bool p_shadow, bool p_directional_add, bool p_directional_shadows);
+	void _render_list(RenderList::Element **p_elements, int p_element_count, const Transform &p_view_transform, const CameraMatrix &p_projection, RasterizerStorageGLES3::Sky *p_sky, bool p_reverse_cull, bool p_alpha_pass, bool p_shadow, bool p_directional_add, bool p_directional_shadows);
 
 	_FORCE_INLINE_ void _add_geometry(RasterizerStorageGLES3::Geometry *p_geometry, InstanceBase *p_instance, RasterizerStorageGLES3::GeometryOwner *p_owner, int p_material, bool p_depth_pass, bool p_shadow_pass);
 

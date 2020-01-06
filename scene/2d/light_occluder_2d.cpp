@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -268,7 +268,7 @@ String LightOccluder2D::get_configuration_warning() const {
 	}
 
 	if (occluder_polygon.is_valid() && occluder_polygon->get_polygon().size() == 0) {
-		return TTR("The occluder polygon for this occluder is empty. Please draw a polygon!");
+		return TTR("The occluder polygon for this occluder is empty. Please draw a polygon.");
 	}
 
 	return String();

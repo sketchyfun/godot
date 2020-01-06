@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -38,9 +38,6 @@
 #include "scene/gui/label.h"
 #include "scene/gui/line_edit.h"
 #include "scene/gui/tree.h"
-/**
-	@author Juan Linietsky <reduzio@gmail.com>
-*/
 
 class CreateDialog : public ConfirmationDialog {
 
@@ -54,6 +51,7 @@ class CreateDialog : public ConfirmationDialog {
 	LineEdit *search_box;
 	Tree *search_options;
 	HashMap<String, TreeItem *> search_options_types;
+	HashMap<String, RES> search_loaded_scripts;
 	bool is_replace_mode;
 	String base_type;
 	String preferred_search_result_type;
@@ -90,6 +88,7 @@ class CreateDialog : public ConfirmationDialog {
 	void drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from);
 
 	bool _is_class_disabled_by_feature_profile(const StringName &p_class);
+	bool _is_type_prefered(const String &type);
 
 protected:
 	void _notification(int p_what);

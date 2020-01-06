@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -192,9 +192,8 @@ void OS_JavaScript::set_window_fullscreen(bool p_enabled) {
 		strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
 		strategy.canvasResizedCallback = NULL;
 		EMSCRIPTEN_RESULT result = emscripten_request_fullscreen_strategy(NULL, false, &strategy);
-		ERR_EXPLAIN("Enabling fullscreen is only possible from an input callback for the HTML5 platform");
-		ERR_FAIL_COND(result == EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED);
-		ERR_FAIL_COND(result != EMSCRIPTEN_RESULT_SUCCESS);
+		ERR_FAIL_COND_MSG(result == EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED, "Enabling fullscreen is only possible from an input callback for the HTML5 platform.");
+		ERR_FAIL_COND_MSG(result != EMSCRIPTEN_RESULT_SUCCESS, "Enabling fullscreen is only possible from an input callback for the HTML5 platform.");
 		// Not fullscreen yet, so prevent "windowed" canvas dimensions from
 		// being overwritten.
 		entering_fullscreen = true;
@@ -448,6 +447,18 @@ void OS_JavaScript::set_cursor_shape(CursorShape p_shape) {
 void OS_JavaScript::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, const Vector2 &p_hotspot) {
 
 	if (p_cursor.is_valid()) {
+
+		Map<CursorShape, Vector<Variant> >::Element *cursor_c = cursors_cache.find(p_shape);
+
+		if (cursor_c) {
+			if (cursor_c->get()[0] == p_cursor && cursor_c->get()[1] == p_hotspot) {
+				set_cursor_shape(p_shape);
+				return;
+			}
+
+			cursors_cache.erase(p_shape);
+		}
+
 		Ref<Texture> texture = p_cursor;
 		Ref<AtlasTexture> atlas_texture = p_cursor;
 		Ref<Image> image;
@@ -551,6 +562,11 @@ void OS_JavaScript::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_s
 
 		cursors[p_shape] = url;
 
+		Vector<Variant> params;
+		params.push_back(p_cursor);
+		params.push_back(p_hotspot);
+		cursors_cache.insert(p_shape, params);
+
 	} else if (cursors[p_shape] != "") {
 		/* clang-format off */
 		EM_ASM({
@@ -558,6 +574,8 @@ void OS_JavaScript::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_s
 		}, cursors[p_shape].utf8().get_data());
 		/* clang-format on */
 		cursors[p_shape] = "";
+
+		cursors_cache.erase(p_shape);
 	}
 
 	set_cursor_shape(cursor_shape);
@@ -565,8 +583,7 @@ void OS_JavaScript::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_s
 
 void OS_JavaScript::set_mouse_mode(OS::MouseMode p_mode) {
 
-	ERR_EXPLAIN("MOUSE_MODE_CONFINED is not supported for the HTML5 platform");
-	ERR_FAIL_COND(p_mode == MOUSE_MODE_CONFINED);
+	ERR_FAIL_COND_MSG(p_mode == MOUSE_MODE_CONFINED, "MOUSE_MODE_CONFINED is not supported for the HTML5 platform.");
 	if (p_mode == get_mouse_mode())
 		return;
 
@@ -585,9 +602,8 @@ void OS_JavaScript::set_mouse_mode(OS::MouseMode p_mode) {
 	} else if (p_mode == MOUSE_MODE_CAPTURED) {
 
 		EMSCRIPTEN_RESULT result = emscripten_request_pointerlock("canvas", false);
-		ERR_EXPLAIN("MOUSE_MODE_CAPTURED can only be entered from within an appropriate input callback");
-		ERR_FAIL_COND(result == EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED);
-		ERR_FAIL_COND(result != EMSCRIPTEN_RESULT_SUCCESS);
+		ERR_FAIL_COND_MSG(result == EMSCRIPTEN_RESULT_FAILED_NOT_DEFERRED, "MOUSE_MODE_CAPTURED can only be entered from within an appropriate input callback.");
+		ERR_FAIL_COND_MSG(result != EMSCRIPTEN_RESULT_SUCCESS, "MOUSE_MODE_CAPTURED can only be entered from within an appropriate input callback.");
 		// set_css_cursor must be called before set_cursor_shape to make the cursor visible
 		set_css_cursor(godot2dom_cursor(cursor_shape));
 		set_cursor_shape(cursor_shape);
@@ -793,8 +809,7 @@ const char *OS_JavaScript::get_video_driver_name(int p_driver) const {
 		case VIDEO_DRIVER_GLES2:
 			return "GLES2";
 	}
-	ERR_EXPLAIN("Invalid video driver index " + itos(p_driver));
-	ERR_FAIL_V(NULL);
+	ERR_FAIL_V_MSG(NULL, "Invalid video driver index: " + itos(p_driver) + ".");
 }
 
 // Audio
@@ -822,15 +837,14 @@ void OS_JavaScript::set_clipboard(const String &p_text) {
 		var text = UTF8ToString($0);
 		if (!navigator.clipboard || !navigator.clipboard.writeText)
 			return 1;
-		navigator.clipboard.writeText(text).catch(e => {
+		navigator.clipboard.writeText(text).catch(function(e) {
 			// Setting OS clipboard is only possible from an input callback.
 			console.error("Setting OS clipboard is only possible from an input callback for the HTML5 plafrom. Exception:", e);
 		});
 		return 0;
 	}, p_text.utf8().get_data());
 	/* clang-format on */
-	ERR_EXPLAIN("Clipboard API is not supported.");
-	ERR_FAIL_COND(err);
+	ERR_FAIL_COND_MSG(err, "Clipboard API is not supported.");
 }
 
 String OS_JavaScript::get_clipboard() const {
@@ -955,8 +969,6 @@ Error OS_JavaScript::initialize(const VideoMode &p_desired, int p_video_driver, 
 	AudioDriverManager::initialize(p_audio_driver);
 	VisualServer *visual_server = memnew(VisualServerRaster());
 	input = memnew(InputDefault);
-
-	camera_server = memnew(CameraServer);
 
 	EMSCRIPTEN_RESULT result;
 #define EM_CHECK(ev)                         \
@@ -1092,7 +1104,6 @@ void OS_JavaScript::delete_main_loop() {
 
 void OS_JavaScript::finalize() {
 
-	memdelete(camera_server);
 	memdelete(input);
 }
 
@@ -1100,20 +1111,17 @@ void OS_JavaScript::finalize() {
 
 Error OS_JavaScript::execute(const String &p_path, const List<String> &p_arguments, bool p_blocking, ProcessID *r_child_id, String *r_pipe, int *r_exitcode, bool read_stderr, Mutex *p_pipe_mutex) {
 
-	ERR_EXPLAIN("OS::execute() is not available on the HTML5 platform");
-	ERR_FAIL_V(ERR_UNAVAILABLE);
+	ERR_FAIL_V_MSG(ERR_UNAVAILABLE, "OS::execute() is not available on the HTML5 platform.");
 }
 
 Error OS_JavaScript::kill(const ProcessID &p_pid) {
 
-	ERR_EXPLAIN("OS::kill() is not available on the HTML5 platform");
-	ERR_FAIL_V(ERR_UNAVAILABLE);
+	ERR_FAIL_V_MSG(ERR_UNAVAILABLE, "OS::kill() is not available on the HTML5 platform.");
 }
 
 int OS_JavaScript::get_process_id() const {
 
-	ERR_EXPLAIN("OS::get_process_id() is not available on the HTML5 platform");
-	ERR_FAIL_V(0);
+	ERR_FAIL_V_MSG(0, "OS::get_process_id() is not available on the HTML5 platform.");
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE void send_notification(int p_notification) {

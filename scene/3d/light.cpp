@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -51,6 +51,7 @@ void Light::set_param(Param p_param, float p_value) {
 
 		if (p_param == PARAM_SPOT_ANGLE) {
 			_change_notify("spot_angle");
+			update_configuration_warning();
 		} else if (p_param == PARAM_RANGE) {
 			_change_notify("omni_range");
 			_change_notify("spot_range");
@@ -68,6 +69,10 @@ void Light::set_shadow(bool p_enable) {
 
 	shadow = p_enable;
 	VS::get_singleton()->light_set_shadow(light, p_enable);
+
+	if (type == VisualServer::LIGHT_SPOT) {
+		update_configuration_warning();
+	}
 }
 bool Light::has_shadow() const {
 
@@ -98,6 +103,8 @@ void Light::set_color(const Color &p_color) {
 
 	color = p_color;
 	VS::get_singleton()->light_set_color(light, p_color);
+	// The gizmo color depends on the light color, so update it.
+	update_gizmo();
 }
 Color Light::get_color() const {
 
@@ -194,9 +201,6 @@ void Light::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_ENTER_TREE) {
 		_update_visibility();
-	}
-
-	if (p_what == NOTIFICATION_EXIT_TREE) {
 	}
 }
 
@@ -408,7 +412,7 @@ DirectionalLight::DirectionalLight() :
 
 	set_param(PARAM_SHADOW_NORMAL_BIAS, 0.8);
 	set_param(PARAM_SHADOW_BIAS, 0.1);
-	set_param(PARAM_SHADOW_MAX_DISTANCE, 200);
+	set_param(PARAM_SHADOW_MAX_DISTANCE, 100);
 	set_param(PARAM_SHADOW_BIAS_SPLIT_SCALE, 0.25);
 	set_shadow_mode(SHADOW_PARALLEL_4_SPLITS);
 	set_shadow_depth_range(SHADOW_DEPTH_RANGE_STABLE);
@@ -463,6 +467,20 @@ OmniLight::OmniLight() :
 
 	set_shadow_mode(SHADOW_CUBE);
 	set_shadow_detail(SHADOW_DETAIL_HORIZONTAL);
+}
+
+String SpotLight::get_configuration_warning() const {
+	String warning = Light::get_configuration_warning();
+
+	if (has_shadow() && get_param(PARAM_SPOT_ANGLE) >= 90.0) {
+		if (warning != String()) {
+			warning += "\n\n";
+		}
+
+		warning += TTR("A SpotLight with an angle wider than 90 degrees cannot cast shadows.");
+	}
+
+	return warning;
 }
 
 void SpotLight::_bind_methods() {

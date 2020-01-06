@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -458,7 +458,7 @@ public:
 	virtual bool can_inherit_from_file() { return true; }
 	virtual int find_function(const String &p_function, const String &p_code) const;
 	virtual String make_function(const String &p_class, const String &p_name, const PoolStringArray &p_args) const;
-	virtual Error complete_code(const String &p_code, const String &p_path, Object *p_owner, List<String> *r_options, bool &r_forced, String &r_call_hint);
+	virtual Error complete_code(const String &p_code, const String &p_path, Object *p_owner, List<ScriptCodeCompletionOption> *r_options, bool &r_forced, String &r_call_hint);
 #ifdef TOOLS_ENABLED
 	virtual Error lookup_code(const String &p_code, const String &p_symbol, const String &p_path, Object *p_owner, LookupResult &r_result);
 #endif

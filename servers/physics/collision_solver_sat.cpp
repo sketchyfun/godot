@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -538,8 +538,6 @@ static void _collision_sphere_capsule(const ShapeSW *p_a, const Transform &p_tra
 
 template <bool withMargin>
 static void _collision_sphere_cylinder(const ShapeSW *p_a, const Transform &p_transform_a, const ShapeSW *p_b, const Transform &p_transform_b, _CollectorCallback *p_collector, real_t p_margin_a, real_t p_margin_b) {
-
-	return;
 }
 
 template <bool withMargin>
@@ -835,8 +833,6 @@ static void _collision_box_capsule(const ShapeSW *p_a, const Transform &p_transf
 
 template <bool withMargin>
 static void _collision_box_cylinder(const ShapeSW *p_a, const Transform &p_transform_a, const ShapeSW *p_b, const Transform &p_transform_b, _CollectorCallback *p_collector, real_t p_margin_a, real_t p_margin_b) {
-
-	return;
 }
 
 template <bool withMargin>
@@ -1117,8 +1113,6 @@ static void _collision_capsule_capsule(const ShapeSW *p_a, const Transform &p_tr
 
 template <bool withMargin>
 static void _collision_capsule_cylinder(const ShapeSW *p_a, const Transform &p_transform_a, const ShapeSW *p_b, const Transform &p_transform_b, _CollectorCallback *p_collector, real_t p_margin_a, real_t p_margin_b) {
-
-	return;
 }
 
 template <bool withMargin>
@@ -1243,20 +1237,14 @@ static void _collision_capsule_face(const ShapeSW *p_a, const Transform &p_trans
 
 template <bool withMargin>
 static void _collision_cylinder_cylinder(const ShapeSW *p_a, const Transform &p_transform_a, const ShapeSW *p_b, const Transform &p_transform_b, _CollectorCallback *p_collector, real_t p_margin_a, real_t p_margin_b) {
-
-	return;
 }
 
 template <bool withMargin>
 static void _collision_cylinder_convex_polygon(const ShapeSW *p_a, const Transform &p_transform_a, const ShapeSW *p_b, const Transform &p_transform_b, _CollectorCallback *p_collector, real_t p_margin_a, real_t p_margin_b) {
-
-	return;
 }
 
 template <bool withMargin>
 static void _collision_cylinder_face(const ShapeSW *p_a, const Transform &p_transform_a, const ShapeSW *p_b, const Transform &p_transform_b, _CollectorCallback *p_collector, real_t p_margin_a, real_t p_margin_b) {
-
-	return;
 }
 
 template <bool withMargin>

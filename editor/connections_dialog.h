@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -106,6 +106,13 @@ public:
 
 //////////////////////////////////////////
 
+// Custom Tree needed to use a RichTextLabel as tooltip control
+// when display signal documentation.
+class ConnectionsDockTree : public Tree {
+
+	virtual Control *make_custom_tooltip(const String &p_text) const;
+};
+
 class ConnectionsDock : public VBoxContainer {
 
 	GDCLASS(ConnectionsDock, VBoxContainer);
@@ -123,7 +130,7 @@ class ConnectionsDock : public VBoxContainer {
 	};
 
 	Node *selectedNode;
-	Tree *tree;
+	ConnectionsDockTree *tree;
 	EditorNode *editor;
 
 	ConfirmationDialog *disconnect_all_dialog;
@@ -132,6 +139,8 @@ class ConnectionsDock : public VBoxContainer {
 	PopupMenu *signal_menu;
 	PopupMenu *slot_menu;
 	UndoRedo *undo_redo;
+
+	Map<StringName, Map<StringName, String> > descr_cache;
 
 	void _make_or_edit_connection();
 	void _connect(Connection cToMake);

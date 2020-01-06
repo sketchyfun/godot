@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -31,8 +31,10 @@
 #include "editor_audio_buses.h"
 
 #include "core/io/resource_saver.h"
+#include "core/os/input.h"
 #include "core/os/keyboard.h"
 #include "editor_node.h"
+#include "editor_scale.h"
 #include "filesystem_dock.h"
 #include "scene/resources/font.h"
 #include "servers/audio_server.h"
@@ -76,9 +78,9 @@ void EditorAudioBus::_notification(int p_what) {
 
 			disabled_vu = get_icon("BusVuFrozen", "EditorIcons");
 
-			Color solo_color = Color::html(EditorSettings::get_singleton()->is_dark_theme() ? "#ffe337" : "#ffeb70");
-			Color mute_color = Color::html(EditorSettings::get_singleton()->is_dark_theme() ? "#ff2929" : "#ff7070");
-			Color bypass_color = Color::html(EditorSettings::get_singleton()->is_dark_theme() ? "#22ccff" : "#70deff");
+			Color solo_color = EditorSettings::get_singleton()->is_dark_theme() ? Color(1.0, 0.89, 0.22) : Color(1.0, 0.92, 0.44);
+			Color mute_color = EditorSettings::get_singleton()->is_dark_theme() ? Color(1.0, 0.16, 0.16) : Color(1.0, 0.44, 0.44);
+			Color bypass_color = EditorSettings::get_singleton()->is_dark_theme() ? Color(0.13, 0.8, 1.0) : Color(0.44, 0.87, 1.0);
 
 			solo->set_icon(get_icon("AudioBusSolo", "EditorIcons"));
 			solo->add_color_override("icon_color_pressed", solo_color);
@@ -87,7 +89,7 @@ void EditorAudioBus::_notification(int p_what) {
 			bypass->set_icon(get_icon("AudioBusBypass", "EditorIcons"));
 			bypass->add_color_override("icon_color_pressed", bypass_color);
 
-			bus_options->set_icon(get_icon("GuiMiniTabMenu", "EditorIcons"));
+			bus_options->set_icon(get_icon("GuiTabMenu", "EditorIcons"));
 
 			update_bus();
 			set_process(true);
@@ -179,7 +181,7 @@ void EditorAudioBus::_notification(int p_what) {
 			mute->set_icon(get_icon("AudioBusMute", "EditorIcons"));
 			bypass->set_icon(get_icon("AudioBusBypass", "EditorIcons"));
 
-			bus_options->set_icon(get_icon("GuiMiniTabMenu", "EditorIcons"));
+			bus_options->set_icon(get_icon("GuiTabMenu", "EditorIcons"));
 		} break;
 		case NOTIFICATION_MOUSE_EXIT:
 		case NOTIFICATION_DRAG_END: {
@@ -288,7 +290,7 @@ void EditorAudioBus::_name_changed(const String &p_new_name) {
 	}
 	updating_bus = true;
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 
 	StringName current = AudioServer::get_singleton()->get_bus_name(get_index());
 	ur->create_action(TTR("Rename Audio Bus"));
@@ -321,9 +323,15 @@ void EditorAudioBus::_volume_changed(float p_normalized) {
 
 	updating_bus = true;
 
-	float p_db = this->_normalized_volume_to_scaled_db(p_normalized);
+	const float p_db = this->_normalized_volume_to_scaled_db(p_normalized);
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	if (Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+		// Snap the value when holding Ctrl for easier editing.
+		// To do so, it needs to be converted back to normalized volume (as the slider uses that unit).
+		slider->set_value(_scaled_db_to_normalized_volume(Math::round(p_db)));
+	}
+
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Change Audio Bus Volume"), UndoRedo::MERGE_ENDS);
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_volume_db", get_index(), p_db);
 	ur->add_undo_method(AudioServer::get_singleton(), "set_bus_volume_db", get_index(), AudioServer::get_singleton()->get_bus_volume_db(get_index()));
@@ -376,14 +384,24 @@ float EditorAudioBus::_scaled_db_to_normalized_volume(float db) {
 }
 
 void EditorAudioBus::_show_value(float slider_value) {
-	String text = vformat("%10.1f dB", _normalized_volume_to_scaled_db(slider_value));
 
+	float db;
+	if (Input::get_singleton()->is_key_pressed(KEY_CONTROL)) {
+		// Display the correct (snapped) value when holding Ctrl
+		db = Math::round(_normalized_volume_to_scaled_db(slider_value));
+	} else {
+		db = _normalized_volume_to_scaled_db(slider_value);
+	}
+
+	String text = vformat("%10.1f dB", db);
+
+	slider->set_tooltip(text);
 	audio_value_preview_label->set_text(text);
 	Vector2 slider_size = slider->get_size();
 	Vector2 slider_position = slider->get_global_position();
 	float left_padding = 5.0f;
 	float vert_padding = 10.0f;
-	Vector2 box_position = Vector2(slider_size.x + left_padding, (slider_size.y - vert_padding) * (1.0f - slider_value) - vert_padding);
+	Vector2 box_position = Vector2(slider_size.x + left_padding, (slider_size.y - vert_padding) * (1.0f - slider->get_value()) - vert_padding);
 	audio_value_preview_box->set_position(slider_position + box_position);
 	audio_value_preview_box->set_size(audio_value_preview_label->get_size());
 	if (slider->has_focus() && !audio_value_preview_box->is_visible()) {
@@ -400,7 +418,7 @@ void EditorAudioBus::_solo_toggled() {
 
 	updating_bus = true;
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Toggle Audio Bus Solo"));
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_solo", get_index(), solo->is_pressed());
 	ur->add_undo_method(AudioServer::get_singleton(), "set_bus_solo", get_index(), AudioServer::get_singleton()->is_bus_solo(get_index()));
@@ -414,7 +432,7 @@ void EditorAudioBus::_mute_toggled() {
 
 	updating_bus = true;
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Toggle Audio Bus Mute"));
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_mute", get_index(), mute->is_pressed());
 	ur->add_undo_method(AudioServer::get_singleton(), "set_bus_mute", get_index(), AudioServer::get_singleton()->is_bus_mute(get_index()));
@@ -428,7 +446,7 @@ void EditorAudioBus::_bypass_toggled() {
 
 	updating_bus = true;
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Toggle Audio Bus Bypass Effects"));
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_bypass_effects", get_index(), bypass->is_pressed());
 	ur->add_undo_method(AudioServer::get_singleton(), "set_bus_bypass_effects", get_index(), AudioServer::get_singleton()->is_bus_bypassing_effects(get_index()));
@@ -443,7 +461,7 @@ void EditorAudioBus::_send_selected(int p_which) {
 
 	updating_bus = true;
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Select Audio Bus Send"));
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_send", get_index(), send->get_item_text(p_which));
 	ur->add_undo_method(AudioServer::get_singleton(), "set_bus_send", get_index(), AudioServer::get_singleton()->get_bus_send(get_index()));
@@ -492,7 +510,7 @@ void EditorAudioBus::_effect_edited() {
 		int index = effect->get_metadata(0);
 		updating_bus = true;
 
-		UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+		UndoRedo *ur = EditorNode::get_undo_redo();
 		ur->create_action(TTR("Select Audio Bus Send"));
 		ur->add_do_method(AudioServer::get_singleton(), "set_bus_effect_enabled", get_index(), index, effect->is_checked(0));
 		ur->add_undo_method(AudioServer::get_singleton(), "set_bus_effect_enabled", get_index(), index, AudioServer::get_singleton()->is_bus_effect_enabled(get_index(), index));
@@ -519,7 +537,7 @@ void EditorAudioBus::_effect_add(int p_which) {
 
 	afxr->set_name(effect_options->get_item_text(p_which));
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Add Audio Bus Effect"));
 	ur->add_do_method(AudioServer::get_singleton(), "add_bus_effect", get_index(), afxr, -1);
 	ur->add_undo_method(AudioServer::get_singleton(), "remove_bus_effect", get_index(), AudioServer::get_singleton()->get_bus_effect_count(get_index()));
@@ -671,7 +689,7 @@ void EditorAudioBus::drop_data_fw(const Point2 &p_point, const Variant &p_data, 
 
 	bool enabled = AudioServer::get_singleton()->is_bus_effect_enabled(bus, effect);
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Move Bus Effect"));
 	ur->add_do_method(AudioServer::get_singleton(), "remove_bus_effect", bus, effect);
 	ur->add_do_method(AudioServer::get_singleton(), "add_bus_effect", get_index(), AudioServer::get_singleton()->get_bus_effect(bus, effect), paste_at);
@@ -712,7 +730,7 @@ void EditorAudioBus::_delete_effect_pressed(int p_option) {
 
 	int index = item->get_metadata(0);
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Delete Bus Effect"));
 	ur->add_do_method(AudioServer::get_singleton(), "remove_bus_effect", get_index(), index);
 	ur->add_undo_method(AudioServer::get_singleton(), "add_bus_effect", get_index(), AudioServer::get_singleton()->get_bus_effect(get_index(), index), index);
@@ -773,7 +791,7 @@ EditorAudioBus::EditorAudioBus(EditorAudioBuses *p_buses, bool p_is_master) {
 	is_master = p_is_master;
 	hovering_drop = false;
 
-	set_tooltip(TTR("Audio Bus, Drag and Drop to rearrange."));
+	set_tooltip(TTR("Drag & drop to rearrange."));
 
 	VBoxContainer *vb = memnew(VBoxContainer);
 	add_child(vb);
@@ -980,11 +998,7 @@ void EditorAudioBusDrop::_notification(int p_what) {
 bool EditorAudioBusDrop::can_drop_data(const Point2 &p_point, const Variant &p_data) const {
 
 	Dictionary d = p_data;
-	if (d.has("type") && String(d["type"]) == "move_audio_bus") {
-		return true;
-	}
-
-	return false;
+	return (d.has("type") && String(d["type"]) == "move_audio_bus");
 }
 
 void EditorAudioBusDrop::drop_data(const Point2 &p_point, const Variant &p_data) {
@@ -1013,7 +1027,7 @@ void EditorAudioBuses::_update_buses() {
 
 	for (int i = 0; i < AudioServer::get_singleton()->get_bus_count(); i++) {
 
-		bool is_master = i == 0 ? true : false;
+		bool is_master = (i == 0);
 		EditorAudioBus *audio_bus = memnew(EditorAudioBus(this, is_master));
 		bus_hb->add_child(audio_bus);
 		audio_bus->connect("delete_request", this, "_delete_bus", varray(audio_bus), CONNECT_DEFERRED);
@@ -1075,7 +1089,7 @@ void EditorAudioBuses::_notification(int p_what) {
 
 void EditorAudioBuses::_add_bus() {
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 
 	ur->create_action(TTR("Add Audio Bus"));
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_count", AudioServer::get_singleton()->get_bus_count() + 1);
@@ -1109,7 +1123,7 @@ void EditorAudioBuses::_delete_bus(Object *p_which) {
 		return;
 	}
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 
 	ur->create_action(TTR("Delete Audio Bus"));
 	ur->add_do_method(AudioServer::get_singleton(), "remove_bus", index);
@@ -1133,7 +1147,7 @@ void EditorAudioBuses::_delete_bus(Object *p_which) {
 void EditorAudioBuses::_duplicate_bus(int p_which) {
 
 	int add_at_pos = p_which + 1;
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Duplicate Audio Bus"));
 	ur->add_do_method(AudioServer::get_singleton(), "add_bus", add_at_pos);
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_name", add_at_pos, AudioServer::get_singleton()->get_bus_name(p_which) + " Copy");
@@ -1158,7 +1172,7 @@ void EditorAudioBuses::_reset_bus_volume(Object *p_which) {
 	EditorAudioBus *bus = Object::cast_to<EditorAudioBus>(p_which);
 	int index = bus->get_index();
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Reset Bus Volume"));
 	ur->add_do_method(AudioServer::get_singleton(), "set_bus_volume_db", index, 0.f);
 	ur->add_undo_method(AudioServer::get_singleton(), "set_bus_volume_db", index, AudioServer::get_singleton()->get_bus_volume_db(index));
@@ -1180,7 +1194,7 @@ void EditorAudioBuses::_request_drop_end() {
 
 void EditorAudioBuses::_drop_at_index(int p_bus, int p_index) {
 
-	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	UndoRedo *ur = EditorNode::get_undo_redo();
 	ur->create_action(TTR("Move Audio Bus"));
 
 	ur->add_do_method(AudioServer::get_singleton(), "move_bus", p_bus, p_index);
@@ -1276,7 +1290,7 @@ void EditorAudioBuses::_file_dialog_callback(const String &p_string) {
 		Error err = ResourceSaver::save(p_string, AudioServer::get_singleton()->generate_bus_layout());
 
 		if (err != OK) {
-			EditorNode::get_singleton()->show_warning("Error saving file: " + p_string);
+			EditorNode::get_singleton()->show_warning(vformat(TTR("Error saving file: %s"), p_string));
 			return;
 		}
 
@@ -1316,7 +1330,8 @@ EditorAudioBuses::EditorAudioBuses() {
 	add_child(top_hb);
 
 	file = memnew(Label);
-	file->set_text(String(TTR("Layout")) + ": " + "default_bus_layout.tres");
+	String layout_path = ProjectSettings::get_singleton()->get("audio/default_bus_layout");
+	file->set_text(String(TTR("Layout")) + ": " + layout_path.get_file());
 	file->set_clip_text(true);
 	file->set_h_size_flags(SIZE_EXPAND_FILL);
 	top_hb->add_child(file);
@@ -1443,7 +1458,7 @@ Size2 EditorAudioMeterNotches::get_minimum_size() const {
 	float width = 0;
 	float height = top_padding + btm_padding;
 
-	for (uint8_t i = 0; i < notches.size(); i++) {
+	for (int i = 0; i < notches.size(); i++) {
 		if (notches[i].render_db_value) {
 			width = MAX(width, font->get_string_size(String::num(Math::abs(notches[i].db_value)) + "dB").x);
 			height += font_height;
@@ -1477,7 +1492,7 @@ void EditorAudioMeterNotches::_draw_audio_notches() {
 	Ref<Font> font = get_font("font", "Label");
 	float font_height = font->get_height();
 
-	for (uint8_t i = 0; i < notches.size(); i++) {
+	for (int i = 0; i < notches.size(); i++) {
 		AudioNotch n = notches[i];
 		draw_line(Vector2(0, (1.0f - n.relative_position) * (get_size().y - btm_padding - top_padding) + top_padding),
 				Vector2(line_length, (1.0f - n.relative_position) * (get_size().y - btm_padding - top_padding) + top_padding),

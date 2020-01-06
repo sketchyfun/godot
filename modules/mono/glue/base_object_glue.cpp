@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -36,6 +36,7 @@
 #include "core/string_name.h"
 
 #include "../csharp_script.h"
+#include "../mono_gd/gd_mono_cache.h"
 #include "../mono_gd/gd_mono_class.h"
 #include "../mono_gd/gd_mono_internals.h"
 #include "../mono_gd/gd_mono_utils.h"
@@ -219,7 +220,18 @@ MonoBoolean godot_icall_DynamicGodotObject_SetMember(Object *p_ptr, MonoString *
 }
 
 MonoString *godot_icall_Object_ToString(Object *p_ptr) {
-	return GDMonoMarshal::mono_string_from_godot(Variant(p_ptr).operator String());
+#ifdef DEBUG_ENABLED
+	// Cannot happen in C#; would get an ObjectDisposedException instead.
+	CRASH_COND(p_ptr == NULL);
+
+	if (ScriptDebugger::get_singleton() && !Object::cast_to<Reference>(p_ptr)) { // Only if debugging!
+		// Cannot happen either in C#; the handle is nullified when the object is destroyed
+		CRASH_COND(!ObjectDB::instance_validate(p_ptr));
+	}
+#endif
+
+	String result = "[" + p_ptr->get_class() + ":" + itos(p_ptr->get_instance_id()) + "]";
+	return GDMonoMarshal::mono_string_from_godot(result);
 }
 
 void godot_register_object_icalls() {

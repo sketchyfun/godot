@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -75,6 +75,14 @@ godot_real GDAPI godot_vector2_length_squared(const godot_vector2 *p_self) {
 godot_bool GDAPI godot_vector2_is_normalized(const godot_vector2 *p_self) {
 	const Vector2 *self = (const Vector2 *)p_self;
 	return self->is_normalized();
+}
+
+godot_vector2 GDAPI godot_vector2_direction_to(const godot_vector2 *p_self, const godot_vector2 *p_to) {
+	godot_vector2 dest;
+	const Vector2 *self = (const Vector2 *)p_self;
+	const Vector2 *to = (const Vector2 *)p_to;
+	*((Vector2 *)&dest) = self->direction_to(*to);
+	return dest;
 }
 
 godot_real GDAPI godot_vector2_distance_to(const godot_vector2 *p_self, const godot_vector2 *p_to) {

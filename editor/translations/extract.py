@@ -38,8 +38,8 @@ unique_str = []
 unique_loc = {}
 main_po = """
 # LANGUAGE translation of the Godot Engine editor
-# Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.
-# Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)
+# Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.
+# Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).
 # This file is distributed under the same license as the Godot source code.
 #
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
@@ -116,7 +116,7 @@ shutil.move("editor.pot", "editor/translations/editor.pot")
 
 # TODO: Make that in a portable way, if we care; if not, kudos to Unix users
 if (os.name == "posix"):
-    added = subprocess.check_output("git diff editor/translations/editor.pot | grep \+msgid | wc -l", shell=True)
-    removed = subprocess.check_output("git diff editor/translations/editor.pot | grep \\\-msgid | wc -l", shell=True)
+    added = subprocess.check_output(r"git diff editor/translations/editor.pot | grep \+msgid | wc -l", shell=True)
+    removed = subprocess.check_output(r"git diff editor/translations/editor.pot | grep \\\-msgid | wc -l", shell=True)
     print("\n# Template changes compared to the staged status:")
     print("#   Additions: %s msgids.\n#   Deletions: %s msgids." % (int(added), int(removed)))

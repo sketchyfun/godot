@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -115,9 +115,6 @@ void BaseButton::_notification(int p_what) {
 		}
 	}
 
-	if (p_what == NOTIFICATION_ENTER_TREE) {
-	}
-
 	if (p_what == NOTIFICATION_EXIT_TREE || (p_what == NOTIFICATION_VISIBILITY_CHANGED && !is_visible_in_tree())) {
 
 		if (!toggle_mode) {
@@ -174,9 +171,17 @@ void BaseButton::on_action_event(Ref<InputEvent> p_event) {
 		}
 	}
 
-	if (!p_event->is_pressed()) { // pressed state should be correct with button_up signal
+	if (!p_event->is_pressed()) {
+		Ref<InputEventMouseButton> mouse_button = p_event;
+		if (mouse_button.is_valid()) {
+			if (!has_point(mouse_button->get_position())) {
+				status.hovering = false;
+			}
+		}
+		// pressed state should be correct with button_up signal
 		emit_signal("button_up");
 		status.press_attempt = false;
+		status.pressing_inside = false;
 	}
 
 	update();

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -439,27 +439,26 @@ double ScrollBar::get_grabber_size() const {
 }
 
 double ScrollBar::get_area_size() const {
-
-	if (orientation == VERTICAL) {
-
-		double area = get_size().height;
-		area -= get_stylebox("scroll")->get_minimum_size().height;
-		area -= get_icon("increment")->get_height();
-		area -= get_icon("decrement")->get_height();
-		area -= get_grabber_min_size();
-		return area;
-
-	} else if (orientation == HORIZONTAL) {
-
-		double area = get_size().width;
-		area -= get_stylebox("scroll")->get_minimum_size().width;
-		area -= get_icon("increment")->get_width();
-		area -= get_icon("decrement")->get_width();
-		area -= get_grabber_min_size();
-		return area;
-	} else {
-
-		return 0;
+	switch (orientation) {
+		case VERTICAL: {
+			double area = get_size().height;
+			area -= get_stylebox("scroll")->get_minimum_size().height;
+			area -= get_icon("increment")->get_height();
+			area -= get_icon("decrement")->get_height();
+			area -= get_grabber_min_size();
+			return area;
+		} break;
+		case HORIZONTAL: {
+			double area = get_size().width;
+			area -= get_stylebox("scroll")->get_minimum_size().width;
+			area -= get_icon("increment")->get_width();
+			area -= get_icon("decrement")->get_width();
+			area -= get_grabber_min_size();
+			return area;
+		} break;
+		default: {
+			return 0.0;
+		}
 	}
 }
 

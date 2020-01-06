@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,6 +30,7 @@
 
 #include "main.h"
 
+#include "core/crypto/crypto.h"
 #include "core/input_map.h"
 #include "core/io/file_access_network.h"
 #include "core/io/file_access_pack.h"
@@ -37,15 +38,12 @@
 #include "core/io/image_loader.h"
 #include "core/io/ip.h"
 #include "core/io/resource_loader.h"
-#include "core/io/stream_peer_ssl.h"
-#include "core/io/stream_peer_tcp.h"
 #include "core/message_queue.h"
 #include "core/os/dir_access.h"
 #include "core/os/os.h"
 #include "core/project_settings.h"
 #include "core/register_core_types.h"
 #include "core/script_debugger_local.h"
-#include "core/script_debugger_remote.h"
 #include "core/script_language.h"
 #include "core/translation.h"
 #include "core/version.h"
@@ -60,12 +58,14 @@
 #include "main/tests/test_main.h"
 #include "modules/register_module_types.h"
 #include "platform/register_platform_apis.h"
+#include "scene/debugger/script_debugger_remote.h"
 #include "scene/main/scene_tree.h"
 #include "scene/main/viewport.h"
 #include "scene/register_scene_types.h"
 #include "scene/resources/packed_scene.h"
 #include "servers/arvr_server.h"
 #include "servers/audio_server.h"
+#include "servers/camera_server.h"
 #include "servers/physics_2d_server.h"
 #include "servers/physics_server.h"
 #include "servers/register_server_types.h"
@@ -75,6 +75,7 @@
 #include "editor/doc/doc_data_class_path.gen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
+#include "editor/progress_dialog.h"
 #include "editor/project_manager.h"
 #endif
 
@@ -98,6 +99,7 @@ static MessageQueue *message_queue = NULL;
 
 // Initialized in setup2()
 static AudioServer *audio_server = NULL;
+static CameraServer *camera_server = NULL;
 static ARVRServer *arvr_server = NULL;
 static PhysicsServer *physics_server = NULL;
 static Physics2DServer *physics_2d_server = NULL;
@@ -206,8 +208,8 @@ void Main::print_help(const char *p_binary) {
 
 	print_line(String(VERSION_NAME) + " v" + get_full_version_string() + " - " + String(VERSION_WEBSITE));
 	OS::get_singleton()->print("Free and open source software under the terms of the MIT license.\n");
-	OS::get_singleton()->print("(c) 2007-2019 Juan Linietsky, Ariel Manzur.\n");
-	OS::get_singleton()->print("(c) 2014-2019 Godot Engine contributors.\n");
+	OS::get_singleton()->print("(c) 2007-2020 Juan Linietsky, Ariel Manzur.\n");
+	OS::get_singleton()->print("(c) 2014-2020 Godot Engine contributors.\n");
 	OS::get_singleton()->print("\n");
 	OS::get_singleton()->print("Usage: %s [options] [path to scene or 'project.godot' file]\n", p_binary);
 	OS::get_singleton()->print("\n");
@@ -258,6 +260,8 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  --position <X>,<Y>               Request window position.\n");
 	OS::get_singleton()->print("  --low-dpi                        Force low-DPI mode (macOS and Windows only).\n");
 	OS::get_singleton()->print("  --no-window                      Disable window creation (Windows only). Useful together with --script.\n");
+	OS::get_singleton()->print("  --enable-vsync-via-compositor    When vsync is enabled, vsync via the OS' window compositor (Windows only).\n");
+	OS::get_singleton()->print("  --disable-vsync-via-compositor   Disable vsync via the OS' window compositor (Windows only).\n");
 	OS::get_singleton()->print("\n");
 #endif
 
@@ -282,8 +286,8 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -s, --script <script>            Run a script.\n");
 	OS::get_singleton()->print("  --check-only                     Only parse for errors and quit (use with --script).\n");
 #ifdef TOOLS_ENABLED
-	OS::get_singleton()->print("  --export <target>                Export the project using the given export target. Export only main pack if path ends with .pck or .zip.\n");
-	OS::get_singleton()->print("  --export-debug <target>          Like --export, but use debug template.\n");
+	OS::get_singleton()->print("  --export <target> <path>         Export the project using the given export target. Export only main pack if path ends with .pck or .zip. <path> is relative to the project directory.\n");
+	OS::get_singleton()->print("  --export-debug <target> <path>   Like --export, but use debug template.\n");
 	OS::get_singleton()->print("  --doctool <path>                 Dump the engine API reference to the given <path> in XML format, merging if existing files are found.\n");
 	OS::get_singleton()->print("  --no-docbase                     Disallow dumping the base types (used with --doctool).\n");
 	OS::get_singleton()->print("  --build-solutions                Build the scripting solutions (e.g. for C# projects).\n");
@@ -387,6 +391,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	bool upwards = false;
 	String debug_mode;
 	String debug_host;
+	bool skip_breakpoints = false;
 	String main_pack;
 	bool quiet_stdout = false;
 	int rtm = -1;
@@ -397,6 +402,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	Vector<String> breakpoints;
 	bool use_custom_res = true;
 	bool force_res = false;
+	bool saw_vsync_via_compositor_override = false;
 #ifdef TOOLS_ENABLED
 	bool found_project = false;
 #endif
@@ -444,6 +450,32 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			if (I->next()) {
 
 				audio_driver = I->next()->get();
+
+				bool found = false;
+				for (int i = 0; i < OS::get_singleton()->get_audio_driver_count(); i++) {
+					if (audio_driver == OS::get_singleton()->get_audio_driver_name(i)) {
+						found = true;
+					}
+				}
+
+				if (!found) {
+					OS::get_singleton()->print("Unknown audio driver '%s', aborting.\nValid options are ", audio_driver.utf8().get_data());
+
+					for (int i = 0; i < OS::get_singleton()->get_audio_driver_count(); i++) {
+						if (i == OS::get_singleton()->get_audio_driver_count() - 1) {
+							OS::get_singleton()->print(" and ");
+						} else if (i != 0) {
+							OS::get_singleton()->print(", ");
+						}
+
+						OS::get_singleton()->print("'%s'", OS::get_singleton()->get_audio_driver_name(i));
+					}
+
+					OS::get_singleton()->print(".\n");
+
+					goto error;
+				}
+
 				N = I->next()->next();
 			} else {
 				OS::get_singleton()->print("Missing audio driver argument, aborting.\n");
@@ -455,6 +487,32 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			if (I->next()) {
 
 				video_driver = I->next()->get();
+
+				bool found = false;
+				for (int i = 0; i < OS::get_singleton()->get_video_driver_count(); i++) {
+					if (video_driver == OS::get_singleton()->get_video_driver_name(i)) {
+						found = true;
+					}
+				}
+
+				if (!found) {
+					OS::get_singleton()->print("Unknown video driver '%s', aborting.\nValid options are ", video_driver.utf8().get_data());
+
+					for (int i = 0; i < OS::get_singleton()->get_video_driver_count(); i++) {
+						if (i == OS::get_singleton()->get_video_driver_count() - 1) {
+							OS::get_singleton()->print(" and ");
+						} else if (i != 0) {
+							OS::get_singleton()->print(", ");
+						}
+
+						OS::get_singleton()->print("'%s'", OS::get_singleton()->get_video_driver_name(i));
+					}
+
+					OS::get_singleton()->print(".\n");
+
+					goto error;
+				}
+
 				N = I->next()->next();
 			} else {
 				OS::get_singleton()->print("Missing video driver argument, aborting.\n");
@@ -536,6 +594,14 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "--no-window") { // disable window creation (Windows only)
 
 			OS::get_singleton()->set_no_window_mode(true);
+		} else if (I->get() == "--enable-vsync-via-compositor") {
+
+			video_mode.vsync_via_compositor = true;
+			saw_vsync_via_compositor_override = true;
+		} else if (I->get() == "--disable-vsync-via-compositor") {
+
+			video_mode.vsync_via_compositor = false;
+			saw_vsync_via_compositor_override = true;
 #endif
 		} else if (I->get() == "--profiling") { // enable profiling
 
@@ -599,6 +665,18 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 			auto_build_solutions = true;
 			editor = true;
+#ifdef DEBUG_METHODS_ENABLED
+		} else if (I->get() == "--gdnative-generate-json-api") {
+			// Register as an editor instance to use the GLES2 fallback automatically on hardware that doesn't support the GLES3 backend
+			editor = true;
+
+			// We still pass it to the main arguments since the argument handling itself is not done in this function
+			main_args.push_back(I->get());
+#endif
+		} else if (I->get() == "--export" || I->get() == "--export-debug") { // Export project
+
+			editor = true;
+			main_args.push_back(I->get());
 #endif
 		} else if (I->get() == "--path") { // set path of project to start or edit
 
@@ -726,6 +804,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			print_fps = true;
 		} else if (I->get() == "--disable-crash-handler") {
 			OS::get_singleton()->disable_crash_handler();
+		} else if (I->get() == "--skip-breakpoints") {
+			skip_breakpoints = true;
 		} else {
 			main_args.push_back(I->get());
 		}
@@ -779,8 +859,10 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	ProjectSettings::get_singleton()->set_custom_property_info("network/limits/debugger_stdout/max_chars_per_second", PropertyInfo(Variant::INT, "network/limits/debugger_stdout/max_chars_per_second", PROPERTY_HINT_RANGE, "0, 4096, 1, or_greater"));
 	GLOBAL_DEF("network/limits/debugger_stdout/max_messages_per_frame", 10);
 	ProjectSettings::get_singleton()->set_custom_property_info("network/limits/debugger_stdout/max_messages_per_frame", PropertyInfo(Variant::INT, "network/limits/debugger_stdout/max_messages_per_frame", PROPERTY_HINT_RANGE, "0, 20, 1, or_greater"));
-	GLOBAL_DEF("network/limits/debugger_stdout/max_errors_per_frame", 10);
-	ProjectSettings::get_singleton()->set_custom_property_info("network/limits/debugger_stdout/max_errors_per_frame", PropertyInfo(Variant::INT, "network/limits/debugger_stdout/max_errors_per_frame", PROPERTY_HINT_RANGE, "0, 20, 1, or_greater"));
+	GLOBAL_DEF("network/limits/debugger_stdout/max_errors_per_second", 100);
+	ProjectSettings::get_singleton()->set_custom_property_info("network/limits/debugger_stdout/max_errors_per_second", PropertyInfo(Variant::INT, "network/limits/debugger_stdout/max_errors_per_second", PROPERTY_HINT_RANGE, "0, 200, 1, or_greater"));
+	GLOBAL_DEF("network/limits/debugger_stdout/max_warnings_per_second", 100);
+	ProjectSettings::get_singleton()->set_custom_property_info("network/limits/debugger_stdout/max_warnings_per_second", PropertyInfo(Variant::INT, "network/limits/debugger_stdout/max_warnings_per_second", PROPERTY_HINT_RANGE, "0, 200, 1, or_greater"));
 
 	if (debug_mode == "remote") {
 
@@ -792,6 +874,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			debug_host = debug_host.substr(0, sep_pos);
 		}
 		Error derr = sdr->connect_to_host(debug_host, debug_port);
+
+		sdr->set_skip_breakpoints(skip_breakpoints);
 
 		if (derr != OK) {
 			memdelete(sdr);
@@ -810,10 +894,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 			String bp = breakpoints[i];
 			int sp = bp.find_last(":");
-			if (sp == -1) {
-				ERR_EXPLAIN("Invalid breakpoint: '" + bp + "', expected file:line format.");
-				ERR_CONTINUE(sp == -1);
-			}
+			ERR_CONTINUE_MSG(sp == -1, "Invalid breakpoint: '" + bp + "', expected file:line format.");
 
 			script_debugger->insert_breakpoint(bp.substr(sp + 1, bp.length()).to_int(), bp.substr(0, sp));
 		}
@@ -915,10 +996,13 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			video_mode.height = GLOBAL_GET("display/window/size/height");
 
 			if (globals->has_setting("display/window/size/test_width") && globals->has_setting("display/window/size/test_height")) {
+
 				int tw = globals->get("display/window/size/test_width");
-				int th = globals->get("display/window/size/test_height");
-				if (tw > 0 && th > 0) {
+				if (tw > 0) {
 					video_mode.width = tw;
+				}
+				int th = globals->get("display/window/size/test_height");
+				if (th > 0) {
 					video_mode.height = th;
 				}
 			}
@@ -934,8 +1018,18 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		OS::get_singleton()->_allow_hidpi = GLOBAL_DEF("display/window/dpi/allow_hidpi", false);
 	}
 
-	video_mode.use_vsync = GLOBAL_DEF("display/window/vsync/use_vsync", true);
+	video_mode.use_vsync = GLOBAL_DEF_RST("display/window/vsync/use_vsync", true);
 	OS::get_singleton()->_use_vsync = video_mode.use_vsync;
+
+	if (!saw_vsync_via_compositor_override) {
+		// If one of the command line options to enable/disable vsync via the
+		// window compositor ("--enable-vsync-via-compositor" or
+		// "--disable-vsync-via-compositor") was present then it overrides the
+		// project setting.
+		video_mode.vsync_via_compositor = GLOBAL_DEF("display/window/vsync/vsync_via_compositor", false);
+	}
+
+	OS::get_singleton()->_vsync_via_compositor = video_mode.vsync_via_compositor;
 
 	OS::get_singleton()->_allow_layered = GLOBAL_DEF("display/window/per_pixel_transparency/allowed", false);
 	video_mode.layered = GLOBAL_DEF("display/window/per_pixel_transparency/enabled", false);
@@ -974,10 +1068,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	if (video_driver_idx < 0) {
-
-		//OS::get_singleton()->alert("Invalid Video Driver: " + video_driver);
 		video_driver_idx = 0;
-		//goto error;
 	}
 
 	if (audio_driver == "") { // specified in project.godot
@@ -994,10 +1085,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	if (audio_driver_idx < 0) {
-
-		OS::get_singleton()->alert("Invalid Audio Driver: " + audio_driver);
 		audio_driver_idx = 0;
-		//goto error;
 	}
 
 	{
@@ -1038,6 +1126,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	OS::get_singleton()->set_low_processor_usage_mode(GLOBAL_DEF("application/run/low_processor_mode", false));
 	OS::get_singleton()->set_low_processor_usage_mode_sleep_usec(GLOBAL_DEF("application/run/low_processor_mode_sleep_usec", 6900)); // Roughly 144 FPS
 	ProjectSettings::get_singleton()->set_custom_property_info("application/run/low_processor_mode_sleep_usec", PropertyInfo(Variant::INT, "application/run/low_processor_mode_sleep_usec", PROPERTY_HINT_RANGE, "0,33200,1,or_greater")); // No negative numbers
+
+	GLOBAL_DEF("display/window/ios/hide_home_indicator", true);
 
 	Engine::get_singleton()->set_frame_delay(frame_delay);
 
@@ -1167,7 +1257,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 			boot_logo.instance();
 			Error load_err = ImageLoader::load_image(boot_logo_path, boot_logo);
 			if (load_err)
-				ERR_PRINTS("Non-existing or invalid boot splash at: " + boot_logo_path + ". Loading default splash.");
+				ERR_PRINTS("Non-existing or invalid boot splash at '" + boot_logo_path + "'. Loading default splash.");
 		}
 
 		Color boot_bg_color = GLOBAL_DEF("application/boot_splash/bg_color", boot_splash_bg_color);
@@ -1254,6 +1344,8 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	register_platform_apis();
 	register_module_types();
 
+	camera_server = CameraServer::create();
+
 	initialize_physics();
 	register_server_singletons();
 
@@ -1284,8 +1376,8 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	ClassDB::set_current_api(ClassDB::API_NONE); //no more api is registered at this point
 
-	print_verbose("CORE API HASH: " + itos(ClassDB::get_api_hash(ClassDB::API_CORE)));
-	print_verbose("EDITOR API HASH: " + itos(ClassDB::get_api_hash(ClassDB::API_EDITOR)));
+	print_verbose("CORE API HASH: " + uitos(ClassDB::get_api_hash(ClassDB::API_CORE)));
+	print_verbose("EDITOR API HASH: " + uitos(ClassDB::get_api_hash(ClassDB::API_EDITOR)));
 	MAIN_PRINT("Main: Done");
 
 	return OK;
@@ -1343,20 +1435,10 @@ bool Main::start() {
 					removal_docs.push_back(args[j]);
 			} else if (args[i] == "--export") {
 				editor = true; //needs editor
-				if (i + 1 < args.size()) {
-					_export_preset = args[i + 1];
-				} else {
-					ERR_PRINT("Export preset name not specified");
-					return false;
-				}
+				_export_preset = args[i + 1];
 			} else if (args[i] == "--export-debug") {
 				editor = true; //needs editor
-				if (i + 1 < args.size()) {
-					_export_preset = args[i + 1];
-				} else {
-					ERR_PRINT("Export preset name not specified");
-					return false;
-				}
+				_export_preset = args[i + 1];
 				export_debug = true;
 #endif
 			} else {
@@ -1369,18 +1451,15 @@ bool Main::start() {
 		}
 	}
 
-	GLOBAL_DEF("editor/active", editor);
-
 	String main_loop_type;
 #ifdef TOOLS_ENABLED
 	if (doc_tool != "") {
 
+		Engine::get_singleton()->set_editor_hint(true); // Needed to instance editor-only classes for their default values
+
 		{
 			DirAccessRef da = DirAccess::open(doc_tool);
-			if (!da) {
-				ERR_EXPLAIN("Argument supplied to --doctool must be a base godot build directory");
-				ERR_FAIL_V(false);
-			}
+			ERR_FAIL_COND_V_MSG(!da, false, "Argument supplied to --doctool must be a base Godot build directory.");
 		}
 		DocData doc;
 		doc.generate(doc_base);
@@ -1396,12 +1475,23 @@ bool Main::start() {
 			doc_data_classes[name] = path;
 			if (!checked_paths.has(path)) {
 				checked_paths.insert(path);
+
+				// Create the module documentation directory if it doesn't exist
+				DirAccess *da = DirAccess::create_for_path(path);
+				da->make_dir_recursive(path);
+				memdelete(da);
+
 				docsrc.load_classes(path);
 				print_line("Loading docs from: " + path);
 			}
 		}
 
 		String index_path = doc_tool.plus_file("doc/classes");
+		// Create the main documentation directory if it doesn't exist
+		DirAccess *da = DirAccess::create_for_path(index_path);
+		da->make_dir_recursive(index_path);
+		memdelete(da);
+
 		docsrc.load_classes(index_path);
 		checked_paths.insert(index_path);
 		print_line("Loading docs from: " + index_path);
@@ -1442,21 +1532,22 @@ bool Main::start() {
 	};
 
 	if (test != "") {
-#ifdef DEBUG_ENABLED
+#ifdef TOOLS_ENABLED
 		main_loop = test_main(test, args);
 
 		if (!main_loop)
 			return false;
-
 #endif
 
 	} else if (script != "") {
 
 		Ref<Script> script_res = ResourceLoader::load(script);
-		ERR_EXPLAIN("Can't load script: " + script);
-		ERR_FAIL_COND_V(script_res.is_null(), false);
+		ERR_FAIL_COND_V_MSG(script_res.is_null(), false, "Can't load script: " + script);
 
 		if (check_only) {
+			if (!script_res->is_valid()) {
+				OS::get_singleton()->set_exit_code(1);
+			}
 			return false;
 		}
 
@@ -1468,8 +1559,7 @@ bool Main::start() {
 			if (!script_loop) {
 				if (obj)
 					memdelete(obj);
-				ERR_EXPLAIN("Can't load script '" + script + "', it does not inherit from a MainLoop type");
-				ERR_FAIL_COND_V(!script_loop, false);
+				ERR_FAIL_V_MSG(false, "Can't load script '" + script + "', it does not inherit from a MainLoop type.");
 			}
 
 			script_loop->set_init_script(script_res);
@@ -1493,17 +1583,13 @@ bool Main::start() {
 		} else {
 
 			Object *ml = ClassDB::instance(main_loop_type);
-			if (!ml) {
-				ERR_EXPLAIN("Can't instance MainLoop type");
-				ERR_FAIL_V(false);
-			}
+			ERR_FAIL_COND_V_MSG(!ml, false, "Can't instance MainLoop type.");
 
 			main_loop = Object::cast_to<MainLoop>(ml);
 			if (!main_loop) {
 
 				memdelete(ml);
-				ERR_EXPLAIN("Invalid MainLoop type");
-				ERR_FAIL_V(false);
+				ERR_FAIL_V_MSG(false, "Invalid MainLoop type.");
 			}
 		}
 	}
@@ -1526,6 +1612,12 @@ bool Main::start() {
 
 		if (!project_manager && !editor) { // game
 			if (game_path != "" || script != "") {
+				if (script_debugger && script_debugger->is_remote()) {
+					ScriptDebuggerRemote *remote_debugger = static_cast<ScriptDebuggerRemote *>(script_debugger);
+
+					remote_debugger->set_scene_tree(sml);
+				}
+
 				//autoload
 				List<PropertyInfo> props;
 				ProjectSettings::get_singleton()->get_property_list(&props);
@@ -1566,8 +1658,7 @@ bool Main::start() {
 					}
 
 					RES res = ResourceLoader::load(path);
-					ERR_EXPLAIN("Can't autoload: " + path);
-					ERR_CONTINUE(res.is_null());
+					ERR_CONTINUE_MSG(res.is_null(), "Can't autoload: " + path);
 					Node *n = NULL;
 					if (res->is_class("PackedScene")) {
 						Ref<PackedScene> ps = res;
@@ -1576,20 +1667,17 @@ bool Main::start() {
 						Ref<Script> script_res = res;
 						StringName ibt = script_res->get_instance_base_type();
 						bool valid_type = ClassDB::is_parent_class(ibt, "Node");
-						ERR_EXPLAIN("Script does not inherit a Node: " + path);
-						ERR_CONTINUE(!valid_type);
+						ERR_CONTINUE_MSG(!valid_type, "Script does not inherit a Node: " + path);
 
 						Object *obj = ClassDB::instance(ibt);
 
-						ERR_EXPLAIN("Cannot instance script for autoload, expected 'Node' inheritance, got: " + String(ibt));
-						ERR_CONTINUE(obj == NULL);
+						ERR_CONTINUE_MSG(obj == NULL, "Cannot instance script for autoload, expected 'Node' inheritance, got: " + String(ibt));
 
 						n = Object::cast_to<Node>(obj);
 						n->set_script(script_res.get_ref_ptr());
 					}
 
-					ERR_EXPLAIN("Path in autoload not a node or script: " + path);
-					ERR_CONTINUE(!n);
+					ERR_CONTINUE_MSG(!n, "Path in autoload not a node or script: " + path);
 					n->set_name(name);
 
 					//defer so references are all valid on _ready()
@@ -1713,13 +1801,13 @@ bool Main::start() {
 
 						if (sep == -1) {
 							DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-							local_game_path = da->get_current_dir() + "/" + local_game_path;
+							local_game_path = da->get_current_dir().plus_file(local_game_path);
 							memdelete(da);
 						} else {
 
 							DirAccess *da = DirAccess::open(local_game_path.substr(0, sep));
 							if (da) {
-								local_game_path = da->get_current_dir() + "/" + local_game_path.substr(sep + 1, local_game_path.length());
+								local_game_path = da->get_current_dir().plus_file(local_game_path.substr(sep + 1, local_game_path.length()));
 								memdelete(da);
 							}
 						}
@@ -1747,8 +1835,8 @@ bool Main::start() {
 
 		if (!project_manager && !editor) { // game
 
-			// Load SSL Certificates from Project Settings (or builtin)
-			StreamPeerSSL::load_certs_from_memory(StreamPeerSSL::get_project_cert_array());
+			// Load SSL Certificates from Project Settings (or builtin).
+			Crypto::load_default_certificates(GLOBAL_DEF("network/ssl/certificates", ""));
 
 			if (game_path != "") {
 				Node *scene = NULL;
@@ -1756,8 +1844,7 @@ bool Main::start() {
 				if (scenedata.is_valid())
 					scene = scenedata->instance();
 
-				ERR_EXPLAIN("Failed loading scene: " + local_game_path);
-				ERR_FAIL_COND_V(!scene, false);
+				ERR_FAIL_COND_V_MSG(!scene, false, "Failed loading scene: " + local_game_path);
 				sml->add_current_scene(scene);
 
 #ifdef OSX_ENABLED
@@ -1797,15 +1884,16 @@ bool Main::start() {
 			pmanager->add_child(progress_dialog);
 			sml->get_root()->add_child(pmanager);
 			OS::get_singleton()->set_context(OS::CONTEXT_PROJECTMAN);
+			project_manager = true;
 		}
 
 		if (project_manager || editor) {
+			// Hide console window if requested (Windows-only).
+			bool hide_console = EditorSettings::get_singleton()->get_setting("interface/editor/hide_console_window");
+			OS::get_singleton()->set_console_visible(!hide_console);
+
 			// Load SSL Certificates from Editor Settings (or builtin)
-			String certs = EditorSettings::get_singleton()->get_setting("network/ssl/editor_ssl_certificates").operator String();
-			if (certs != "")
-				StreamPeerSSL::load_certs_from_file(certs);
-			else
-				StreamPeerSSL::load_certs_from_memory(StreamPeerSSL::get_project_cert_array());
+			Crypto::load_default_certificates(EditorSettings::get_singleton()->get_setting("network/ssl/editor_ssl_certificates").operator String());
 		}
 #endif
 	}
@@ -1840,7 +1928,7 @@ bool Main::is_iterating() {
 	return iterating > 0;
 }
 
-// For performance metrics
+// For performance metrics.
 static uint64_t physics_process_max = 0;
 static uint64_t idle_process_max = 0;
 
@@ -1868,6 +1956,7 @@ bool Main::iteration() {
 	double scaled_step = step * time_scale;
 
 	Engine::get_singleton()->_frame_step = step;
+	Engine::get_singleton()->_physics_interpolation_fraction = advance.interpolation_fraction;
 
 	uint64_t physics_process_ticks = 0;
 	uint64_t idle_process_ticks = 0;
@@ -2029,6 +2118,11 @@ void Main::cleanup() {
 
 	ERR_FAIL_COND(!_start_success);
 
+	if (script_debugger) {
+		// Flush any remaining messages
+		script_debugger->idle_poll();
+	}
+
 	ResourceLoader::remove_custom_loaders();
 	ResourceSaver::remove_custom_savers();
 
@@ -2076,6 +2170,10 @@ void Main::cleanup() {
 		memdelete(audio_server);
 	}
 
+	if (camera_server) {
+		memdelete(camera_server);
+	}
+
 	OS::get_singleton()->finalize();
 	finalize_physics();
 
@@ -2106,6 +2204,5 @@ void Main::cleanup() {
 	unregister_core_driver_types();
 	unregister_core_types();
 
-	OS::get_singleton()->clear_last_error();
 	OS::get_singleton()->finalize_core();
 }

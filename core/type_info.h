@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -83,15 +83,13 @@ enum Metadata {
 };
 }
 
+// If the compiler fails because it's trying to instantiate the primary 'GetTypeInfo' template
+// instead of one of the specializations, it's most likely because the type 'T' is not supported.
+// If 'T' is a class that inherits 'Object', make sure it can see the actual class declaration
+// instead of a forward declaration. You can always forward declare 'T' in a header file, and then
+// include the actual declaration of 'T' in the source file where 'GetTypeInfo<T>' is instantiated.
 template <class T, typename = void>
-struct GetTypeInfo {
-	static const Variant::Type VARIANT_TYPE = Variant::NIL;
-	static const GodotTypeInfo::Metadata METADATA = GodotTypeInfo::METADATA_NONE;
-	static inline PropertyInfo get_class_info() {
-		ERR_PRINT("GetTypeInfo fallback. Bug!");
-		return PropertyInfo(); // Not "Nil", this is an error
-	}
-};
+struct GetTypeInfo;
 
 #define MAKE_TYPE_INFO(m_type, m_var_type)                                            \
 	template <>                                                                       \
@@ -283,10 +281,7 @@ inline StringName __constant_get_enum_name(T param, const String &p_constant) {
 	return GetTypeInfo<T>::get_class_info().class_name;
 }
 
-#define CLASS_INFO(m_type)                                    \
-	(GetTypeInfo<m_type *>::VARIANT_TYPE != Variant::NIL ?    \
-					GetTypeInfo<m_type *>::get_class_info() : \
-					GetTypeInfo<m_type>::get_class_info())
+#define CLASS_INFO(m_type) (GetTypeInfo<m_type *>::get_class_info())
 
 #else
 

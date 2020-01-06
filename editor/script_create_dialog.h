@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -33,7 +33,7 @@
 
 #include "editor/editor_file_dialog.h"
 #include "editor/editor_settings.h"
-#include "scene/gui/check_button.h"
+#include "scene/gui/check_box.h"
 #include "scene/gui/dialogs.h"
 #include "scene/gui/grid_container.h"
 #include "scene/gui/line_edit.h"
@@ -57,7 +57,7 @@ class ScriptCreateDialog : public ConfirmationDialog {
 	LineEdit *file_path;
 	Button *path_button;
 	EditorFileDialog *file_browse;
-	CheckButton *internal;
+	CheckBox *internal;
 	Label *internal_label;
 	VBoxContainer *path_vb;
 	AcceptDialog *alert;
@@ -76,9 +76,27 @@ class ScriptCreateDialog : public ConfirmationDialog {
 	bool is_built_in;
 	bool built_in_enabled;
 	int current_language;
+	int default_language;
 	bool re_check_path;
+
+	enum ScriptOrigin {
+		SCRIPT_ORIGIN_PROJECT,
+		SCRIPT_ORIGIN_EDITOR,
+	};
+	struct ScriptTemplateInfo {
+		int id;
+		ScriptOrigin origin;
+		String dir;
+		String name;
+		String extension;
+	};
+
 	String script_template;
-	Vector<String> template_list;
+	Vector<ScriptTemplateInfo> template_list;
+	Map<String, Vector<int> > template_overrides; // name : indices
+
+	void _update_script_templates(const String &p_extension);
+
 	String base_type;
 
 	void _path_hbox_sorted();

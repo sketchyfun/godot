@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -101,7 +101,6 @@ void JoypadLinux::joy_thread_func(void *p_user) {
 		JoypadLinux *joy = (JoypadLinux *)p_user;
 		joy->run_joypad_thread();
 	}
-	return;
 }
 
 void JoypadLinux::run_joypad_thread() {
@@ -514,6 +513,8 @@ void JoypadLinux::process_joypads() {
 								break;
 
 							default:
+								if (ev.code >= MAX_ABS)
+									return;
 								if (joy->abs_map[ev.code] != -1 && joy->abs_info[ev.code]) {
 									InputDefault::JoyAxis value = axis_correct(joy->abs_info[ev.code], ev.value);
 									joy->curr_axis[joy->abs_map[ev.code]] = value;

@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -32,9 +32,7 @@
 #define ANIMATION_H
 
 #include "core/resource.h"
-/**
-	@author Juan Linietsky <reduzio@gmail.com>
-*/
+
 class Animation : public Resource {
 
 	GDCLASS(Animation, Resource);
@@ -314,7 +312,7 @@ public:
 	float track_get_key_time(int p_track, int p_key_idx) const;
 	float track_get_key_transition(int p_track, int p_key_idx) const;
 
-	int transform_track_insert_key(int p_track, float p_time, const Vector3 p_loc, const Quat &p_rot = Quat(), const Vector3 &p_scale = Vector3());
+	int transform_track_insert_key(int p_track, float p_time, const Vector3 &p_loc, const Quat &p_rot = Quat(), const Vector3 &p_scale = Vector3());
 	Error transform_track_get_key(int p_track, int p_key, Vector3 *r_loc, Quat *r_rot, Vector3 *r_scale) const;
 	void track_set_interpolation_type(int p_track, InterpolationType p_interp);
 	InterpolationType track_get_interpolation_type(int p_track) const;

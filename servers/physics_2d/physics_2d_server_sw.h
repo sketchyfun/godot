@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2019 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2019 Godot Engine contributors (cf. AUTHORS.md)    */
+/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -70,6 +70,9 @@ class Physics2DServerSW : public Physics2DServer {
 	static Physics2DServerSW *singletonsw;
 
 	//void _clear_query(Query2DSW *p_query);
+	friend class CollisionObject2DSW;
+	SelfList<CollisionObject2DSW>::List pending_shape_update_list;
+	void _update_shapes();
 
 	RID _shape_create(ShapeType p_shape);
 
