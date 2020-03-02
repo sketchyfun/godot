@@ -170,7 +170,7 @@ public:
 	void set_input_event_forwarding_always_enabled();
 	bool is_input_event_forwarding_always_enabled() { return input_event_forwarding_always_enabled; }
 
-	void set_force_draw_over_forwarding_enabled();
+	void set_force_draw_over_forwarding_enabled(bool enabled);
 	bool is_force_draw_over_forwarding_enabled() { return force_draw_over_forwarding_enabled; }
 
 	void notify_main_screen_changed(const String &screen_name);

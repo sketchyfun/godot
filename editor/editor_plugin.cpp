@@ -506,10 +506,13 @@ void EditorPlugin::set_input_event_forwarding_always_enabled() {
 	always_input_forwarding_list->add_plugin(this);
 }
 
-void EditorPlugin::set_force_draw_over_forwarding_enabled() {
-	force_draw_over_forwarding_enabled = true;
+void EditorPlugin::set_force_draw_over_forwarding_enabled(bool enabled) {
+	force_draw_over_forwarding_enabled = enabled;
 	EditorPluginList *always_draw_over_forwarding_list = EditorNode::get_singleton()->get_editor_plugins_force_over();
-	always_draw_over_forwarding_list->add_plugin(this);
+	if (enabled)
+		always_draw_over_forwarding_list->add_plugin(this);
+	else
+		always_draw_over_forwarding_list->remove_plugin(this);
 }
 
 void EditorPlugin::notify_scene_changed(const Node *scn_root) {
@@ -853,7 +856,7 @@ void EditorPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_inspector_plugin", "plugin"), &EditorPlugin::add_inspector_plugin);
 	ClassDB::bind_method(D_METHOD("remove_inspector_plugin", "plugin"), &EditorPlugin::remove_inspector_plugin);
 	ClassDB::bind_method(D_METHOD("set_input_event_forwarding_always_enabled"), &EditorPlugin::set_input_event_forwarding_always_enabled);
-	ClassDB::bind_method(D_METHOD("set_force_draw_over_forwarding_enabled"), &EditorPlugin::set_force_draw_over_forwarding_enabled);
+	ClassDB::bind_method(D_METHOD("set_force_draw_over_forwarding_enabled", "enabled"), &EditorPlugin::set_force_draw_over_forwarding_enabled);
 
 	ClassDB::bind_method(D_METHOD("get_editor_interface"), &EditorPlugin::get_editor_interface);
 	ClassDB::bind_method(D_METHOD("get_script_create_dialog"), &EditorPlugin::get_script_create_dialog);
@@ -861,6 +864,8 @@ void EditorPlugin::_bind_methods() {
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::BOOL, "forward_canvas_gui_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo("forward_canvas_draw_over_viewport", PropertyInfo(Variant::OBJECT, "overlay", PROPERTY_HINT_RESOURCE_TYPE, "Control")));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo("forward_canvas_force_draw_over_viewport", PropertyInfo(Variant::OBJECT, "overlay", PROPERTY_HINT_RESOURCE_TYPE, "Control")));
+	ClassDB::add_virtual_method(get_class_static(), MethodInfo("forward_spatial_draw_over_viewport", PropertyInfo(Variant::OBJECT, "overlay", PROPERTY_HINT_RESOURCE_TYPE, "Control")));
+	ClassDB::add_virtual_method(get_class_static(), MethodInfo("forward_spatial_force_draw_over_viewport", PropertyInfo(Variant::OBJECT, "overlay", PROPERTY_HINT_RESOURCE_TYPE, "Control")));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::BOOL, "forward_spatial_gui_input", PropertyInfo(Variant::OBJECT, "camera", PROPERTY_HINT_RESOURCE_TYPE, "Camera"), PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::STRING, "get_plugin_name"));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::OBJECT, "get_plugin_icon"));
@@ -910,7 +915,7 @@ void EditorPlugin::_bind_methods() {
 }
 
 EditorPlugin::EditorPlugin() :
-		undo_redo(NULL),
+		undo_redo(EditorNode::get_undo_redo()),
 		input_event_forwarding_always_enabled(false),
 		force_draw_over_forwarding_enabled(false),
 		last_main_screen_name("") {

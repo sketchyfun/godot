@@ -1833,7 +1833,7 @@ void AnimationPlayerEditorPlugin::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 
-			set_force_draw_over_forwarding_enabled();
+			set_force_draw_over_forwarding_enabled(true);
 		} break;
 	}
 }
