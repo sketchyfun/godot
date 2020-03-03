@@ -5099,8 +5099,8 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 			box_selecting_from = scroll->get_global_transform().xform(mb->get_position());
 			box_select_rect = Rect2();
 		} else if (box_selecting) {
-
 			if (box_selection->is_visible_in_tree()) {
+
 				//only if moved
 				for (int i = 0; i < track_edits.size(); i++) {
 
@@ -5162,6 +5162,11 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		box_selection->set_size(rect.size);
 
 		box_select_rect = rect;
+
+		if (mm->get_position().y > scroll->get_size().y)
+			scroll->set_v_scroll(scroll->get_v_scroll() + 4);
+		if (mm->get_position().y < scroll->get_position().y)
+			scroll->set_v_scroll(scroll->get_v_scroll() - 4);
 
 		if (get_local_mouse_position().y < 0) {
 			//avoid box selection from going up and lose focus to viewport
@@ -5995,7 +6000,7 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	key_edit = NULL;
 
 	box_selection = memnew(Control);
-	add_child(box_selection);
+	scroll->add_child(box_selection);
 	box_selection->set_as_toplevel(true);
 	box_selection->set_mouse_filter(MOUSE_FILTER_IGNORE);
 	box_selection->hide();
