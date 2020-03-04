@@ -5072,7 +5072,13 @@ float AnimationTrackEditor::get_moving_selection_offset() const {
 
 void AnimationTrackEditor::_box_selection_draw() {
 
+	//Rect2 selection_rect = box_select_rect;
+	//selection_rect.position = scroll->get_global_transform().xform_inv(selection_rect.position);
 	const Rect2 selection_rect = Rect2(Point2(), box_selection->get_size());
+	//Rect2 scroll_rect = Rect2(Vector2(0, scroll->get_v_scroll()), scroll->get_size());
+	//selection_rect = scroll_rect.clip(selection_rect);
+	//print_line(selection_rect);
+	//print_line(box_select_rect);
 	box_selection->draw_rect(selection_rect, get_color("box_selection_fill_color", "Editor"));
 	box_selection->draw_rect(selection_rect, get_color("box_selection_stroke_color", "Editor"), false, Math::round(EDSCALE));
 }
@@ -5096,7 +5102,9 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 	if (mb.is_valid() && mb->get_button_index() == BUTTON_LEFT) {
 		if (mb->is_pressed()) {
 			box_selecting = true;
-			box_selecting_from = scroll->get_global_transform().xform(mb->get_position());
+			//box_selecting_from = mb->get_position() + Vector2(0, scroll->get_v_scroll());
+			box_selecting_from = box_selection->get_global_transform().xform(mb->get_position());
+			print_line(box_selecting_from);
 			box_select_rect = Rect2();
 		} else if (box_selecting) {
 			if (box_selection->is_visible_in_tree()) {
@@ -5145,6 +5153,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		}
 
 		Vector2 from = box_selecting_from;
+		//Vector2 to = mm->get_position() + Vector2(0, scroll->get_v_scroll());
 		Vector2 to = scroll->get_global_transform().xform(mm->get_position());
 
 		if (from.x > to.x) {
@@ -5156,9 +5165,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		}
 
 		Rect2 rect(from, to - from);
-		Rect2 scroll_rect = Rect2(scroll->get_global_position(), scroll->get_size());
-		rect = scroll_rect.clip(rect);
-		box_selection->set_position(rect.position);
+		box_selection->set_position(scroll->get_global_transform().xform_inv(rect.position));
 		box_selection->set_size(rect.size);
 
 		box_select_rect = rect;
@@ -5172,6 +5179,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 			//avoid box selection from going up and lose focus to viewport
 			warp_mouse(Vector2(mm->get_position().x, 0));
 		}
+
 	}
 }
 
@@ -5843,6 +5851,7 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	scroll = memnew(ScrollContainer);
 	timeline_vbox->add_child(scroll);
 	scroll->set_v_size_flags(SIZE_EXPAND_FILL);
+	//scroll->connect("draw", this, "_box_selection_draw");
 	VScrollBar *sb = scroll->get_v_scrollbar();
 	scroll->remove_child(sb);
 	timeline_scroll->add_child(sb); //move here so timeline and tracks are always aligned
@@ -6001,7 +6010,7 @@ AnimationTrackEditor::AnimationTrackEditor() {
 
 	box_selection = memnew(Control);
 	scroll->add_child(box_selection);
-	box_selection->set_as_toplevel(true);
+	//box_selection->set_as_toplevel(true);
 	box_selection->set_mouse_filter(MOUSE_FILTER_IGNORE);
 	box_selection->hide();
 	box_selection->connect("draw", this, "_box_selection_draw");
