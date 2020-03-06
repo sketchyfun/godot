@@ -290,7 +290,10 @@ class AnimationTrackEditor : public VBoxContainer {
 		EDIT_OPTIMIZE_ANIMATION,
 		EDIT_OPTIMIZE_ANIMATION_CONFIRM,
 		EDIT_CLEAN_UP_ANIMATION,
-		EDIT_CLEAN_UP_ANIMATION_CONFIRM
+		EDIT_CLEAN_UP_ANIMATION_CONFIRM,
+		EDIT_SET_TRACKS_NEAREST,
+		EDIT_SET_TRACKS_LINEAR,
+		EDIT_SET_TRACKS_CUBIC
 	};
 
 	Ref<Animation> animation;
@@ -428,8 +431,8 @@ class AnimationTrackEditor : public VBoxContainer {
 	bool box_selecting;
 	Vector2 box_selecting_from;
 	Rect2 box_select_rect;
-	float v_scroll_vel;
-	float h_scroll_vel;
+	double v_scroll_vel;
+	double h_scroll_vel;
 	void _scroll_input(const Ref<InputEvent> &p_event);
 
 	Vector<Ref<AnimationTrackEditPlugin> > track_edit_plugins;

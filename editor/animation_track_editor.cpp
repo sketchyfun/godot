@@ -5152,6 +5152,8 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 			//no longer
 			box_selection->hide();
 			box_selecting = false;
+			h_scroll_vel = 0;
+			v_scroll_vel = 0;
 			return;
 		}
 
@@ -5181,33 +5183,22 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		box_selection->set_size(rect.size);
 		box_select_rect = rect;
 
-		float h_scroll_speed = 2.0 / timeline->get_zoom_scale();
-		float target_y;
-		float target_x;
+		float target_y = 0;
+		float target_x = 0;
 
-		if (mm->get_position().y > scroll->get_size().y) {
+		if (mm->get_position().y > scroll->get_size().y)
 			target_y = mm->get_position().y - scroll->get_size().y;
-			v_scroll_vel = target_y / 10.0;
-			set_physics_process_internal(true);
-			//scroll->set_v_scroll(scroll->get_v_scroll() + 4);
-		}
-		if (mm->get_position().y < scroll->get_position().y) {
+		if (mm->get_position().y < scroll->get_position().y)
 			target_y = mm->get_position().y - scroll->get_position().y;
-			v_scroll_vel = target_y / 10.0;
-			set_physics_process_internal(true);
-			//scroll->set_v_scroll(scroll->get_v_scroll() - 4);
-		}
-		if (mm->get_position().x < scroll->get_position().x) {
+		if (mm->get_position().x < scroll->get_position().x)
 			target_x = mm->get_position().x - scroll->get_position().x;
-			h_scroll_vel = target_x / 10.0;
-			set_physics_process_internal(true);
-			//timeline->set_value(timeline->get_value() - h_scroll_speed);
-		}
-		if (mm->get_position().x > scroll->get_size().x) {
+		if (mm->get_position().x > scroll->get_size().x)
 			target_x = mm->get_position().x - scroll->get_size().x;
-			h_scroll_vel = target_x / 10.0;
+
+		if (target_y != 0 || target_x != 0) {
+			v_scroll_vel = target_y / 10.0;
+			h_scroll_vel = (target_x / 10.0) / timeline->get_zoom_scale();
 			set_physics_process_internal(true);
-			//timeline->set_value(timeline->get_value() + h_scroll_speed);
 		}
 
 		if (get_local_mouse_position().y < 0) {
@@ -5664,6 +5655,33 @@ void AnimationTrackEditor::_edit_menu_pressed(int p_option) {
 			}
 
 		} break;
+		case EDIT_SET_TRACKS_NEAREST: {
+			Animation::InterpolationType interp_mode = Animation::INTERPOLATION_NEAREST;
+			undo_redo->create_action(TTR("Change Animation Interpolation Mode For All Tracks"));
+			for (int i = 0; i < animation->get_track_count(); i++) {
+				undo_redo->add_do_method(animation.ptr(), "track_set_interpolation_type", i, interp_mode);
+				undo_redo->add_undo_method(animation.ptr(), "track_set_interpolation_type", i, animation->track_get_interpolation_type(i));
+			}
+			undo_redo->commit_action();
+		} break;
+		case EDIT_SET_TRACKS_LINEAR: {
+			Animation::InterpolationType interp_mode = Animation::INTERPOLATION_LINEAR;
+			undo_redo->create_action(TTR("Change Animation Interpolation Mode For All Tracks"));
+			for (int i = 0; i < animation->get_track_count(); i++) {
+				undo_redo->add_do_method(animation.ptr(), "track_set_interpolation_type", i, interp_mode);
+				undo_redo->add_undo_method(animation.ptr(), "track_set_interpolation_type", i, animation->track_get_interpolation_type(i));
+			}
+			undo_redo->commit_action();
+		} break;
+		case EDIT_SET_TRACKS_CUBIC: {
+			Animation::InterpolationType interp_mode = Animation::INTERPOLATION_CUBIC;
+			undo_redo->create_action(TTR("Change Animation Interpolation Mode For All Tracks"));
+			for (int i = 0; i < animation->get_track_count(); i++) {
+				undo_redo->add_do_method(animation.ptr(), "track_set_interpolation_type", i, interp_mode);
+				undo_redo->add_undo_method(animation.ptr(), "track_set_interpolation_type", i, animation->track_get_interpolation_type(i));
+			}
+			undo_redo->commit_action();
+		} break;
 	}
 }
 
@@ -5990,6 +6008,10 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	edit->set_tooltip(TTR("Animation properties."));
 	edit->get_popup()->add_item(TTR("Copy Tracks"), EDIT_COPY_TRACKS);
 	edit->get_popup()->add_item(TTR("Paste Tracks"), EDIT_PASTE_TRACKS);
+	edit->get_popup()->add_separator();
+	edit->get_popup()->add_item(TTR("Set All Tracks to Nearest"), EDIT_SET_TRACKS_NEAREST);
+	edit->get_popup()->add_item(TTR("Set All Tracks to Linear"), EDIT_SET_TRACKS_LINEAR);
+	edit->get_popup()->add_item(TTR("Set All Tracks to Cubic"), EDIT_SET_TRACKS_CUBIC);
 	edit->get_popup()->add_separator();
 	edit->get_popup()->add_item(TTR("Scale Selection"), EDIT_SCALE_SELECTION);
 	edit->get_popup()->add_item(TTR("Scale From Cursor"), EDIT_SCALE_FROM_CURSOR);
