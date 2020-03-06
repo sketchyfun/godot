@@ -4382,6 +4382,16 @@ void AnimationTrackEditor::_notification(int p_what) {
 		main_panel->add_style_override("panel", get_stylebox("bg", "Tree"));
 	}
 
+	if (p_what == NOTIFICATION_INTERNAL_PHYSICS_PROCESS) {
+		scroll->set_v_scroll(scroll->get_v_scroll() + v_scroll_vel);
+		timeline->set_value(timeline->get_value() + h_scroll_vel);
+
+		if (Math::abs(h_scroll_vel) <= 0.01  && Math::abs(v_scroll_vel) <= 0.01 ) {
+			set_physics_process_internal(false);
+			print_line("processing stopped");
+		}
+	}
+
 	if (p_what == NOTIFICATION_READY) {
 		EditorNode::get_singleton()->get_editor_selection()->connect("selection_changed", this, "_selection_changed");
 	}
@@ -5072,15 +5082,14 @@ float AnimationTrackEditor::get_moving_selection_offset() const {
 
 void AnimationTrackEditor::_box_selection_draw() {
 
-	//Rect2 selection_rect = box_select_rect;
 	//selection_rect.position = scroll->get_global_transform().xform_inv(selection_rect.position);
-	const Rect2 selection_rect = Rect2(Point2(), box_selection->get_size());
+	//const Rect2 selection_rect = Rect2(Point2(), box_selection->get_size());
 	//Rect2 scroll_rect = Rect2(Vector2(0, scroll->get_v_scroll()), scroll->get_size());
 	//selection_rect = scroll_rect.clip(selection_rect);
 	//print_line(selection_rect);
 	//print_line(box_select_rect);
-	box_selection->draw_rect(selection_rect, get_color("box_selection_fill_color", "Editor"));
-	box_selection->draw_rect(selection_rect, get_color("box_selection_stroke_color", "Editor"), false, Math::round(EDSCALE));
+	box_selection->draw_rect(box_select_rect, get_color("box_selection_fill_color", "Editor"));
+	box_selection->draw_rect(box_select_rect, get_color("box_selection_stroke_color", "Editor"), false, Math::round(EDSCALE));
 }
 
 void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
@@ -5102,8 +5111,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 	if (mb.is_valid() && mb->get_button_index() == BUTTON_LEFT) {
 		if (mb->is_pressed()) {
 			box_selecting = true;
-			//box_selecting_from = mb->get_position() + Vector2(0, scroll->get_v_scroll());
-			box_selecting_from = box_selection->get_global_transform().xform(mb->get_position());
+			box_selecting_from = mb->get_position() + Vector2(0, scroll->get_v_scroll());
 			print_line(box_selecting_from);
 			box_select_rect = Rect2();
 		} else if (box_selecting) {
@@ -5112,7 +5120,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 				//only if moved
 				for (int i = 0; i < track_edits.size(); i++) {
 
-					Rect2 local_rect = box_select_rect;
+					Rect2 local_rect = box_selection->get_global_transform().xform(box_select_rect);
 					local_rect.position -= track_edits[i]->get_global_position();
 					track_edits[i]->append_to_selection(local_rect, mb->get_command());
 				}
@@ -5126,6 +5134,8 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 
 			box_selection->hide();
 			box_selecting = false;
+			h_scroll_vel = 0;
+			v_scroll_vel = 0;
 		}
 	}
 
@@ -5153,8 +5163,7 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		}
 
 		Vector2 from = box_selecting_from;
-		//Vector2 to = mm->get_position() + Vector2(0, scroll->get_v_scroll());
-		Vector2 to = scroll->get_global_transform().xform(mm->get_position());
+		Vector2 to = mm->get_position() + Vector2(scroll->get_h_scroll(), scroll->get_v_scroll());
 
 		if (from.x > to.x) {
 			SWAP(from.x, to.x);
@@ -5165,15 +5174,41 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 		}
 
 		Rect2 rect(from, to - from);
-		box_selection->set_position(scroll->get_global_transform().xform_inv(rect.position));
+		//box_selection->set_position(scroll->get_global_transform().xform_inv(rect.position));
+		//Rect2 clip_rect = Rect2(Point2(), scroll->get_size());
+		//clip_rect.position.x += timeline->get_name_limit();
+		//clip_rect.size.x -= timeline->get_name_limit();
 		box_selection->set_size(rect.size);
-
 		box_select_rect = rect;
 
-		if (mm->get_position().y > scroll->get_size().y)
-			scroll->set_v_scroll(scroll->get_v_scroll() + 4);
-		if (mm->get_position().y < scroll->get_position().y)
-			scroll->set_v_scroll(scroll->get_v_scroll() - 4);
+		float h_scroll_speed = 2.0 / timeline->get_zoom_scale();
+		float target_y;
+		float target_x;
+
+		if (mm->get_position().y > scroll->get_size().y) {
+			target_y = mm->get_position().y - scroll->get_size().y;
+			v_scroll_vel = target_y / 10.0;
+			set_physics_process_internal(true);
+			//scroll->set_v_scroll(scroll->get_v_scroll() + 4);
+		}
+		if (mm->get_position().y < scroll->get_position().y) {
+			target_y = mm->get_position().y - scroll->get_position().y;
+			v_scroll_vel = target_y / 10.0;
+			set_physics_process_internal(true);
+			//scroll->set_v_scroll(scroll->get_v_scroll() - 4);
+		}
+		if (mm->get_position().x < scroll->get_position().x) {
+			target_x = mm->get_position().x - scroll->get_position().x;
+			h_scroll_vel = target_x / 10.0;
+			set_physics_process_internal(true);
+			//timeline->set_value(timeline->get_value() - h_scroll_speed);
+		}
+		if (mm->get_position().x > scroll->get_size().x) {
+			target_x = mm->get_position().x - scroll->get_size().x;
+			h_scroll_vel = target_x / 10.0;
+			set_physics_process_internal(true);
+			//timeline->set_value(timeline->get_value() + h_scroll_speed);
+		}
 
 		if (get_local_mouse_position().y < 0) {
 			//avoid box selection from going up and lose focus to viewport
