@@ -38,6 +38,13 @@
 #include "editor/editor_settings.h"
 #include "scene/gui/split_container.h"
 
+void TileMapEditor::_node_removed(Node *p_node) {
+
+	if (p_node == node) {
+		node = NULL;
+	}
+}
+
 void TileMapEditor::_notification(int p_what) {
 
 	switch (p_what) {
@@ -60,6 +67,7 @@ void TileMapEditor::_notification(int p_what) {
 
 		case NOTIFICATION_ENTER_TREE: {
 
+			get_tree()->connect("node_removed", this, "_node_removed");
 			paint_button->set_icon(get_icon("Edit", "EditorIcons"));
 			bucket_fill_button->set_icon(get_icon("Bucket", "EditorIcons"));
 			picker_button->set_icon(get_icon("ColorPick", "EditorIcons"));
@@ -79,6 +87,10 @@ void TileMapEditor::_notification(int p_what) {
 			p->set_item_icon(p->get_item_index(OPTION_COPY), get_icon("Duplicate", "EditorIcons"));
 			p->set_item_icon(p->get_item_index(OPTION_ERASE_SELECTION), get_icon("Remove", "EditorIcons"));
 
+		} break;
+
+		case NOTIFICATION_EXIT_TREE: {
+			get_tree()->disconnect("node_removed", this, "_node_removed");
 		} break;
 	}
 }
@@ -627,13 +639,14 @@ PoolVector<Vector2> TileMapEditor::_bucket_fill(const Point2i &p_start, bool era
 		if (r != bucket_cache_rect)
 			_clear_bucket_cache();
 		// Cache grid is not initialized
-		if (bucket_cache_visited == 0) {
+		if (bucket_cache_visited == NULL) {
 			bucket_cache_visited = new bool[area];
 			invalidate_cache = true;
 		}
 		// Tile ID changed or position wasn't visited by the previous fill
-		int loc = (p_start.x - r.position.x) + (p_start.y - r.position.y) * r.get_size().x;
-		if (prev_id != bucket_cache_tile || !bucket_cache_visited[loc]) {
+		const int loc = (p_start.x - r.position.x) + (p_start.y - r.position.y) * r.get_size().x;
+		const bool in_range = 0 <= loc && loc < area;
+		if (prev_id != bucket_cache_tile || (in_range && !bucket_cache_visited[loc])) {
 			invalidate_cache = true;
 		}
 		if (invalidate_cache) {
@@ -893,7 +906,7 @@ void TileMapEditor::_draw_fill_preview(Control *p_viewport, int p_cell, const Po
 void TileMapEditor::_clear_bucket_cache() {
 	if (bucket_cache_visited) {
 		delete[] bucket_cache_visited;
-		bucket_cache_visited = 0;
+		bucket_cache_visited = NULL;
 	}
 }
 
@@ -1825,6 +1838,7 @@ void TileMapEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_erase_points"), &TileMapEditor::_erase_points);
 
 	ClassDB::bind_method(D_METHOD("_icon_size_changed"), &TileMapEditor::_icon_size_changed);
+	ClassDB::bind_method(D_METHOD("_node_removed"), &TileMapEditor::_node_removed);
 }
 
 TileMapEditor::CellOp TileMapEditor::_get_op_from_cell(const Point2i &p_pos) {
@@ -1924,7 +1938,7 @@ TileMapEditor::TileMapEditor(EditorNode *p_editor) {
 	transpose = false;
 
 	bucket_cache_tile = -1;
-	bucket_cache_visited = 0;
+	bucket_cache_visited = NULL;
 
 	invalid_cell.resize(1);
 	invalid_cell.write[0] = TileMap::INVALID_CELL;
@@ -2025,13 +2039,13 @@ TileMapEditor::TileMapEditor(EditorNode *p_editor) {
 	toolbar->add_child(bucket_fill_button);
 
 	picker_button = memnew(ToolButton);
-	picker_button->set_shortcut(ED_SHORTCUT("tile_map_editor/pick_tile", TTR("Pick Tile"), KEY_CONTROL));
+	picker_button->set_shortcut(ED_SHORTCUT("tile_map_editor/pick_tile", TTR("Pick Tile"), KEY_I));
 	picker_button->connect("pressed", this, "_button_tool_select", make_binds(TOOL_PICKING));
 	picker_button->set_toggle_mode(true);
 	toolbar->add_child(picker_button);
 
 	select_button = memnew(ToolButton);
-	select_button->set_shortcut(ED_SHORTCUT("tile_map_editor/select", TTR("Select"), KEY_MASK_CMD + KEY_B));
+	select_button->set_shortcut(ED_SHORTCUT("tile_map_editor/select", TTR("Select"), KEY_M));
 	select_button->connect("pressed", this, "_button_tool_select", make_binds(TOOL_SELECTING));
 	select_button->set_toggle_mode(true);
 	toolbar->add_child(select_button);

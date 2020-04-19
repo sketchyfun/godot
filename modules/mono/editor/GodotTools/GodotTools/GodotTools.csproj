@@ -7,7 +7,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>GodotTools</RootNamespace>
     <AssemblyName>GodotTools</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <GodotSourceRootPath>$(SolutionDir)/../../../../</GodotSourceRootPath>
     <DataDirToolsOutputPath>$(GodotSourceRootPath)/bin/GodotSharp/Tools</DataDirToolsOutputPath>
     <GodotApiConfiguration>Debug</GodotApiConfiguration>
@@ -51,7 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Build\MsBuildFinder.cs" />
+    <Compile Include="Export\AotBuilder.cs" />
     <Compile Include="Export\ExportPlugin.cs" />
+    <Compile Include="Export\XcodeHelper.cs" />
     <Compile Include="ExternalEditorId.cs" />
     <Compile Include="Ides\GodotIdeManager.cs" />
     <Compile Include="Ides\GodotIdeServer.cs" />

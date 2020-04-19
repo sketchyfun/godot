@@ -38,6 +38,16 @@
 #include "scene/main/viewport.h"
 #include "scene/scene_string_names.h"
 
+#ifdef TOOLS_ENABLED
+Rect2 VisibilityNotifier2D::_edit_get_rect() const {
+	return rect;
+}
+
+bool VisibilityNotifier2D::_edit_use_rect() const {
+	return true;
+}
+#endif
+
 void VisibilityNotifier2D::_enter_viewport(Viewport *p_viewport) {
 
 	ERR_FAIL_COND(viewports.has(p_viewport));
@@ -82,15 +92,6 @@ void VisibilityNotifier2D::set_rect(const Rect2 &p_rect) {
 	}
 
 	_change_notify("rect");
-}
-
-Rect2 VisibilityNotifier2D::_edit_get_rect() const {
-
-	return rect;
-}
-
-bool VisibilityNotifier2D::_edit_use_rect() const {
-	return true;
 }
 
 Rect2 VisibilityNotifier2D::get_rect() const {
@@ -187,8 +188,7 @@ void VisibilityEnabler2D::_find_nodes(Node *p_node) {
 	bool add = false;
 	Variant meta;
 
-	if (enabler[ENABLER_FREEZE_BODIES]) {
-
+	{
 		RigidBody2D *rb2d = Object::cast_to<RigidBody2D>(p_node);
 		if (rb2d && ((rb2d->get_mode() == RigidBody2D::MODE_CHARACTER || rb2d->get_mode() == RigidBody2D::MODE_RIGID))) {
 
@@ -197,24 +197,21 @@ void VisibilityEnabler2D::_find_nodes(Node *p_node) {
 		}
 	}
 
-	if (enabler[ENABLER_PAUSE_ANIMATIONS]) {
-
+	{
 		AnimationPlayer *ap = Object::cast_to<AnimationPlayer>(p_node);
 		if (ap) {
 			add = true;
 		}
 	}
 
-	if (enabler[ENABLER_PAUSE_ANIMATED_SPRITES]) {
-
+	{
 		AnimatedSprite *as = Object::cast_to<AnimatedSprite>(p_node);
 		if (as) {
 			add = true;
 		}
 	}
 
-	if (enabler[ENABLER_PAUSE_PARTICLES]) {
-
+	{
 		Particles2D *ps = Object::cast_to<Particles2D>(p_node);
 		if (ps) {
 			add = true;
@@ -277,7 +274,7 @@ void VisibilityEnabler2D::_change_node_state(Node *p_node, bool p_enabled) {
 
 	ERR_FAIL_COND(!nodes.has(p_node));
 
-	{
+	if (enabler[ENABLER_FREEZE_BODIES]) {
 		RigidBody2D *rb = Object::cast_to<RigidBody2D>(p_node);
 		if (rb) {
 
@@ -285,7 +282,7 @@ void VisibilityEnabler2D::_change_node_state(Node *p_node, bool p_enabled) {
 		}
 	}
 
-	{
+	if (enabler[ENABLER_PAUSE_ANIMATIONS]) {
 		AnimationPlayer *ap = Object::cast_to<AnimationPlayer>(p_node);
 
 		if (ap) {
@@ -293,7 +290,8 @@ void VisibilityEnabler2D::_change_node_state(Node *p_node, bool p_enabled) {
 			ap->set_active(p_enabled);
 		}
 	}
-	{
+
+	if (enabler[ENABLER_PAUSE_ANIMATED_SPRITES]) {
 		AnimatedSprite *as = Object::cast_to<AnimatedSprite>(p_node);
 
 		if (as) {
@@ -305,7 +303,7 @@ void VisibilityEnabler2D::_change_node_state(Node *p_node, bool p_enabled) {
 		}
 	}
 
-	{
+	if (enabler[ENABLER_PAUSE_PARTICLES]) {
 		Particles2D *ps = Object::cast_to<Particles2D>(p_node);
 
 		if (ps) {

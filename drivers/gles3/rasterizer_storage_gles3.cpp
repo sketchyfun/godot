@@ -101,6 +101,8 @@
 #define _EXT_COMPRESSED_RGB_BPTC_SIGNED_FLOAT 0x8E8E
 #define _EXT_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT 0x8E8F
 
+#define _GL_TEXTURE_EXTERNAL_OES 0x8D65
+
 #ifndef GLES_OVER_GL
 #define glClearDepth glClearDepthf
 #endif
@@ -663,6 +665,10 @@ void RasterizerStorageGLES3::texture_allocate(RID p_texture, int p_width, int p_
 			texture->target = GL_TEXTURE_2D;
 			texture->images.resize(1);
 		} break;
+		case VS::TEXTURE_TYPE_EXTERNAL: {
+			texture->target = _GL_TEXTURE_EXTERNAL_OES;
+			texture->images.resize(0);
+		} break;
 		case VS::TEXTURE_TYPE_CUBEMAP: {
 			texture->target = GL_TEXTURE_CUBE_MAP;
 			texture->images.resize(6);
@@ -677,39 +683,55 @@ void RasterizerStorageGLES3::texture_allocate(RID p_texture, int p_width, int p_
 		} break;
 	}
 
-	texture->is_npot_repeat_mipmap = false;
+	if (p_type != VS::TEXTURE_TYPE_EXTERNAL) {
+		texture->is_npot_repeat_mipmap = false;
 #ifdef JAVASCRIPT_ENABLED
-	// WebGL 2.0 on browsers does not seem to properly support compressed non power-of-two (NPOT)
-	// textures with repeat/mipmaps, even though NPOT textures should be supported as per the spec.
-	// Force decompressing them to work it around on WebGL 2.0 at a performance cost (GH-33058).
-	int po2_width = next_power_of_2(p_width);
-	int po2_height = next_power_of_2(p_height);
-	bool is_po2 = p_width == po2_width && p_height == po2_height;
+		// WebGL 2.0 on browsers does not seem to properly support compressed non power-of-two (NPOT)
+		// textures with repeat/mipmaps, even though NPOT textures should be supported as per the spec.
+		// Force decompressing them to work it around on WebGL 2.0 at a performance cost (GH-33058).
+		int po2_width = next_power_of_2(p_width);
+		int po2_height = next_power_of_2(p_height);
+		bool is_po2 = p_width == po2_width && p_height == po2_height;
 
-	if (!is_po2 && (p_flags & VS::TEXTURE_FLAG_REPEAT || p_flags & VS::TEXTURE_FLAG_MIPMAPS)) {
-		texture->is_npot_repeat_mipmap = true;
-	}
+		if (!is_po2 && (p_flags & VS::TEXTURE_FLAG_REPEAT || p_flags & VS::TEXTURE_FLAG_MIPMAPS)) {
+			texture->is_npot_repeat_mipmap = true;
+		}
 #endif // JAVASCRIPT_ENABLED
 
-	Image::Format real_format;
-	_get_gl_image_and_format(Ref<Image>(), texture->format, texture->flags, real_format, format, internal_format, type, compressed, srgb, texture->is_npot_repeat_mipmap);
+		Image::Format real_format;
+		_get_gl_image_and_format(Ref<Image>(),
+				texture->format,
+				texture->flags,
+				real_format,
+				format,
+				internal_format,
+				type,
+				compressed,
+				srgb,
+				texture->is_npot_repeat_mipmap);
 
-	texture->alloc_width = texture->width;
-	texture->alloc_height = texture->height;
-	texture->alloc_depth = texture->depth;
+		texture->alloc_width = texture->width;
+		texture->alloc_height = texture->height;
+		texture->alloc_depth = texture->depth;
 
-	texture->gl_format_cache = format;
-	texture->gl_type_cache = type;
-	texture->gl_internal_format_cache = internal_format;
-	texture->compressed = compressed;
-	texture->srgb = srgb;
-	texture->data_size = 0;
-	texture->mipmaps = 1;
+		texture->gl_format_cache = format;
+		texture->gl_type_cache = type;
+		texture->gl_internal_format_cache = internal_format;
+		texture->compressed = compressed;
+		texture->srgb = srgb;
+		texture->data_size = 0;
+		texture->mipmaps = 1;
+	}
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(texture->target, texture->tex_id);
 
-	if (p_type == VS::TEXTURE_TYPE_3D || p_type == VS::TEXTURE_TYPE_2D_ARRAY) {
+	if (p_type == VS::TEXTURE_TYPE_EXTERNAL) {
+		glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(texture->target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(texture->target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	} else if (p_type == VS::TEXTURE_TYPE_3D || p_type == VS::TEXTURE_TYPE_2D_ARRAY) {
 
 		int width = p_width;
 		int height = p_height;
@@ -757,6 +779,7 @@ void RasterizerStorageGLES3::texture_set_data(RID p_texture, const Ref<Image> &p
 	ERR_FAIL_COND(texture->render_target);
 	ERR_FAIL_COND(texture->format != p_image->get_format());
 	ERR_FAIL_COND(p_image.is_null());
+	ERR_FAIL_COND(texture->type == VS::TEXTURE_TYPE_EXTERNAL);
 
 	GLenum type;
 	GLenum format;
@@ -788,7 +811,8 @@ void RasterizerStorageGLES3::texture_set_data(RID p_texture, const Ref<Image> &p
 	GLenum blit_target = GL_TEXTURE_2D;
 
 	switch (texture->type) {
-		case VS::TEXTURE_TYPE_2D: {
+		case VS::TEXTURE_TYPE_2D:
+		case VS::TEXTURE_TYPE_EXTERNAL: {
 			blit_target = GL_TEXTURE_2D;
 		} break;
 		case VS::TEXTURE_TYPE_CUBEMAP: {
@@ -989,6 +1013,7 @@ void RasterizerStorageGLES3::texture_set_data_partial(RID p_texture, const Ref<I
 	ERR_FAIL_COND(src_x < 0 || src_y < 0 || src_x + src_w > p_image->get_width() || src_y + src_h > p_image->get_height());
 	ERR_FAIL_COND(dst_x < 0 || dst_y < 0 || dst_x + src_w > texture->alloc_width || dst_y + src_h > texture->alloc_height);
 	ERR_FAIL_COND(p_dst_mip < 0 || p_dst_mip >= texture->mipmaps);
+	ERR_FAIL_COND(texture->type == VS::TEXTURE_TYPE_EXTERNAL);
 
 	GLenum type;
 	GLenum format;
@@ -1008,7 +1033,8 @@ void RasterizerStorageGLES3::texture_set_data_partial(RID p_texture, const Ref<I
 	GLenum blit_target = GL_TEXTURE_2D;
 
 	switch (texture->type) {
-		case VS::TEXTURE_TYPE_2D: {
+		case VS::TEXTURE_TYPE_2D:
+		case VS::TEXTURE_TYPE_EXTERNAL: {
 			blit_target = GL_TEXTURE_2D;
 		} break;
 		case VS::TEXTURE_TYPE_CUBEMAP: {
@@ -1834,7 +1860,7 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 		glGenFramebuffers(1, &tmp_fb);
 		glBindFramebuffer(GL_FRAMEBUFFER, tmp_fb);
 
-		int size = 64;
+		int size = 32;
 
 		bool use_float = config.framebuffer_half_float_supported;
 
@@ -1854,6 +1880,27 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sky->irradiance, 0);
 
+		int irradiance_size = GLOBAL_GET("rendering/quality/reflections/irradiance_max_size");
+		int upscale_size = MIN(int(previous_power_of_2(irradiance_size)), p_radiance_size);
+
+		GLuint tmp_fb2;
+		GLuint tmp_tex;
+		{
+			//generate another one for rendering, as can't read and write from a single texarray it seems
+			glGenFramebuffers(1, &tmp_fb2);
+			glBindFramebuffer(GL_FRAMEBUFFER, tmp_fb2);
+			glGenTextures(1, &tmp_tex);
+			glBindTexture(GL_TEXTURE_2D, tmp_tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, internal_format, upscale_size, 2.0 * upscale_size, 0, format, type, NULL);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tmp_tex, 0);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#ifdef DEBUG_ENABLED
+			GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+			ERR_FAIL_COND(status != GL_FRAMEBUFFER_COMPLETE);
+#endif
+		}
+
 		shaders.cubemap_filter.set_conditional(CubemapFilterShaderGLES3::USE_DUAL_PARABOLOID, true);
 		shaders.cubemap_filter.set_conditional(CubemapFilterShaderGLES3::USE_SOURCE_PANORAMA, true);
 		shaders.cubemap_filter.set_conditional(CubemapFilterShaderGLES3::COMPUTE_IRRADIANCE, true);
@@ -1863,8 +1910,9 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 		// level that corresponds to a panorama of 1024x512
 		shaders.cubemap_filter.set_uniform(CubemapFilterShaderGLES3::SOURCE_MIP_LEVEL, MAX(Math::floor(Math::log(float(texture->width)) / Math::log(2.0f)) - 10.0f, 0.0f));
 
+		// Compute Irradiance for a large texture, specified by radiance size and then pull out a low mipmap corresponding to 32x32
 		for (int i = 0; i < 2; i++) {
-			glViewport(0, i * size, size, size);
+			glViewport(0, i * upscale_size, upscale_size, upscale_size);
 			glBindVertexArray(resources.quadie_array);
 
 			shaders.cubemap_filter.set_uniform(CubemapFilterShaderGLES3::Z_FLIP, i > 0);
@@ -1872,13 +1920,32 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 			glBindVertexArray(0);
 		}
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tmp_tex);
+		glBindFramebuffer(GL_FRAMEBUFFER, tmp_fb);
 
 		shaders.cubemap_filter.set_conditional(CubemapFilterShaderGLES3::USE_DUAL_PARABOLOID, false);
 		shaders.cubemap_filter.set_conditional(CubemapFilterShaderGLES3::USE_SOURCE_PANORAMA, false);
 		shaders.cubemap_filter.set_conditional(CubemapFilterShaderGLES3::COMPUTE_IRRADIANCE, false);
 
+		shaders.copy.set_conditional(CopyShaderGLES3::USE_LOD, true);
+		shaders.copy.bind();
+		shaders.copy.set_uniform(CopyShaderGLES3::MIP_LEVEL, MAX(Math::floor(Math::log(float(upscale_size)) / Math::log(2.0f)) - 5.0f, 0.0f)); // Mip level that corresponds to a 32x32 texture
+
+		glViewport(0, 0, size, size * 2.0);
+		glBindVertexArray(resources.quadie_array);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		glBindVertexArray(0);
+
+		shaders.copy.set_conditional(CopyShaderGLES3::USE_LOD, false);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, RasterizerStorageGLES3::system_fbo);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(texture->target, texture->tex_id);
 		glDeleteFramebuffers(1, &tmp_fb);
+		glDeleteFramebuffers(1, &tmp_fb2);
+		glDeleteTextures(1, &tmp_tex);
 	}
 
 	// Now compute radiance
@@ -1955,7 +2022,6 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D_ARRAY, sky->radiance);
 				shaders.cubemap_filter.set_uniform(CubemapFilterShaderGLES3::SOURCE_ARRAY_INDEX, j - 1); //read from previous to ensure better blur
-				shaders.cubemap_filter.set_uniform(CubemapFilterShaderGLES3::SOURCE_RESOLUTION, float(size / 2));
 			}
 
 			for (int i = 0; i < 2; i++) {
@@ -2085,7 +2151,6 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, sky->radiance);
 				shaders.cubemap_filter.set_uniform(CubemapFilterShaderGLES3::SOURCE_MIP_LEVEL, float(lod - 1)); //read from previous to ensure better blur
-				shaders.cubemap_filter.set_uniform(CubemapFilterShaderGLES3::SOURCE_RESOLUTION, float(size));
 			}
 
 			for (int i = 0; i < 2; i++) {
@@ -2123,6 +2188,9 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		//reset flags on Sky Texture that may have changed
+		texture_set_flags(sky->panorama, texture->flags);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, RasterizerStorageGLES3::system_fbo);
 		glDeleteFramebuffers(1, &tmp_fb);
@@ -2427,6 +2495,7 @@ void RasterizerStorageGLES3::shader_get_param_list(RID p_shader, List<PropertyIn
 			case ShaderLanguage::TYPE_MAT3: pi.type = Variant::BASIS; break;
 			case ShaderLanguage::TYPE_MAT4: pi.type = Variant::TRANSFORM; break;
 			case ShaderLanguage::TYPE_SAMPLER2D:
+			case ShaderLanguage::TYPE_SAMPLEREXT:
 			case ShaderLanguage::TYPE_ISAMPLER2D:
 			case ShaderLanguage::TYPE_USAMPLER2D: {
 
@@ -2483,6 +2552,34 @@ RID RasterizerStorageGLES3::shader_get_default_texture_param(RID p_shader, const
 	if (!E)
 		return RID();
 	return E->get();
+}
+
+void RasterizerStorageGLES3::shader_add_custom_define(RID p_shader, const String &p_define) {
+
+	Shader *shader = shader_owner.get(p_shader);
+	ERR_FAIL_COND(!shader);
+
+	shader->shader->add_custom_define(p_define);
+
+	_shader_make_dirty(shader);
+}
+
+void RasterizerStorageGLES3::shader_get_custom_defines(RID p_shader, Vector<String> *p_defines) const {
+
+	Shader *shader = shader_owner.get(p_shader);
+	ERR_FAIL_COND(!shader);
+
+	shader->shader->get_custom_defines(p_defines);
+}
+
+void RasterizerStorageGLES3::shader_clear_custom_defines(RID p_shader) {
+
+	Shader *shader = shader_owner.get(p_shader);
+	ERR_FAIL_COND(!shader);
+
+	shader->shader->clear_custom_defines();
+
+	_shader_make_dirty(shader);
 }
 
 /* COMMON MATERIAL API */
@@ -4470,20 +4567,20 @@ void RasterizerStorageGLES3::multimesh_allocate(RID p_multimesh, int p_instances
 			multimesh->xform_floats = 12;
 		}
 
-		if (multimesh->color_format == VS::MULTIMESH_COLOR_NONE) {
-			multimesh->color_floats = 0;
-		} else if (multimesh->color_format == VS::MULTIMESH_COLOR_8BIT) {
+		if (multimesh->color_format == VS::MULTIMESH_COLOR_8BIT) {
 			multimesh->color_floats = 1;
 		} else if (multimesh->color_format == VS::MULTIMESH_COLOR_FLOAT) {
 			multimesh->color_floats = 4;
+		} else {
+			multimesh->color_floats = 0;
 		}
 
-		if (multimesh->custom_data_format == VS::MULTIMESH_CUSTOM_DATA_NONE) {
-			multimesh->custom_data_floats = 0;
-		} else if (multimesh->custom_data_format == VS::MULTIMESH_CUSTOM_DATA_8BIT) {
+		if (multimesh->custom_data_format == VS::MULTIMESH_CUSTOM_DATA_8BIT) {
 			multimesh->custom_data_floats = 1;
 		} else if (multimesh->custom_data_format == VS::MULTIMESH_CUSTOM_DATA_FLOAT) {
 			multimesh->custom_data_floats = 4;
+		} else {
+			multimesh->custom_data_floats = 0;
 		}
 
 		int format_floats = multimesh->color_floats + multimesh->xform_floats + multimesh->custom_data_floats;
@@ -4679,6 +4776,7 @@ void RasterizerStorageGLES3::multimesh_instance_set_color(RID p_multimesh, int p
 	ERR_FAIL_COND(!multimesh);
 	ERR_FAIL_INDEX(p_index, multimesh->size);
 	ERR_FAIL_COND(multimesh->color_format == VS::MULTIMESH_COLOR_NONE);
+	ERR_FAIL_INDEX(multimesh->color_format, VS::MULTIMESH_COLOR_MAX);
 
 	int stride = multimesh->color_floats + multimesh->xform_floats + multimesh->custom_data_floats;
 	float *dataptr = &multimesh->data.write[stride * p_index + multimesh->xform_floats];
@@ -4712,6 +4810,7 @@ void RasterizerStorageGLES3::multimesh_instance_set_custom_data(RID p_multimesh,
 	ERR_FAIL_COND(!multimesh);
 	ERR_FAIL_INDEX(p_index, multimesh->size);
 	ERR_FAIL_COND(multimesh->custom_data_format == VS::MULTIMESH_CUSTOM_DATA_NONE);
+	ERR_FAIL_INDEX(multimesh->custom_data_format, VS::MULTIMESH_CUSTOM_DATA_MAX);
 
 	int stride = multimesh->color_floats + multimesh->xform_floats + multimesh->custom_data_floats;
 	float *dataptr = &multimesh->data.write[stride * p_index + multimesh->xform_floats + multimesh->color_floats];
@@ -4800,6 +4899,7 @@ Color RasterizerStorageGLES3::multimesh_instance_get_color(RID p_multimesh, int 
 	ERR_FAIL_COND_V(!multimesh, Color());
 	ERR_FAIL_INDEX_V(p_index, multimesh->size, Color());
 	ERR_FAIL_COND_V(multimesh->color_format == VS::MULTIMESH_COLOR_NONE, Color());
+	ERR_FAIL_INDEX_V(multimesh->color_format, VS::MULTIMESH_COLOR_MAX, Color());
 
 	int stride = multimesh->color_floats + multimesh->xform_floats + multimesh->custom_data_floats;
 	float *dataptr = &multimesh->data.write[stride * p_index + multimesh->xform_floats];
@@ -4833,6 +4933,7 @@ Color RasterizerStorageGLES3::multimesh_instance_get_custom_data(RID p_multimesh
 	ERR_FAIL_COND_V(!multimesh, Color());
 	ERR_FAIL_INDEX_V(p_index, multimesh->size, Color());
 	ERR_FAIL_COND_V(multimesh->custom_data_format == VS::MULTIMESH_CUSTOM_DATA_NONE, Color());
+	ERR_FAIL_INDEX_V(multimesh->custom_data_format, VS::MULTIMESH_CUSTOM_DATA_MAX, Color());
 
 	int stride = multimesh->color_floats + multimesh->xform_floats + multimesh->custom_data_floats;
 	float *dataptr = &multimesh->data.write[stride * p_index + multimesh->xform_floats + multimesh->color_floats];

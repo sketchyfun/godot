@@ -190,6 +190,10 @@ public:
 	BIND3(shader_set_default_texture_param, RID, const StringName &, RID)
 	BIND2RC(RID, shader_get_default_texture_param, RID, const StringName &)
 
+	BIND2(shader_add_custom_define, RID, const String &)
+	BIND2C(shader_get_custom_defines, RID, Vector<String> *)
+	BIND1(shader_clear_custom_defines, RID)
+
 	/* COMMON MATERIAL API */
 
 	BIND0R(RID, material_create)
@@ -533,11 +537,10 @@ public:
 	BIND2(scenario_set_fallback_environment, RID, RID)
 
 	/* INSTANCING API */
-	// from can be mesh, light,  area and portal so far.
 	BIND0R(RID, instance_create)
 
-	BIND2(instance_set_base, RID, RID) // from can be mesh, light, poly, area and portal so far.
-	BIND2(instance_set_scenario, RID, RID) // from can be mesh, light, poly, area and portal so far.
+	BIND2(instance_set_base, RID, RID)
+	BIND2(instance_set_scenario, RID, RID)
 	BIND2(instance_set_layer_mask, RID, uint32_t)
 	BIND2(instance_set_transform, RID, const Transform &)
 	BIND2(instance_attach_object_instance_id, RID, ObjectID)

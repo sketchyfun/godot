@@ -3034,13 +3034,6 @@ void Tree::_notification(int p_what) {
 			draw_item(Point2(), draw_ofs, draw_size, root);
 		}
 
-		int ofs = 0;
-
-		for (int i = 0; i < (columns.size() - 1 - 1); i++) {
-
-			ofs += get_column_width(i);
-		}
-
 		if (show_column_titles) {
 
 			//title buttons
@@ -3628,6 +3621,17 @@ TreeItem *Tree::search_item_text(const String &p_find, int *r_col, bool p_select
 		return NULL;
 
 	return _search_item_text(from->get_next_visible(true), p_find, r_col, p_selectable);
+}
+
+TreeItem *Tree::get_item_with_text(const String &p_find) const {
+	for (TreeItem *current = root; current; current = current->get_next_visible()) {
+		for (int i = 0; i < columns.size(); i++) {
+			if (current->get_text(i) == p_find) {
+				return current;
+			}
+		}
+	}
+	return NULL;
 }
 
 void Tree::_do_incr_search(const String &p_add) {

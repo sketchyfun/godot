@@ -465,8 +465,7 @@ private:
 
 		MethodInfo user;
 		VMap<Target, Slot> slot_map;
-		int lock;
-		Signal() { lock = 0; }
+		Signal() {}
 	};
 
 	HashMap<StringName, Signal> signal_map;
@@ -481,6 +480,7 @@ private:
 	bool _predelete();
 	void _postinitialize();
 	bool _can_translate;
+	bool _emitting;
 #ifdef TOOLS_ENABLED
 	bool _edited;
 	uint32_t _edited_version;
@@ -704,6 +704,7 @@ public:
 	void add_user_signal(const MethodInfo &p_signal);
 	Error emit_signal(const StringName &p_name, VARIANT_ARG_LIST);
 	Error emit_signal(const StringName &p_name, const Variant **p_args, int p_argcount);
+	bool has_signal(const StringName &p_name) const;
 	void get_signal_list(List<MethodInfo> *p_signals) const;
 	void get_signal_connection_list(const StringName &p_signal, List<Connection> *p_connections) const;
 	void get_all_signal_connections(List<Connection> *p_connections) const;

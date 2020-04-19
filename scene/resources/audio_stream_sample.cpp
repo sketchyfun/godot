@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "audio_stream_sample.h"
+
 #include "core/io/marshalls.h"
 #include "core/os/file_access.h"
 
@@ -257,7 +258,7 @@ void AudioStreamPlaybackSample::mix(AudioFrame *p_buffer, float p_rate_scale, in
 	float srate = base->mix_rate;
 	srate *= p_rate_scale;
 	float fincrement = srate / base_rate;
-	int32_t increment = int32_t(fincrement * MIX_FRAC_LEN);
+	int32_t increment = int32_t(MAX(fincrement * MIX_FRAC_LEN, 1));
 	increment *= sign;
 
 	//looping
@@ -656,8 +657,8 @@ AudioStreamSample::AudioStreamSample() {
 	data = NULL;
 	data_bytes = 0;
 }
-AudioStreamSample::~AudioStreamSample() {
 
+AudioStreamSample::~AudioStreamSample() {
 	if (data) {
 		AudioServer::get_singleton()->audio_data_free(data);
 		data = NULL;

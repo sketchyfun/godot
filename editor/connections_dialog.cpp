@@ -119,6 +119,9 @@ void ConnectDialog::ok_pressed() {
 		return;
 	}
 	Node *target = tree->get_selected();
+	if (!target) {
+		return; // Nothing selected in the tree, not an error.
+	}
 	if (target->get_script().is_null()) {
 		if (!target->has_method(dst_method->get_text())) {
 			error->set_text(TTR("Target method not found. Specify a valid method or attach a script to the target node."));
@@ -127,6 +130,7 @@ void ConnectDialog::ok_pressed() {
 		}
 	}
 	emit_signal("connected");
+	hide();
 }
 
 void ConnectDialog::_cancel_pressed() {
@@ -145,7 +149,7 @@ void ConnectDialog::_tree_node_selected() {
 		return;
 
 	dst_path = source->get_path_to(current);
-	get_ok()->set_disabled(false);
+	_update_ok_enabled();
 }
 
 /*
@@ -199,6 +203,27 @@ void ConnectDialog::_remove_bind() {
 	cdbinds->notify_changed();
 }
 
+/*
+ * Enables or disables the connect button. The connect button is enabled if a
+ * node is selected and valid in the selected mode.
+ */
+void ConnectDialog::_update_ok_enabled() {
+
+	Node *target = tree->get_selected();
+
+	if (target == nullptr) {
+		get_ok()->set_disabled(true);
+		return;
+	}
+
+	if (!advanced->is_pressed() && target->get_script().is_null()) {
+		get_ok()->set_disabled(true);
+		return;
+	}
+
+	get_ok()->set_disabled(false);
+}
+
 void ConnectDialog::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_ENTER_TREE) {
@@ -213,6 +238,7 @@ void ConnectDialog::_bind_methods() {
 	ClassDB::bind_method("_tree_node_selected", &ConnectDialog::_tree_node_selected);
 	ClassDB::bind_method("_add_bind", &ConnectDialog::_add_bind);
 	ClassDB::bind_method("_remove_bind", &ConnectDialog::_remove_bind);
+	ClassDB::bind_method("_update_ok_enabled", &ConnectDialog::_update_ok_enabled);
 
 	ADD_SIGNAL(MethodInfo("connected"));
 }
@@ -280,6 +306,8 @@ bool ConnectDialog::is_editing() const {
  */
 void ConnectDialog::init(Connection c, bool bEdit) {
 
+	set_hide_on_ok(false);
+
 	source = static_cast<Node *>(c.source);
 	signal = c.signal;
 
@@ -287,12 +315,11 @@ void ConnectDialog::init(Connection c, bool bEdit) {
 	tree->set_marked(source, true);
 
 	if (c.target) {
-		get_ok()->set_disabled(false);
 		set_dst_node(static_cast<Node *>(c.target));
 		set_dst_method(c.method);
-	} else {
-		get_ok()->set_disabled(true);
 	}
+
+	_update_ok_enabled();
 
 	bool bDeferred = (c.flags & CONNECT_DEFERRED) == CONNECT_DEFERRED;
 	bool bOneshot = (c.flags & CONNECT_ONESHOT) == CONNECT_ONESHOT;
@@ -335,6 +362,8 @@ void ConnectDialog::_advanced_pressed() {
 		vbc_right->hide();
 		error_label->set_visible(!_find_first_script(get_tree()->get_edited_scene_root(), get_tree()->get_edited_scene_root()));
 	}
+
+	_update_ok_enabled();
 
 	set_position((get_viewport_rect().size - get_custom_minimum_size()) / 2);
 }
@@ -471,7 +500,6 @@ Control *ConnectionsDockTree::make_custom_tooltip(const String &p_text) const {
 	String text = TTR("Signal:") + " [u][b]" + p_text.get_slice("::", 0) + "[/b][/u]";
 	text += p_text.get_slice("::", 1).strip_edges() + "\n";
 	text += p_text.get_slice("::", 2).strip_edges();
-	help_bit->set_text(text);
 	help_bit->call_deferred("set_text", text); //hack so it uses proper theme once inside scene
 	return help_bit;
 }

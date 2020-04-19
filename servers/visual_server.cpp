@@ -2189,6 +2189,8 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(VIEWPORT_RENDER_INFO_SHADER_CHANGES_IN_FRAME);
 	BIND_ENUM_CONSTANT(VIEWPORT_RENDER_INFO_SURFACE_CHANGES_IN_FRAME);
 	BIND_ENUM_CONSTANT(VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME);
+	BIND_ENUM_CONSTANT(VIEWPORT_RENDER_INFO_2D_ITEMS_IN_FRAME);
+	BIND_ENUM_CONSTANT(VIEWPORT_RENDER_INFO_2D_DRAW_CALLS_IN_FRAME);
 	BIND_ENUM_CONSTANT(VIEWPORT_RENDER_INFO_MAX);
 
 	BIND_ENUM_CONSTANT(VIEWPORT_DEBUG_DRAW_DISABLED);
@@ -2248,6 +2250,8 @@ void VisualServer::_bind_methods() {
 	BIND_ENUM_CONSTANT(INFO_SHADER_CHANGES_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_SURFACE_CHANGES_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_DRAW_CALLS_IN_FRAME);
+	BIND_ENUM_CONSTANT(INFO_2D_ITEMS_IN_FRAME);
+	BIND_ENUM_CONSTANT(INFO_2D_DRAW_CALLS_IN_FRAME);
 	BIND_ENUM_CONSTANT(INFO_USAGE_VIDEO_MEM_TOTAL);
 	BIND_ENUM_CONSTANT(INFO_VIDEO_MEM_USED);
 	BIND_ENUM_CONSTANT(INFO_TEXTURE_MEM_USED);
@@ -2398,6 +2402,8 @@ VisualServer::VisualServer() {
 	GLOBAL_DEF("rendering/quality/reflections/texture_array_reflections.mobile", false);
 	GLOBAL_DEF("rendering/quality/reflections/high_quality_ggx", true);
 	GLOBAL_DEF("rendering/quality/reflections/high_quality_ggx.mobile", false);
+	GLOBAL_DEF("rendering/quality/reflections/irradiance_max_size", 128);
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/quality/reflections/irradiance_max_size", PropertyInfo(Variant::INT, "rendering/quality/reflections/irradiance_max_size", PROPERTY_HINT_RANGE, "32,2048"));
 
 	GLOBAL_DEF("rendering/quality/shading/force_vertex_shading", false);
 	GLOBAL_DEF("rendering/quality/shading/force_vertex_shading.mobile", true);
@@ -2410,6 +2416,20 @@ VisualServer::VisualServer() {
 	GLOBAL_DEF("rendering/quality/depth_prepass/disable_for_vendors", "PowerVR,Mali,Adreno,Apple");
 
 	GLOBAL_DEF("rendering/quality/filters/use_nearest_mipmap_filter", false);
+
+	GLOBAL_DEF("rendering/gles2/batching/use_batching", true);
+	GLOBAL_DEF("rendering/gles2/batching/max_join_item_commands", 16);
+	GLOBAL_DEF("rendering/gles2/batching/colored_vertex_format_threshold", 0.25f);
+	GLOBAL_DEF("rendering/gles2/batching/light_scissor_area_threshold", 1.0f);
+	GLOBAL_DEF("rendering/gles2/batching/batch_buffer_size", 16384);
+	GLOBAL_DEF("rendering/gles2/debug/flash_batching", false);
+	GLOBAL_DEF("rendering/gles2/debug/diagnose_frame", false);
+	GLOBAL_DEF_RST("rendering/gles2/debug/use_batching_in_editor", true);
+
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles2/batching/max_join_item_commands", PropertyInfo(Variant::INT, "rendering/gles2/batching/max_join_item_commands", PROPERTY_HINT_RANGE, "0,65535"));
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles2/batching/colored_vertex_format_threshold", PropertyInfo(Variant::REAL, "rendering/gles2/batching/colored_vertex_format_threshold", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"));
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles2/batching/batch_buffer_size", PropertyInfo(Variant::INT, "rendering/gles2/batching/batch_buffer_size", PROPERTY_HINT_RANGE, "1024,65535,1024"));
+	ProjectSettings::get_singleton()->set_custom_property_info("rendering/gles2/batching/light_scissor_area_threshold", PropertyInfo(Variant::REAL, "rendering/gles2/batching/light_scissor_area_threshold", PROPERTY_HINT_RANGE, "0.0,1.0"));
 }
 
 VisualServer::~VisualServer() {

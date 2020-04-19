@@ -76,7 +76,6 @@ void InspectorDock::_menu_option(int p_option) {
 			editor_data->apply_changes_in_editors();
 			if (current)
 				editor_data->paste_object_params(current);
-			editor_data->get_undo_redo().clear_history();
 		} break;
 
 		case OBJECT_UNIQUE_RESOURCES: {
@@ -584,6 +583,7 @@ InspectorDock::InspectorDock(EditorNode *p_editor, EditorData &p_editor_data) {
 	add_child(warning);
 	warning->set_text(TTR("Changes may be lost!"));
 	warning->set_icon(get_icon("NodeWarning", "EditorIcons"));
+	warning->set_clip_text(true);
 	warning->hide();
 	warning->connect("pressed", this, "_warning_pressed");
 

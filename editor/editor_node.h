@@ -198,7 +198,8 @@ private:
 		HELP_SEARCH,
 		HELP_DOCS,
 		HELP_QA,
-		HELP_ISSUES,
+		HELP_REPORT_A_BUG,
+		HELP_SEND_DOCS_FEEDBACK,
 		HELP_COMMUNITY,
 		HELP_ABOUT,
 
@@ -561,7 +562,7 @@ private:
 		bool pack_only;
 	} export_defer;
 
-	bool disable_progress_dialog;
+	bool cmdline_export_mode;
 
 	static EditorNode *singleton;
 

@@ -726,9 +726,6 @@ void SpaceBullet::check_ghost_overlaps() {
 
 					other_body_shape = static_cast<btCollisionShape *>(otherObject->get_bt_shape(z));
 
-					if (other_body_shape->isConcave())
-						continue;
-
 					btTransform other_shape_transform(otherObject->get_bt_shape_transform(z));
 					other_shape_transform.getOrigin() *= other_body_scale;
 
@@ -945,7 +942,7 @@ bool SpaceBullet::test_body_motion(RigidBodyBullet *p_body, const Transform &p_f
 
 	btVector3 motion;
 	G_TO_B(p_motion, motion);
-	if (!motion.fuzzyZero()) {
+	{
 		// Phase two - sweep test, from a secure position without margin
 
 		const int shape_count(p_body->get_shape_count());
@@ -960,7 +957,7 @@ bool SpaceBullet::test_body_motion(RigidBodyBullet *p_body, const Transform &p_f
 		motionVec->end();
 #endif
 
-		for (int shIndex = 0; shIndex < shape_count; ++shIndex) {
+		for (int shIndex = 0; shIndex < shape_count && !motion.fuzzyZero(); ++shIndex) {
 			if (p_body->is_shape_disabled(shIndex)) {
 				continue;
 			}

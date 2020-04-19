@@ -93,6 +93,7 @@ public:
 
 	enum TextureType {
 		TEXTURE_TYPE_2D,
+		TEXTURE_TYPE_EXTERNAL,
 		TEXTURE_TYPE_CUBEMAP,
 		TEXTURE_TYPE_2D_ARRAY,
 		TEXTURE_TYPE_3D,
@@ -192,6 +193,10 @@ public:
 
 	virtual void shader_set_default_texture_param(RID p_shader, const StringName &p_name, RID p_texture) = 0;
 	virtual RID shader_get_default_texture_param(RID p_shader, const StringName &p_name) const = 0;
+
+	virtual void shader_add_custom_define(RID p_shader, const String &p_define) = 0;
+	virtual void shader_get_custom_defines(RID p_shader, Vector<String> *p_defines) const = 0;
+	virtual void shader_clear_custom_defines(RID p_shader) = 0;
 
 	/* COMMON MATERIAL API */
 
@@ -335,12 +340,14 @@ public:
 		MULTIMESH_COLOR_NONE,
 		MULTIMESH_COLOR_8BIT,
 		MULTIMESH_COLOR_FLOAT,
+		MULTIMESH_COLOR_MAX,
 	};
 
 	enum MultimeshCustomDataFormat {
 		MULTIMESH_CUSTOM_DATA_NONE,
 		MULTIMESH_CUSTOM_DATA_8BIT,
 		MULTIMESH_CUSTOM_DATA_FLOAT,
+		MULTIMESH_CUSTOM_DATA_MAX,
 	};
 
 	virtual void multimesh_allocate(RID p_multimesh, int p_instances, MultimeshTransformFormat p_transform_format, MultimeshColorFormat p_color_format, MultimeshCustomDataFormat p_data_format = MULTIMESH_CUSTOM_DATA_NONE) = 0;
@@ -684,6 +691,8 @@ public:
 		VIEWPORT_RENDER_INFO_SHADER_CHANGES_IN_FRAME,
 		VIEWPORT_RENDER_INFO_SURFACE_CHANGES_IN_FRAME,
 		VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME,
+		VIEWPORT_RENDER_INFO_2D_ITEMS_IN_FRAME,
+		VIEWPORT_RENDER_INFO_2D_DRAW_CALLS_IN_FRAME,
 		VIEWPORT_RENDER_INFO_MAX
 	};
 
@@ -813,11 +822,10 @@ public:
 
 	virtual RID instance_create2(RID p_base, RID p_scenario);
 
-	//virtual RID instance_create(RID p_base,RID p_scenario)=0; // from can be mesh, light,  area and portal so far.
-	virtual RID instance_create() = 0; // from can be mesh, light, poly, area and portal so far.
+	virtual RID instance_create() = 0;
 
-	virtual void instance_set_base(RID p_instance, RID p_base) = 0; // from can be mesh, light, poly, area and portal so far.
-	virtual void instance_set_scenario(RID p_instance, RID p_scenario) = 0; // from can be mesh, light, poly, area and portal so far.
+	virtual void instance_set_base(RID p_instance, RID p_base) = 0;
+	virtual void instance_set_scenario(RID p_instance, RID p_scenario) = 0;
 	virtual void instance_set_layer_mask(RID p_instance, uint32_t p_mask) = 0;
 	virtual void instance_set_transform(RID p_instance, const Transform &p_transform) = 0;
 	virtual void instance_attach_object_instance_id(RID p_instance, ObjectID p_id) = 0;
@@ -1012,6 +1020,8 @@ public:
 		INFO_SHADER_CHANGES_IN_FRAME,
 		INFO_SURFACE_CHANGES_IN_FRAME,
 		INFO_DRAW_CALLS_IN_FRAME,
+		INFO_2D_ITEMS_IN_FRAME,
+		INFO_2D_DRAW_CALLS_IN_FRAME,
 		INFO_USAGE_VIDEO_MEM_TOTAL,
 		INFO_VIDEO_MEM_USED,
 		INFO_TEXTURE_MEM_USED,

@@ -35,9 +35,17 @@
 
 void Label::set_autowrap(bool p_autowrap) {
 
+	if (autowrap == p_autowrap) {
+		return;
+	}
+
 	autowrap = p_autowrap;
 	word_cache_dirty = true;
 	update();
+
+	if (clip) {
+		minimum_size_changed();
+	}
 }
 bool Label::has_autowrap() const {
 
@@ -224,7 +232,6 @@ void Label::_notification(int p_what) {
 					return;
 				}
 				if (from->space_count) {
-					chars_total += from->space_count;
 					/* spacing */
 					x_ofs += space_w * from->space_count;
 					if (can_fill && align == ALIGN_FILL && spaces) {

@@ -335,7 +335,9 @@ void GDScriptLanguage::debug_get_stack_level_members(int p_level, List<String> *
 
 ScriptInstance *GDScriptLanguage::debug_get_stack_level_instance(int p_level) {
 
-	ERR_FAIL_COND_V(_debug_parse_err_line >= 0, NULL);
+	if (_debug_parse_err_line >= 0)
+		return NULL;
+
 	ERR_FAIL_INDEX_V(p_level, _debug_call_stack_pos, NULL);
 
 	int l = _debug_call_stack_pos - p_level - 1;
@@ -428,6 +430,8 @@ void GDScriptLanguage::get_public_functions(List<MethodInfo> *p_functions) const
 		mi.name = "assert";
 		mi.return_val.type = Variant::NIL;
 		mi.arguments.push_back(PropertyInfo(Variant::BOOL, "condition"));
+		mi.arguments.push_back(PropertyInfo(Variant::STRING, "message"));
+		mi.default_arguments.push_back(String());
 		p_functions->push_back(mi);
 	}
 }
@@ -555,7 +559,7 @@ static String _get_visual_datatype(const PropertyInfo &p_info, bool p_isarg = tr
 	}
 	if (p_info.type == Variant::NIL) {
 		if (p_isarg || (p_info.usage & PROPERTY_USAGE_NIL_IS_VARIANT)) {
-			return "var";
+			return "Variant";
 		} else {
 			return "void";
 		}
@@ -1736,14 +1740,12 @@ static String _make_arguments_hint(const MethodInfo &p_info, int p_arg_idx) {
 	for (const List<PropertyInfo>::Element *E = p_info.arguments.front(); E; E = E->next()) {
 		if (i > 0) {
 			arghint += ", ";
-		} else {
-			arghint += " ";
 		}
 
 		if (i == p_arg_idx) {
 			arghint += String::chr(0xFFFF);
 		}
-		arghint += _get_visual_datatype(E->get(), true) + " " + E->get().name;
+		arghint += E->get().name + ": " + _get_visual_datatype(E->get(), true);
 
 		if (i - def_args >= 0) {
 			arghint += String(" = ") + p_info.default_arguments[i - def_args].get_construct_string();
@@ -1759,8 +1761,6 @@ static String _make_arguments_hint(const MethodInfo &p_info, int p_arg_idx) {
 	if (p_info.flags & METHOD_FLAG_VARARG) {
 		if (p_info.arguments.size() > 0) {
 			arghint += ", ";
-		} else {
-			arghint += " ";
 		}
 		if (p_arg_idx >= p_info.arguments.size()) {
 			arghint += String::chr(0xFFFF);
@@ -1769,9 +1769,6 @@ static String _make_arguments_hint(const MethodInfo &p_info, int p_arg_idx) {
 		if (p_arg_idx >= p_info.arguments.size()) {
 			arghint += String::chr(0xFFFF);
 		}
-	}
-	if (p_info.arguments.size() > 0 || (p_info.flags & METHOD_FLAG_VARARG)) {
-		arghint += " ";
 	}
 
 	arghint += ")";
@@ -1787,14 +1784,12 @@ static String _make_arguments_hint(const GDScriptParser::FunctionNode *p_functio
 	for (int i = 0; i < p_function->arguments.size(); i++) {
 		if (i > 0) {
 			arghint += ", ";
-		} else {
-			arghint += " ";
 		}
 
 		if (i == p_arg_idx) {
 			arghint += String::chr(0xFFFF);
 		}
-		arghint += p_function->argument_types[i].to_string() + " " + p_function->arguments[i].operator String();
+		arghint += p_function->arguments[i].operator String() + ": " + p_function->argument_types[i].to_string();
 
 		if (i - def_args >= 0) {
 			String def_val = "<unknown>";
@@ -1818,9 +1813,6 @@ static String _make_arguments_hint(const GDScriptParser::FunctionNode *p_functio
 		}
 	}
 
-	if (p_function->arguments.size() > 0) {
-		arghint += " ";
-	}
 	arghint += ")";
 
 	return arghint;
@@ -2244,6 +2236,8 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 
 	const String quote_style = EDITOR_DEF("text_editor/completion/use_single_quotes", false) ? "'" : "\"";
 
+#define IS_METHOD_SIGNAL(m_method) (m_method == "connect" || m_method == "disconnect" || m_method == "is_connected" || m_method == "emit_signal")
+
 	while (base_type.has_type) {
 		switch (base_type.kind) {
 			case GDScriptParser::DataType::CLASS: {
@@ -2260,7 +2254,7 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 					}
 				}
 
-				if ((p_method == "connect" || p_method == "emit_signal") && p_argidx == 0) {
+				if (IS_METHOD_SIGNAL(p_method) && p_argidx == 0) {
 					for (int i = 0; i < base_type.class_type->_signals.size(); i++) {
 						ScriptCodeCompletionOption option(base_type.class_type->_signals[i].name.operator String(), ScriptCodeCompletionOption::KIND_SIGNAL);
 						option.insert_text = quote_style + option.display + quote_style;
@@ -2273,7 +2267,7 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 			case GDScriptParser::DataType::GDSCRIPT: {
 				Ref<GDScript> gds = base_type.script_type;
 				if (gds.is_valid()) {
-					if ((p_method == "connect" || p_method == "emit_signal") && p_argidx == 0) {
+					if (IS_METHOD_SIGNAL(p_method) && p_argidx == 0) {
 						List<MethodInfo> signals;
 						gds->get_script_signal_list(&signals);
 						for (List<MethodInfo>::Element *E = signals.front(); E; E = E->next()) {
@@ -2335,7 +2329,7 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 					}
 				}
 
-				if ((p_method == "connect" || p_method == "emit_signal") && p_argidx == 0) {
+				if (IS_METHOD_SIGNAL(p_method) && p_argidx == 0) {
 					List<MethodInfo> signals;
 					ClassDB::get_signal_list(class_name, &signals);
 					for (List<MethodInfo>::Element *E = signals.front(); E; E = E->next()) {
@@ -2344,6 +2338,7 @@ static void _find_call_arguments(const GDScriptCompletionContext &p_context, con
 						r_result.insert(option.display, option);
 					}
 				}
+#undef IS_METHOD_SIGNAL
 
 				if (ClassDB::is_parent_class(class_name, "Node") && (p_method == "get_node" || p_method == "has_node") && p_argidx == 0) {
 					// Get autoloads
