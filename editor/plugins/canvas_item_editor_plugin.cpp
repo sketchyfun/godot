@@ -809,7 +809,7 @@ List<CanvasItem *> CanvasItemEditor::_get_edited_canvas_items(bool retreive_lock
 	List<CanvasItem *> selection;
 	for (Map<Node *, Object *>::Element *E = editor_selection->get_selection().front(); E; E = E->next()) {
 		CanvasItem *canvas_item = Object::cast_to<CanvasItem>(E->key());
-		if (canvas_item && canvas_item->is_visible_in_tree() && canvas_item->get_viewport() == EditorNode::get_singleton()->get_scene_root() && (retreive_locked || !_is_node_locked(canvas_item))) {
+		if (canvas_item && canvas_item->is_visible_in_tree() && (retreive_locked || !_is_node_locked(canvas_item))) {
 			CanvasItemEditorSelectedItem *se = editor_selection->get_node_editor_data<CanvasItemEditorSelectedItem>(canvas_item);
 			if (se) {
 				selection.push_back(canvas_item);
