@@ -2417,7 +2417,7 @@ float Animation::bezier_track_interpolate(int p_track, float p_time) const {
 		}
 	}
 
-	float t = Math::wrapf(p_time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0.0, length);
+	float t = Math::wrapf(p_time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0.0f, length);
 
 	int iterations = 10;
 
