@@ -1505,6 +1505,13 @@ void main() {
 	vec2 screen_uv = gl_FragCoord.xy * screen_pixel_size;
 #endif
 
+#ifdef LIGHT_MODE_DIRECTIONAL
+	vec3 light = -light_direction;
+	light = normalize(light);
+#else
+    vec3 light = vec3(0.0);
+#endif
+
 	{
 		/* clang-format off */
 
