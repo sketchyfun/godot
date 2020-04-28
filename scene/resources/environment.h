@@ -161,6 +161,7 @@ private:
 
 	bool fog_enabled;
 	Color fog_color;
+	Ref<Texture> fog_gradient;
 	Color fog_sun_color;
 	float fog_sun_amount;
 
@@ -368,6 +369,9 @@ public:
 
 	void set_fog_color(const Color &p_color);
 	Color get_fog_color() const;
+
+	void set_fog_gradient(const Ref<Texture> &p_ramp);
+	Ref<Texture> get_fog_gradient() const;
 
 	void set_fog_sun_color(const Color &p_color);
 	Color get_fog_sun_color() const;

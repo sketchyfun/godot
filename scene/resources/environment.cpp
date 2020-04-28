@@ -803,7 +803,7 @@ Environment::DOFBlurQuality Environment::get_dof_blur_near_quality() const {
 void Environment::set_fog_enabled(bool p_enabled) {
 
 	fog_enabled = p_enabled;
-	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_sun_color, fog_sun_amount);
+	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_gradient.is_valid() ? fog_gradient->get_rid() : RID(), fog_sun_color, fog_sun_amount);
 	_change_notify();
 }
 
@@ -815,17 +815,28 @@ bool Environment::is_fog_enabled() const {
 void Environment::set_fog_color(const Color &p_color) {
 
 	fog_color = p_color;
-	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_sun_color, fog_sun_amount);
+	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_gradient.is_valid() ? fog_gradient->get_rid() : RID(), fog_sun_color, fog_sun_amount);
 }
 Color Environment::get_fog_color() const {
 
 	return fog_color;
 }
 
+void Environment::set_fog_gradient(const Ref<Texture> &p_ramp) {
+
+	fog_gradient = p_ramp;
+	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_gradient.is_valid() ? fog_gradient->get_rid() : RID(), fog_sun_color, fog_sun_amount);
+	//VS::get_singleton()->environment_set_adjustment(environment, adjustment_enabled, adjustment_brightness, adjustment_contrast, adjustment_saturation, adjustment_color_correction.is_valid() ? adjustment_color_correction->get_rid() : RID());
+}
+Ref<Texture> Environment::get_fog_gradient() const {
+
+	return fog_gradient;
+}
+
 void Environment::set_fog_sun_color(const Color &p_color) {
 
 	fog_sun_color = p_color;
-	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_sun_color, fog_sun_amount);
+	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_gradient.is_valid() ? fog_gradient->get_rid() : RID(), fog_sun_color, fog_sun_amount);
 }
 Color Environment::get_fog_sun_color() const {
 
@@ -835,7 +846,7 @@ Color Environment::get_fog_sun_color() const {
 void Environment::set_fog_sun_amount(float p_amount) {
 
 	fog_sun_amount = p_amount;
-	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_sun_color, fog_sun_amount);
+	VS::get_singleton()->environment_set_fog(environment, fog_enabled, fog_color, fog_gradient.is_valid() ? fog_gradient->get_rid() : RID(), fog_sun_color, fog_sun_amount);
 }
 float Environment::get_fog_sun_amount() const {
 
@@ -997,6 +1008,9 @@ void Environment::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_fog_color", "color"), &Environment::set_fog_color);
 	ClassDB::bind_method(D_METHOD("get_fog_color"), &Environment::get_fog_color);
 
+	ClassDB::bind_method(D_METHOD("set_fog_gradient", "fog_gradient"), &Environment::set_fog_gradient);
+	ClassDB::bind_method(D_METHOD("get_fog_gradient"), &Environment::get_fog_gradient);
+
 	ClassDB::bind_method(D_METHOD("set_fog_sun_color", "color"), &Environment::set_fog_sun_color);
 	ClassDB::bind_method(D_METHOD("get_fog_sun_color"), &Environment::get_fog_sun_color);
 
@@ -1036,6 +1050,7 @@ void Environment::_bind_methods() {
 	ADD_GROUP("Fog", "fog_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "fog_enabled"), "set_fog_enabled", "is_fog_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "fog_color"), "set_fog_color", "get_fog_color");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "fog_gradient", PROPERTY_HINT_RESOURCE_TYPE, "Texture"), "set_fog_gradient", "get_fog_gradient");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "fog_sun_color"), "set_fog_sun_color", "get_fog_sun_color");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fog_sun_amount", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_fog_sun_amount", "get_fog_sun_amount");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "fog_depth_enabled"), "set_fog_depth_enabled", "is_fog_depth_enabled");
@@ -1048,6 +1063,7 @@ void Environment::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fog_height_min", PROPERTY_HINT_RANGE, "-4000,4000,0.1,or_lesser,or_greater"), "set_fog_height_min", "get_fog_height_min");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fog_height_max", PROPERTY_HINT_RANGE, "-4000,4000,0.1,or_lesser,or_greater"), "set_fog_height_max", "get_fog_height_max");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fog_height_curve", PROPERTY_HINT_EXP_EASING), "set_fog_height_curve", "get_fog_height_curve");
+
 
 	ClassDB::bind_method(D_METHOD("set_tonemapper", "mode"), &Environment::set_tonemapper);
 	ClassDB::bind_method(D_METHOD("get_tonemapper"), &Environment::get_tonemapper);

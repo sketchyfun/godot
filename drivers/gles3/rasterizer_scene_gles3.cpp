@@ -939,7 +939,7 @@ void RasterizerSceneGLES3::environment_set_adjustment(RID p_env, bool p_enable, 
 	env->color_correction = p_ramp;
 }
 
-void RasterizerSceneGLES3::environment_set_fog(RID p_env, bool p_enable, const Color &p_color, const Color &p_sun_color, float p_sun_amount) {
+void RasterizerSceneGLES3::environment_set_fog(RID p_env, bool p_enable, const Color &p_color, RID p_ramp, const Color &p_sun_color, float p_sun_amount) {
 
 	Environment *env = environment_owner.getornull(p_env);
 	ERR_FAIL_COND(!env);
@@ -948,6 +948,7 @@ void RasterizerSceneGLES3::environment_set_fog(RID p_env, bool p_enable, const C
 	env->fog_color = p_color;
 	env->fog_sun_color = p_sun_color;
 	env->fog_sun_amount = p_sun_amount;
+	env->fog_gradient = p_ramp;
 }
 
 void RasterizerSceneGLES3::environment_set_fog_depth(RID p_env, bool p_enable, float p_depth_begin, float p_depth_end, float p_depth_curve, bool p_transmit, float p_transmit_curve) {

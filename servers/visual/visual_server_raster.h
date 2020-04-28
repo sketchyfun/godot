@@ -520,7 +520,7 @@ public:
 
 	BIND6(environment_set_adjustment, RID, bool, float, float, float, RID)
 
-	BIND5(environment_set_fog, RID, bool, const Color &, const Color &, float)
+	BIND6(environment_set_fog, RID, bool, const Color &, RID, const Color &, float)
 	BIND7(environment_set_fog_depth, RID, bool, float, float, float, bool, float)
 	BIND5(environment_set_fog_height, RID, bool, float, float, float)
 

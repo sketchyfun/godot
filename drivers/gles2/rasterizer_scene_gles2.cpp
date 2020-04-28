@@ -823,13 +823,14 @@ void RasterizerSceneGLES2::environment_set_adjustment(RID p_env, bool p_enable, 
 	env->color_correction = p_ramp;
 }
 
-void RasterizerSceneGLES2::environment_set_fog(RID p_env, bool p_enable, const Color &p_color, const Color &p_sun_color, float p_sun_amount) {
+void RasterizerSceneGLES2::environment_set_fog(RID p_env, bool p_enable, const Color &p_color, RID p_ramp, const Color &p_sun_color, float p_sun_amount) {
 
 	Environment *env = environment_owner.getornull(p_env);
 	ERR_FAIL_COND(!env);
 
 	env->fog_enabled = p_enable;
 	env->fog_color = p_color;
+	env->fog_gradient = p_ramp;
 	env->fog_sun_color = p_sun_color;
 	env->fog_sun_amount = p_sun_amount;
 }
@@ -2535,6 +2536,13 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 						state.scene_shader.set_uniform(SceneShaderGLES2::FOG_DEPTH_BEGIN, p_env->fog_depth_begin);
 						state.scene_shader.set_uniform(SceneShaderGLES2::FOG_DEPTH_CURVE, p_env->fog_depth_curve);
 						state.scene_shader.set_uniform(SceneShaderGLES2::FOG_MAX_DISTANCE, fog_max_distance);
+						RasterizerStorageGLES2::Texture *tex = storage->texture_owner.getornull(p_env->fog_gradient);
+						if (tex) {
+							glActiveTexture(GL_TEXTURE2);
+							glBindTexture(tex->target, tex->tex_id);
+						}
+
+						state.scene_shader.bind();
 					}
 
 					if (p_env->fog_height_enabled) {

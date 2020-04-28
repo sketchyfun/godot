@@ -297,6 +297,7 @@ varying mediump vec3 refprobe2_ambient_normal;
 varying vec4 fog_interp;
 
 uniform mediump vec4 fog_color_base;
+uniform mediump sampler2D fog_gradient; //texunit:2
 #ifdef LIGHT_MODE_DIRECTIONAL
 uniform mediump vec4 fog_sun_color_amount;
 #endif
@@ -641,8 +642,9 @@ VERTEX_SHADER_CODE
 	{
 
 		float fog_z = smoothstep(fog_depth_begin, fog_max_distance, length(vertex));
-
-		fog_amount = pow(fog_z, fog_depth_curve) * fog_color_base.a;
+		vec4 fog_grad_col = texture2D(fog_gradient, vec2(pow(fog_z, fog_depth_curve), 0.0);
+        fog_color = fog_grad_col.rgb;
+		fog_amount = pow(fog_z, fog_depth_curve) * fog_grad_col.a;
 	}
 #endif
 
@@ -1422,6 +1424,7 @@ varying vec4 fog_interp;
 
 #else
 uniform mediump vec4 fog_color_base;
+uniform mediump sampler2D fog_gradient; //texunit:2
 #ifdef LIGHT_MODE_DIRECTIONAL
 uniform mediump vec4 fog_sun_color_amount;
 #endif
@@ -2161,8 +2164,10 @@ FRAGMENT_SHADER_CODE
 	{
 
 		float fog_z = smoothstep(fog_depth_begin, fog_max_distance, length(vertex));
-
-		fog_amount = pow(fog_z, fog_depth_curve) * fog_color_base.a;
+		
+		vec4 fog_grad_col = texture2D(fog_gradient, vec2(pow(fog_z, fog_depth_curve), 0.0));
+        fog_color = fog_grad_col.rgb;
+		fog_amount = pow(fog_z, fog_depth_curve) * fog_grad_col.a;
 
 		if (fog_transmit_enabled) {
 			vec3 total_light = gl_FragColor.rgb;
