@@ -641,8 +641,8 @@ VERTEX_SHADER_CODE
 
 	{
 
-		float fog_z = smoothstep(fog_depth_begin, fog_max_distance, length(vertex));
-		vec4 fog_grad_col = texture2D(fog_gradient, vec2(pow(fog_z, fog_depth_curve), 0.0);
+		float fog_z = smoothstep(fog_depth_begin, fog_max_distance, -vertex.z);
+		vec4 fog_grad_col = texture2D(fog_gradient, vec2(1.0 - pow(fog_z, fog_depth_curve), 0.0);
         fog_color = fog_grad_col.rgb;
 		fog_amount = pow(fog_z, fog_depth_curve) * fog_grad_col.a;
 	}
@@ -2163,9 +2163,9 @@ FRAGMENT_SHADER_CODE
 
 	{
 
-		float fog_z = smoothstep(fog_depth_begin, fog_max_distance, length(vertex));
+		float fog_z = smoothstep(fog_depth_begin, fog_max_distance, -vertex.z);
 		
-		vec4 fog_grad_col = texture2D(fog_gradient, vec2(pow(fog_z, fog_depth_curve), 0.0));
+		vec4 fog_grad_col = texture2D(fog_gradient, vec2(1.0 - pow(fog_z, fog_depth_curve), 0.0));
         fog_color = fog_grad_col.rgb;
 		fog_amount = pow(fog_z, fog_depth_curve) * fog_grad_col.a;
 
