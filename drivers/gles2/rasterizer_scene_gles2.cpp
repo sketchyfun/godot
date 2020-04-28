@@ -2538,7 +2538,7 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 						state.scene_shader.set_uniform(SceneShaderGLES2::FOG_MAX_DISTANCE, fog_max_distance);
 						RasterizerStorageGLES2::Texture *tex = storage->texture_owner.getornull(p_env->fog_gradient);
 						if (tex) {
-							glActiveTexture(GL_TEXTURE2);
+							glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 7);
 							glBindTexture(tex->target, tex->tex_id);
 						}
 

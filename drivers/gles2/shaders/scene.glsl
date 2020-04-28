@@ -297,7 +297,7 @@ varying mediump vec3 refprobe2_ambient_normal;
 varying vec4 fog_interp;
 
 uniform mediump vec4 fog_color_base;
-uniform mediump sampler2D fog_gradient; //texunit:2
+uniform mediump sampler2D fog_gradient; //texunit:-7
 #ifdef LIGHT_MODE_DIRECTIONAL
 uniform mediump vec4 fog_sun_color_amount;
 #endif
@@ -1424,7 +1424,7 @@ varying vec4 fog_interp;
 
 #else
 uniform mediump vec4 fog_color_base;
-uniform mediump sampler2D fog_gradient; //texunit:2
+uniform mediump sampler2D fog_gradient; //texunit:-7
 #ifdef LIGHT_MODE_DIRECTIONAL
 uniform mediump vec4 fog_sun_color_amount;
 #endif
