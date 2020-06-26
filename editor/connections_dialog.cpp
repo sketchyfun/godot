@@ -239,6 +239,7 @@ void ConnectDialog::_bind_methods() {
 	ClassDB::bind_method("_add_bind", &ConnectDialog::_add_bind);
 	ClassDB::bind_method("_remove_bind", &ConnectDialog::_remove_bind);
 	ClassDB::bind_method("_update_ok_enabled", &ConnectDialog::_update_ok_enabled);
+	ClassDB::bind_method(D_METHOD("_filter_changed"), &ConnectDialog::_filter_changed);
 
 	ADD_SIGNAL(MethodInfo("connected"));
 }
@@ -368,6 +369,11 @@ void ConnectDialog::_advanced_pressed() {
 	set_position((get_viewport_rect().size - get_custom_minimum_size()) / 2);
 }
 
+void ConnectDialog::_filter_changed(const String &p_filter) {
+
+	tree->set_filter(p_filter);
+}
+
 ConnectDialog::ConnectDialog() {
 
 	set_custom_minimum_size(Size2(600, 500) * EDSCALE);
@@ -395,6 +401,13 @@ ConnectDialog::ConnectDialog() {
 
 	Node *mc = vbc_left->add_margin_child(TTR("Connect to Script:"), tree, true);
 	connect_to_label = Object::cast_to<Label>(vbc_left->get_child(mc->get_index() - 1));
+
+	filter = memnew(LineEdit);
+	filter->set_h_size_flags(SIZE_EXPAND_FILL);
+	filter->set_placeholder(TTR("Filter nodes"));
+	filter->add_constant_override("minimum_spaces", 0);
+	filter->connect("text_changed", this, "_filter_changed");
+	vbc_left->add_child(filter);
 
 	error_label = memnew(Label);
 	error_label->set_text(TTR("Scene does not contain any script."));

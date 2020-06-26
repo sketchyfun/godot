@@ -63,6 +63,7 @@ class ConnectDialog : public ConfirmationDialog {
 	NodePath dst_path;
 	VBoxContainer *vbc_right;
 
+	LineEdit *filter;
 	SceneTreeEditor *tree;
 	AcceptDialog *error;
 	EditorInspector *bind_editor;
@@ -80,6 +81,7 @@ class ConnectDialog : public ConfirmationDialog {
 	void _remove_bind();
 	void _advanced_pressed();
 	void _update_ok_enabled();
+	void _filter_changed(const String &p_filter);
 
 protected:
 	void _notification(int p_what);
