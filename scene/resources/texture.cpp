@@ -1793,6 +1793,7 @@ CurveTexture::~CurveTexture() {
 #define COLOR_RAMP_SET_COLORS "set_colors"
 
 GradientTexture::GradientTexture() {
+	flags = FLAGS_DEFAULT;
 	update_pending = false;
 	width = 2048;
 
@@ -1871,7 +1872,7 @@ void GradientTexture::_update() {
 
 	Ref<Image> image = memnew(Image(width, 1, false, Image::FORMAT_RGBA8, data));
 
-	VS::get_singleton()->texture_allocate(texture, width, 1, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_2D, VS::TEXTURE_FLAG_FILTER);
+	VS::get_singleton()->texture_allocate(texture, width, 1, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_2D, flags);
 	VS::get_singleton()->texture_set_data(texture, image);
 
 	emit_changed();
@@ -1887,8 +1888,16 @@ int GradientTexture::get_width() const {
 	return width;
 }
 
-Ref<Image> GradientTexture::get_data() const {
-	return VisualServer::get_singleton()->texture_get_data(texture);
+void GradientTexture::set_flags(uint32_t p_flags) {
+	flags = p_flags;
+
+	if (texture.is_valid()) {
+		VS::get_singleton()->texture_set_flags(texture, flags);
+	}
+}
+
+uint32_t GradientTexture::get_flags() const {
+	return flags;
 }
 
 //////////////////////////////////////

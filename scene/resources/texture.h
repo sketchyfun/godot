@@ -615,6 +615,7 @@ private:
 	bool update_pending;
 	RID texture;
 	int width;
+	uint32_t flags;
 
 	void _queue_update();
 	void _update();
@@ -633,10 +634,8 @@ public:
 	virtual int get_height() const { return 1; }
 	virtual bool has_alpha() const { return true; }
 
-	virtual void set_flags(uint32_t p_flags) {}
-	virtual uint32_t get_flags() const { return FLAG_FILTER; }
-
-	virtual Ref<Image> get_data() const;
+	void set_flags(uint32_t p_flags);
+	uint32_t get_flags() const;
 
 	GradientTexture();
 	virtual ~GradientTexture();
