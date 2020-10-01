@@ -1,7 +1,9 @@
 #!/bin/bash
-scons p=windows -j 6 tools=no target=release
-scons p=x11 -j 6 tools=no target=release builtin_libpng=yes builtin_openssl=yes builtin_zlib=yes use_static_cpp=yes use_lto=yes
-scons p=osx -j 6 target=release tools=no osxcross_sdk=darwin15
+CORES=$1
+export OSXCROSS_ROOT="$HOME/osxcross"
+scons p=windows -j $CORES tools=no target=release
+scons p=x11 -j $CORES tools=no target=release builtin_libpng=yes builtin_openssl=yes builtin_zlib=yes use_static_cpp=yes use_lto=yes
+scons p=osx -j $CORES target=release tools=no osxcross_sdk=darwin15
 
 strip bin/*
 
