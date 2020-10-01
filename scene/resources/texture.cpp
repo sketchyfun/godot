@@ -1793,7 +1793,7 @@ CurveTexture::~CurveTexture() {
 #define COLOR_RAMP_SET_COLORS "set_colors"
 
 GradientTexture::GradientTexture() {
-	flags = FLAGS_FILTER;
+	flags = FLAG_FILTER;
 	update_pending = false;
 	width = 2048;
 
