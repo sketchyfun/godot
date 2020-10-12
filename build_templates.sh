@@ -1,9 +1,10 @@
 #!/bin/bash
 CORES=$1
 export OSXCROSS_ROOT="$HOME/osxcross"
-scons p=windows -j $CORES tools=no target=release
-scons p=x11 -j $CORES tools=no target=release builtin_libpng=yes builtin_openssl=yes builtin_zlib=yes use_static_cpp=yes use_lto=yes
-scons p=osx -j $CORES target=release tools=no osxcross_sdk=darwin15
+export PATH=$PATH:/home/ben/osxcross/target/bin/
+#scons p=windows -j $CORES tools=no target=release
+#scons p=x11 -j $CORES tools=no target=release builtin_libpng=yes builtin_openssl=yes builtin_zlib=yes use_static_cpp=yes use_lto=yes
+scons p=osx -j $CORES target=release tools=no osxcross_sdk=darwin19
 
 strip bin/*
 
