@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -210,7 +210,7 @@ void RotatedFileLogger::logv(const char *p_format, va_list p_list, bool p_err) {
 			Memory::free_static(buf);
 		}
 
-		if (p_err || GLOBAL_GET("application/run/flush_stdout_on_print")) {
+		if (p_err || !ProjectSettings::get_singleton() || GLOBAL_GET("application/run/flush_stdout_on_print")) {
 			// Don't always flush when printing stdout to avoid performance
 			// issues when `print()` is spammed in release builds.
 			file->flush();
@@ -231,7 +231,7 @@ void StdLogger::logv(const char *p_format, va_list p_list, bool p_err) {
 		vfprintf(stderr, p_format, p_list);
 	} else {
 		vprintf(p_format, p_list);
-		if (GLOBAL_GET("application/run/flush_stdout_on_print")) {
+		if (!ProjectSettings::get_singleton() || GLOBAL_GET("application/run/flush_stdout_on_print")) {
 			// Don't always flush when printing stdout to avoid performance
 			// issues when `print()` is spammed in release builds.
 			fflush(stdout);

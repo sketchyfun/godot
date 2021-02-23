@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -56,11 +56,14 @@ public:
 
 		bool shrink_textures_x2;
 		bool use_fast_texture_filter;
+		bool use_anisotropic_filter;
 		bool use_skeleton_software;
+		bool use_lightmap_filter_bicubic;
 
 		int max_vertex_texture_image_units;
 		int max_texture_image_units;
 		int max_texture_size;
+		int max_viewport_dimensions[2];
 
 		// TODO implement wireframe in GLES2
 		// bool generate_wireframes;
@@ -80,6 +83,8 @@ public:
 
 		bool use_rgba_2d_shadows;
 		bool use_rgba_3d_shadows;
+
+		float anisotropic_level;
 
 		bool support_32_bits_indices;
 		bool support_write_depth;

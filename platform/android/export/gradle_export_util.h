@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -134,6 +134,9 @@ Error store_string_at_path(const String &p_path, const String &p_data) {
 	String dir = p_path.get_base_dir();
 	Error err = create_directory(dir);
 	if (err != OK) {
+		if (OS::get_singleton()->is_stdout_verbose()) {
+			print_error("Unable to write data into " + p_path);
+		}
 		return err;
 	}
 	FileAccess *fa = FileAccess::open(p_path, FileAccess::WRITE);
@@ -150,12 +153,14 @@ Error store_string_at_path(const String &p_path, const String &p_data) {
 // This method will be called ONLY when custom build is enabled.
 Error rename_and_store_file_in_gradle_project(void *p_userdata, const String &p_path, const Vector<uint8_t> &p_data, int p_file, int p_total) {
 	String dst_path = p_path.replace_first("res://", "res://android/build/assets/");
+	print_verbose("Saving project files from " + p_path + " into " + dst_path);
 	Error err = store_file_at_path(dst_path, p_data);
 	return err;
 }
 
 // Creates strings.xml files inside the gradle project for different locales.
 Error _create_project_name_strings_files(const Ref<EditorExportPreset> &p_preset, const String &project_name) {
+	print_verbose("Creating strings resources for supported locales for project " + project_name);
 	// Stores the string into the default values directory.
 	String processed_default_xml_string = vformat(godot_project_name_xml_string, project_name.xml_escape(true));
 	store_string_at_path("res://android/build/res/values/godot_project_name_string.xml", processed_default_xml_string);
@@ -163,6 +168,9 @@ Error _create_project_name_strings_files(const Ref<EditorExportPreset> &p_preset
 	// Searches the Gradle project res/ directory to find all supported locales
 	DirAccessRef da = DirAccess::open("res://android/build/res");
 	if (!da) {
+		if (OS::get_singleton()->is_stdout_verbose()) {
+			print_error("Unable to open Android resources directory.");
+		}
 		return ERR_CANT_OPEN;
 	}
 	da->list_dir_begin();
@@ -181,6 +189,7 @@ Error _create_project_name_strings_files(const Ref<EditorExportPreset> &p_preset
 		if (ProjectSettings::get_singleton()->has_setting(property_name)) {
 			String locale_project_name = ProjectSettings::get_singleton()->get(property_name);
 			String processed_xml_string = vformat(godot_project_name_xml_string, locale_project_name.xml_escape(true));
+			print_verbose("Storing project name for locale " + locale + " under " + locale_directory);
 			store_string_at_path(locale_directory, processed_xml_string);
 		} else {
 			// TODO: Once the legacy build system is deprecated we don't need to have xml files for this else branch

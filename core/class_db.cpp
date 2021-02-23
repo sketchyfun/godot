@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -929,9 +929,9 @@ void ClassDB::add_property_group(StringName p_class, const String &p_name, const
 
 void ClassDB::add_property(StringName p_class, const PropertyInfo &p_pinfo, const StringName &p_setter, const StringName &p_getter, int p_index) {
 
-	lock->read_lock();
+	lock.read_lock();
 	ClassInfo *type = classes.getptr(p_class);
-	lock->read_unlock();
+	lock.read_unlock();
 
 	ERR_FAIL_COND(!type);
 
@@ -1447,12 +1447,7 @@ Variant ClassDB::class_get_default_property_value(const StringName &p_class, con
 	return default_values[p_class][p_property];
 }
 
-RWLock *ClassDB::lock = NULL;
-
-void ClassDB::init() {
-
-	lock = RWLock::create();
-}
+RWLock ClassDB::lock;
 
 void ClassDB::cleanup_defaults() {
 
@@ -1479,8 +1474,6 @@ void ClassDB::cleanup() {
 	classes.clear();
 	resource_base_extensions.clear();
 	compat_classes.clear();
-
-	memdelete(lock);
 }
 
 //

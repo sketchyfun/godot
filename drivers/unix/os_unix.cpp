@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -32,14 +32,10 @@
 
 #ifdef UNIX_ENABLED
 
-#include "core/os/thread_dummy.h"
 #include "core/project_settings.h"
 #include "drivers/unix/dir_access_unix.h"
 #include "drivers/unix/file_access_unix.h"
-#include "drivers/unix/mutex_posix.h"
 #include "drivers/unix/net_socket_posix.h"
-#include "drivers/unix/rw_lock_posix.h"
-#include "drivers/unix/semaphore_posix.h"
 #include "drivers/unix/thread_posix.h"
 #include "servers/visual_server.h"
 
@@ -64,6 +60,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 /// Clock Setup function (used by get_ticks_usec)
@@ -120,19 +117,10 @@ int OS_Unix::unix_initialize_audio(int p_audio_driver) {
 
 void OS_Unix::initialize_core() {
 
-#ifdef NO_THREADS
-	ThreadDummy::make_default();
-	SemaphoreDummy::make_default();
-	MutexDummy::make_default();
-	RWLockDummy::make_default();
-#else
-	ThreadPosix::make_default();
-#if !defined(OSX_ENABLED) && !defined(IPHONE_ENABLED)
-	SemaphorePosix::make_default();
+#if !defined(NO_THREADS)
+	init_thread_posix();
 #endif
-	MutexPosix::make_default();
-	RWLockPosix::make_default();
-#endif
+
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCES);
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
 	FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
@@ -257,9 +245,11 @@ OS::TimeZoneInfo OS_Unix::get_time_zone_info() const {
 }
 
 void OS_Unix::delay_usec(uint32_t p_usec) const {
-
-	struct timespec rem = { static_cast<time_t>(p_usec / 1000000), (static_cast<long>(p_usec) % 1000000) * 1000 };
-	while (nanosleep(&rem, &rem) == EINTR) {
+	struct timespec requested = { static_cast<time_t>(p_usec / 1000000), (static_cast<long>(p_usec) % 1000000) * 1000 };
+	struct timespec remaining;
+	while (nanosleep(&requested, &remaining) == -1 && errno == EINTR) {
+		requested.tv_sec = remaining.tv_sec;
+		requested.tv_nsec = remaining.tv_nsec;
 	}
 }
 uint64_t OS_Unix::get_ticks_usec() const {

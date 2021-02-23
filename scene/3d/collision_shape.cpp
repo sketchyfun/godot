@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -30,6 +30,9 @@
 
 #include "collision_shape.h"
 
+#include "core/math/quick_hull.h"
+#include "mesh_instance.h"
+#include "physics_body.h"
 #include "scene/resources/box_shape.h"
 #include "scene/resources/capsule_shape.h"
 #include "scene/resources/concave_polygon_shape.h"
@@ -38,10 +41,6 @@
 #include "scene/resources/ray_shape.h"
 #include "scene/resources/sphere_shape.h"
 #include "servers/visual_server.h"
-//TODO: Implement CylinderShape and HeightMapShape?
-#include "core/math/quick_hull.h"
-#include "mesh_instance.h"
-#include "physics_body.h"
 
 void CollisionShape::make_convex_from_brothers() {
 
@@ -170,7 +169,9 @@ void CollisionShape::_bind_methods() {
 }
 
 void CollisionShape::set_shape(const Ref<Shape> &p_shape) {
-
+	if (p_shape == shape) {
+		return;
+	}
 	if (!shape.is_null()) {
 		shape->unregister_owner(this);
 		shape->disconnect("changed", this, "_shape_changed");

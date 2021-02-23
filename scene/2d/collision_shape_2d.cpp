@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -117,6 +117,7 @@ void CollisionShape2D::_notification(int p_what) {
 				draw_col.r = g;
 				draw_col.g = g;
 				draw_col.b = g;
+				draw_col.a *= 0.5;
 			}
 			shape->draw(get_canvas_item(), draw_col);
 
@@ -147,7 +148,9 @@ void CollisionShape2D::_notification(int p_what) {
 }
 
 void CollisionShape2D::set_shape(const Ref<Shape2D> &p_shape) {
-
+	if (p_shape == shape) {
+		return;
+	}
 	if (shape.is_valid())
 		shape->disconnect("changed", this, "_shape_changed");
 	shape = p_shape;
@@ -157,6 +160,7 @@ void CollisionShape2D::set_shape(const Ref<Shape2D> &p_shape) {
 		if (shape.is_valid()) {
 			parent->shape_owner_add_shape(owner_id, shape);
 		}
+		_update_in_shape_owner();
 	}
 
 	if (shape.is_valid())

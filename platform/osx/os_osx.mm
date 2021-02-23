@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -38,7 +38,6 @@
 #include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles3/rasterizer_gles3.h"
 #include "main/main.h"
-#include "semaphore_osx.h"
 #include "servers/visual/visual_server_raster.h"
 
 #include <mach-o/dyld.h>
@@ -737,6 +736,15 @@ static void _mouseDownEvent(NSEvent *event, int index, int mask, bool pressed) {
 
 	NSPoint delta = NSMakePoint([event deltaX], [event deltaY]);
 	NSPoint mpos = [event locationInWindow];
+
+	if (OS_OSX::singleton->ignore_warp) {
+		// Discard late events, before warp
+		if (([event timestamp]) < OS_OSX::singleton->last_warp) {
+			return;
+		}
+		OS_OSX::singleton->ignore_warp = false;
+		return;
+	}
 
 	if (OS_OSX::singleton->mouse_mode == OS::MOUSE_MODE_CONFINED) {
 		// Discard late events
@@ -1518,8 +1526,6 @@ void OS_OSX::initialize_core() {
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_RESOURCES);
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_USERDATA);
 	DirAccess::make_default<DirAccessOSX>(DirAccess::ACCESS_FILESYSTEM);
-
-	SemaphoreOSX::make_default();
 }
 
 struct LayoutInfo {
@@ -1773,8 +1779,6 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	joypad_osx = memnew(JoypadOSX);
 
 	power_manager = memnew(PowerOSX);
-
-	_ensure_user_data_dir();
 
 	restore_rect = Rect2(get_window_position(), get_window_size());
 
@@ -3308,6 +3312,8 @@ void OS_OSX::set_mouse_mode(MouseMode p_mode) {
 		CGAssociateMouseAndMouseCursorPosition(true);
 	}
 
+	last_warp = [[NSProcessInfo processInfo] systemUptime];
+	ignore_warp = true;
 	warp_events.clear();
 	mouse_mode = p_mode;
 }

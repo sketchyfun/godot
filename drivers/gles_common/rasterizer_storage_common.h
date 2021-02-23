@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -45,7 +45,7 @@ public:
 	// these flags are specifically for batching
 	// some of the logic is thus in rasterizer_storage.cpp
 	// we could alternatively set bitflags for each 'uses' and test on the fly
-	enum BatchFlags {
+	enum BatchFlags : uint32_t {
 		PREVENT_COLOR_BAKING = 1 << 0,
 		PREVENT_VERTEX_BAKING = 1 << 1,
 
@@ -65,7 +65,7 @@ public:
 		BT_DUMMY = 5, // dummy batch is just used to keep the batch creation loop simple
 	};
 
-	enum BatchTypeFlags {
+	enum BatchTypeFlags : uint32_t {
 		BTF_DEFAULT = 1 << BT_DEFAULT,
 		BTF_RECT = 1 << BT_RECT,
 		BTF_LINE = 1 << BT_LINE,

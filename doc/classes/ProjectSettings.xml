@@ -850,6 +850,7 @@
 			If [code]true[/code], logs all output to files.
 		</member>
 		<member name="logging/file_logging/enable_file_logging.pc" type="bool" setter="" getter="" default="true">
+			Desktop override for [member logging/file_logging/enable_file_logging], as log files are not readily accessible on mobile/Web platforms.
 		</member>
 		<member name="logging/file_logging/log_path" type="String" setter="" getter="" default="&quot;user://logs/godot.log&quot;">
 			Path to logs within the project. Using an [code]user://[/code] path is recommended.
@@ -1003,12 +1004,21 @@
 			The default linear damp in 3D.
 			[b]Note:[/b] Good values are in the range [code]0[/code] to [code]1[/code]. At value [code]0[/code] objects will keep moving with the same velocity. Values greater than [code]1[/code] will aim to reduce the velocity to [code]0[/code] in less than a second e.g. a value of [code]2[/code] will aim to reduce the velocity to [code]0[/code] in half a second. A value equal to or greater than the physics frame rate ([member ProjectSettings.physics/common/physics_fps], [code]60[/code] by default) will bring the object to a stop in one iteration.
 		</member>
+		<member name="physics/3d/godot_physics/use_bvh" type="bool" setter="" getter="" default="true">
+			Enables the use of bounding volume hierarchy instead of octree for physics spatial partitioning. This may give better performance.
+		</member>
 		<member name="physics/3d/physics_engine" type="String" setter="" getter="" default="&quot;DEFAULT&quot;">
 			Sets which physics engine to use for 3D physics.
 			"DEFAULT" is currently the [url=https://bulletphysics.org]Bullet[/url] physics engine. The "GodotPhysics" engine is still supported as an alternative.
 		</member>
 		<member name="physics/common/enable_object_picking" type="bool" setter="" getter="" default="true">
 			Enables [member Viewport.physics_object_picking] on the root viewport.
+		</member>
+		<member name="physics/common/enable_pause_aware_picking" type="bool" setter="" getter="" default="false">
+			If enabled, 2D and 3D physics picking behaves this way in relation to pause:
+			- When pause is started, every collision object that is hovered or captured (3D only) is released from that condition, getting the relevant mouse-exit callback, unless its pause mode makes it immune to pause.
+			- During pause, picking only considers collision objects immune to pause, sending input events and enter/exit callbacks to them as expected.
+			If disabled, the legacy behavior is used, which consists in queuing the picking input events during pause (so nodes won't get them) and flushing that queue on resume, against the state of the 2D/3D world at that point.
 		</member>
 		<member name="physics/common/physics_fps" type="int" setter="" getter="" default="60">
 			The number of fixed iterations per second. This controls how often physics simulation and [method Node._physics_process] methods are run.
@@ -1034,12 +1044,10 @@
 			Enabling this setting uses the legacy method to draw batches containing only one rect. The legacy method is faster (approx twice as fast), but can cause flicker on some systems. In order to directly compare performance with the non-batching renderer you can set this to true, but it is recommended to turn this off unless you can guarantee your target hardware will work with this method.
 		</member>
 		<member name="rendering/batching/options/use_batching" type="bool" setter="" getter="" default="true">
-			Turns batching on and off. Batching increases performance by reducing the amount of graphics API drawcalls.
-			[b]Note:[/b] Currently only effective when using the GLES2 renderer.
+			Turns 2D batching on and off. Batching increases performance by reducing the amount of graphics API drawcalls.
 		</member>
 		<member name="rendering/batching/options/use_batching_in_editor" type="bool" setter="" getter="" default="true">
-			Switches on batching within the editor.
-			[b]Note:[/b] Currently only effective when using the GLES2 renderer.
+			Switches on 2D batching within the editor.
 		</member>
 		<member name="rendering/batching/parameters/batch_buffer_size" type="int" setter="" getter="" default="16384">
 			Size of buffer reserved for batched vertices. Larger size enables larger batches, but there are diminishing returns for the memory used. This should only have a minor effect on performance.
@@ -1060,6 +1068,18 @@
 		<member name="rendering/batching/precision/uv_contract_amount" type="int" setter="" getter="" default="100">
 			The amount of UV contraction. This figure is divided by 1000000, and is a proportion of the total texture dimensions, where the width and height are both ranged from 0.0 to 1.0.
 			Use the default unless correcting for a problem on particular hardware.
+		</member>
+		<member name="rendering/cpu_lightmapper/quality/high_quality_ray_count" type="int" setter="" getter="" default="512">
+			Amount of light samples taken when using [constant BakedLightmap.BAKE_QUALITY_HIGH].
+		</member>
+		<member name="rendering/cpu_lightmapper/quality/low_quality_ray_count" type="int" setter="" getter="" default="64">
+			Amount of light samples taken when using [constant BakedLightmap.BAKE_QUALITY_LOW].
+		</member>
+		<member name="rendering/cpu_lightmapper/quality/medium_quality_ray_count" type="int" setter="" getter="" default="256">
+			Amount of light samples taken when using [constant BakedLightmap.BAKE_QUALITY_MEDIUM].
+		</member>
+		<member name="rendering/cpu_lightmapper/quality/ultra_quality_ray_count" type="int" setter="" getter="" default="1024">
+			Amount of light samples taken when using [constant BakedLightmap.BAKE_QUALITY_ULTRA].
 		</member>
 		<member name="rendering/environment/default_clear_color" type="Color" setter="" getter="" default="Color( 0.3, 0.3, 0.3, 1 )">
 			Default background clear color. Overridable per [Viewport] using its [Environment]. See [member Environment.background_mode] and [member Environment.background_color] in particular. To change this default color programmatically, use [method VisualServer.set_default_clear_color].
@@ -1104,6 +1124,10 @@
 		<member name="rendering/quality/2d/ninepatch_mode" type="int" setter="" getter="" default="0">
 			Choose between default mode where corner scalings are preserved matching the artwork, and scaling mode.
 			Not available in GLES3 when [member rendering/batching/options/use_batching] is off.
+		</member>
+		<member name="rendering/quality/2d/use_camera_snap" type="bool" setter="" getter="" default="false">
+			If [code]true[/code], forces snapping of 2D viewports to the nearest whole coordinate.
+			Can reduce unwanted camera relative movement in pixel art styles.
 		</member>
 		<member name="rendering/quality/2d/use_nvidia_rect_flicker_workaround" type="bool" setter="" getter="" default="false">
 			Some NVIDIA GPU drivers have a bug which produces flickering issues for the [code]draw_rect[/code] method, especially as used in [TileMap]. Refer to [url=https://github.com/godotengine/godot/issues/9913]GitHub issue 9913[/url] for details.
@@ -1171,6 +1195,12 @@
 		<member name="rendering/quality/intended_usage/framebuffer_allocation.mobile" type="int" setter="" getter="" default="3">
 			Lower-end override for [member rendering/quality/intended_usage/framebuffer_allocation] on mobile devices, due to performance concerns or driver support.
 		</member>
+		<member name="rendering/quality/lightmapping/use_bicubic_sampling" type="bool" setter="" getter="" default="true">
+			Enable usage of bicubic sampling in baked lightmaps. This results in smoother looking lighting at the expense of more bandwidth usage. On GLES2, changes to this setting will only be applied upon restarting the application.
+		</member>
+		<member name="rendering/quality/lightmapping/use_bicubic_sampling.mobile" type="bool" setter="" getter="" default="false">
+			Lower-end override for [member rendering/quality/lightmapping/use_bicubic_sampling] on mobile devices, in order to reduce bandwidth usage.
+		</member>
 		<member name="rendering/quality/reflections/atlas_size" type="int" setter="" getter="" default="2048">
 			Size of the atlas used by reflection probes. A larger size can result in higher visual quality, while a smaller size will be faster and take up less memory.
 		</member>
@@ -1231,6 +1261,7 @@
 		</member>
 		<member name="rendering/quality/shadows/filter_mode" type="int" setter="" getter="" default="1">
 			Shadow filter mode. Higher-quality settings result in smoother shadows that flicker less when moving. "Disabled" is the fastest option, but also has the lowest quality. "PCF5" is smoother but is also slower. "PCF13" is the smoothest option, but is also the slowest.
+			[b]Note:[/b] When using the GLES2 backend, the "PCF13" option actually uses 16 samples to emulate linear filtering in the shader. This results in a shadow appearance similar to the one produced by the GLES3 backend.
 		</member>
 		<member name="rendering/quality/shadows/filter_mode.mobile" type="int" setter="" getter="" default="0">
 			Lower-end override for [member rendering/quality/shadows/filter_mode] on mobile devices, due to performance concerns or driver support.
@@ -1248,6 +1279,9 @@
 		<member name="rendering/quality/spatial_partitioning/render_tree_balance" type="float" setter="" getter="" default="0.0">
 			The rendering octree balance can be changed to favor smaller ([code]0[/code]), or larger ([code]1[/code]) branches.
 			Larger branches can increase performance significantly in some projects.
+		</member>
+		<member name="rendering/quality/spatial_partitioning/use_bvh" type="bool" setter="" getter="" default="true">
+			Enables the use of bounding volume hierarchy instead of octree for rendering spatial partitioning. This may give better performance.
 		</member>
 		<member name="rendering/quality/subsurface_scattering/follow_surface" type="bool" setter="" getter="" default="false">
 			Improves quality of subsurface scattering, but cost significantly increases.

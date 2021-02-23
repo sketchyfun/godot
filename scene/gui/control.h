@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -160,6 +160,7 @@ private:
 		float rotation;
 		Vector2 scale;
 		Vector2 pivot_offset;
+		bool size_warning = true;
 
 		bool pending_resize;
 
@@ -224,6 +225,7 @@ private:
 	void _change_notify_margins();
 	void _update_minimum_size();
 
+	void _clear_size_warning();
 	void _update_scroll();
 	void _resize(const Size2 &p_size);
 

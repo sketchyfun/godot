@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -124,6 +124,12 @@ void RasterizerSceneGLES2::shadow_atlas_set_size(RID p_atlas, int p_size) {
 		glGenFramebuffers(1, &shadow_atlas->fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, shadow_atlas->fbo);
 
+		if (shadow_atlas->size > storage->config.max_viewport_dimensions[0] || shadow_atlas->size > storage->config.max_viewport_dimensions[1]) {
+			WARN_PRINTS("Cannot set shadow atlas size larger than maximum hardware supported size of (" + itos(storage->config.max_viewport_dimensions[0]) + ", " + itos(storage->config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
+			shadow_atlas->size = MIN(shadow_atlas->size, storage->config.max_viewport_dimensions[0]);
+			shadow_atlas->size = MIN(shadow_atlas->size, storage->config.max_viewport_dimensions[1]);
+		}
+
 		// create a depth texture
 		glActiveTexture(GL_TEXTURE0);
 
@@ -132,7 +138,7 @@ void RasterizerSceneGLES2::shadow_atlas_set_size(RID p_atlas, int p_size) {
 			//maximum compatibility, renderbuffer and RGBA shadow
 			glGenRenderbuffers(1, &shadow_atlas->depth);
 			glBindRenderbuffer(GL_RENDERBUFFER, shadow_atlas->depth);
-			glRenderbufferStorage(GL_RENDERBUFFER, storage->config.depth_internalformat, shadow_atlas->size, shadow_atlas->size);
+			glRenderbufferStorage(GL_RENDERBUFFER, storage->config.depth_buffer_internalformat, shadow_atlas->size, shadow_atlas->size);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, shadow_atlas->depth);
 
 			glGenTextures(1, &shadow_atlas->color);
@@ -540,6 +546,13 @@ bool RasterizerSceneGLES2::reflection_probe_instance_begin_render(RID p_instance
 
 		//update cubemap if resolution changed
 		int size = rpi->probe_ptr->resolution;
+
+		if (size > storage->config.max_viewport_dimensions[0] || size > storage->config.max_viewport_dimensions[1]) {
+			WARN_PRINT_ONCE("Cannot set reflection probe resolution larger than maximum hardware supported size of (" + itos(storage->config.max_viewport_dimensions[0]) + ", " + itos(storage->config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
+			size = MIN(size, storage->config.max_viewport_dimensions[0]);
+			size = MIN(size, storage->config.max_viewport_dimensions[1]);
+		}
+
 		rpi->current_resolution = size;
 
 		GLenum internal_format = GL_RGB;
@@ -549,7 +562,7 @@ bool RasterizerSceneGLES2::reflection_probe_instance_begin_render(RID p_instance
 		glActiveTexture(GL_TEXTURE0);
 
 		glBindRenderbuffer(GL_RENDERBUFFER, rpi->depth);
-		glRenderbufferStorage(GL_RENDERBUFFER, storage->config.depth_internalformat, size, size);
+		glRenderbufferStorage(GL_RENDERBUFFER, storage->config.depth_buffer_internalformat, size, size);
 
 		if (rpi->cubemap != 0) {
 			glDeleteTextures(1, &rpi->cubemap);
@@ -2580,6 +2593,9 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 
 		if (rebind_lightmap && lightmap) {
 			state.scene_shader.set_uniform(SceneShaderGLES2::LIGHTMAP_ENERGY, lightmap_energy);
+			if (storage->config.use_lightmap_filter_bicubic) {
+				state.scene_shader.set_uniform(SceneShaderGLES2::LIGHTMAP_TEXTURE_SIZE, Vector2(lightmap->width, lightmap->height));
+			}
 		}
 
 		state.scene_shader.set_uniform(SceneShaderGLES2::WORLD_TRANSFORM, e->instance->transform);
@@ -4016,6 +4032,12 @@ void RasterizerSceneGLES2::initialize() {
 		directional_shadow.light_count = 0;
 		directional_shadow.size = next_power_of_2(GLOBAL_GET("rendering/quality/directional_shadow/size"));
 
+		if (directional_shadow.size > storage->config.max_viewport_dimensions[0] || directional_shadow.size > storage->config.max_viewport_dimensions[1]) {
+			WARN_PRINTS("Cannot set directional shadow size larger than maximum hardware supported size of (" + itos(storage->config.max_viewport_dimensions[0]) + ", " + itos(storage->config.max_viewport_dimensions[1]) + "). Setting size to maximum.");
+			directional_shadow.size = MIN(directional_shadow.size, storage->config.max_viewport_dimensions[0]);
+			directional_shadow.size = MIN(directional_shadow.size, storage->config.max_viewport_dimensions[1]);
+		}
+
 		glGenFramebuffers(1, &directional_shadow.fbo);
 		glBindFramebuffer(GL_FRAMEBUFFER, directional_shadow.fbo);
 
@@ -4053,6 +4075,10 @@ void RasterizerSceneGLES2::initialize() {
 		if (status != GL_FRAMEBUFFER_COMPLETE) {
 			ERR_PRINT("Directional shadow framebuffer status invalid");
 		}
+	}
+
+	if (storage->config.use_lightmap_filter_bicubic) {
+		state.scene_shader.add_custom_define("#define USE_LIGHTMAP_FILTER_BICUBIC\n");
 	}
 
 	shadow_filter_mode = SHADOW_FILTER_NEAREST;

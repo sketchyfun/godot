@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -90,7 +90,7 @@ static IP *ip = NULL;
 
 static _Geometry *_geometry = NULL;
 
-extern Mutex *_global_mutex;
+extern Mutex _global_mutex;
 
 extern void register_global_constants();
 extern void unregister_global_constants();
@@ -99,14 +99,9 @@ extern void unregister_variant_methods();
 
 void register_core_types() {
 
-	ObjectDB::setup();
-	ResourceCache::setup();
 	MemoryPool::setup();
 
-	_global_mutex = Mutex::create();
-
 	StringName::setup();
-	ResourceLoader::initialize();
 
 	register_global_constants();
 	register_variant_methods();
@@ -317,11 +312,6 @@ void unregister_core_types() {
 	ResourceCache::clear();
 	CoreStringNames::free();
 	StringName::cleanup();
-
-	if (_global_mutex) {
-		memdelete(_global_mutex);
-		_global_mutex = NULL; //still needed at a few places
-	};
 
 	MemoryPool::cleanup();
 }

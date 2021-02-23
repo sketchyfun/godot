@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -250,7 +250,7 @@
 		cmd->sync_sem = ss;                                                                    \
 		unlock();                                                                              \
 		if (sync) sync->post();                                                                \
-		ss->sem->wait();                                                                       \
+		ss->sem.wait();                                                                        \
 		ss->in_use = false;                                                                    \
 	}
 
@@ -267,7 +267,7 @@
 		cmd->sync_sem = ss;                                                           \
 		unlock();                                                                     \
 		if (sync) sync->post();                                                       \
-		ss->sem->wait();                                                              \
+		ss->sem.wait();                                                               \
 		ss->in_use = false;                                                           \
 	}
 
@@ -277,7 +277,7 @@ class CommandQueueMT {
 
 	struct SyncSemaphore {
 
-		Semaphore *sem;
+		Semaphore sem;
 		bool in_use;
 	};
 
@@ -293,7 +293,7 @@ class CommandQueueMT {
 		SyncSemaphore *sync_sem;
 
 		virtual void post() {
-			sync_sem->sem->post();
+			sync_sem->sem.post();
 		}
 	};
 
@@ -321,7 +321,7 @@ class CommandQueueMT {
 	uint32_t dealloc_ptr;
 	uint32_t command_mem_size;
 	SyncSemaphore sync_sems[SYNC_SEMAPHORES];
-	Mutex *mutex;
+	Mutex mutex;
 	Semaphore *sync;
 
 	template <class T>

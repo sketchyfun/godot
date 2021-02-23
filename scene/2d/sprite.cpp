@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -99,7 +99,7 @@ void Sprite::_get_rects(Rect2 &r_src_rect, Rect2 &r_dst_rect, bool &r_filter_cli
 	Point2 dest_offset = offset;
 	if (centered)
 		dest_offset -= frame_size / 2;
-	if (Engine::get_singleton()->get_snap_2d_transforms()) {
+	if (Engine::get_singleton()->get_use_pixel_snap()) {
 		dest_offset = dest_offset.floor();
 	}
 
@@ -378,7 +378,7 @@ Rect2 Sprite::get_rect() const {
 	Point2 ofs = offset;
 	if (centered)
 		ofs -= Size2(s) / 2;
-	if (Engine::get_singleton()->get_snap_2d_transforms()) {
+	if (Engine::get_singleton()->get_use_pixel_snap()) {
 		ofs = ofs.floor();
 	}
 

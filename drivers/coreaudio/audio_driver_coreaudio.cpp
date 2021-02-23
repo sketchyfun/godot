@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -69,8 +69,6 @@ OSStatus AudioDriverCoreAudio::output_device_address_cb(AudioObjectID inObjectID
 #endif
 
 Error AudioDriverCoreAudio::init() {
-	mutex = Mutex::create();
-
 	AudioComponentDescription desc;
 	zeromem(&desc, sizeof(desc));
 	desc.componentType = kAudioUnitType_Output;
@@ -280,19 +278,15 @@ AudioDriver::SpeakerMode AudioDriverCoreAudio::get_speaker_mode() const {
 };
 
 void AudioDriverCoreAudio::lock() {
-	if (mutex)
-		mutex->lock();
+	mutex.lock();
 };
 
 void AudioDriverCoreAudio::unlock() {
-	if (mutex)
-		mutex->unlock();
+	mutex.unlock();
 };
 
 bool AudioDriverCoreAudio::try_lock() {
-	if (mutex)
-		return mutex->try_lock() == OK;
-	return true;
+	return mutex.try_lock() == OK;
 }
 
 void AudioDriverCoreAudio::finish() {
@@ -343,11 +337,6 @@ void AudioDriverCoreAudio::finish() {
 
 		audio_unit = NULL;
 		unlock();
-	}
-
-	if (mutex) {
-		memdelete(mutex);
-		mutex = NULL;
 	}
 }
 
@@ -691,7 +680,6 @@ AudioDriverCoreAudio::AudioDriverCoreAudio() :
 		audio_unit(NULL),
 		input_unit(NULL),
 		active(false),
-		mutex(NULL),
 		device_name("Default"),
 		capture_device_name("Default"),
 		mix_rate(0),

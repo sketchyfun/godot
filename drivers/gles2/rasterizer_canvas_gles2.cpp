@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -1277,7 +1277,12 @@ bool RasterizerCanvasGLES2::try_join_item(Item *p_ci, RenderItemState &r_ris, bo
 	r_batch_break = false;
 	bool join = true;
 
-	// light_masked may possibly need state checking here. Check for regressions!
+	// light_masked objects we just don't currently support for joining
+	// (this could possibly be improved at a later date)
+	if (p_ci->light_masked) {
+		join = false;
+		r_batch_break = true;
+	}
 
 	// we will now allow joining even if final modulate is different
 	// we will instead bake the final modulate into the vertex colors

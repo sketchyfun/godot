@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -121,8 +121,6 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	xdnd_version = 0;
 
 	XInitThreads();
-
-	events_mutex = Mutex::create();
 
 	/** XLIB INITIALIZATION **/
 	x11_display = XOpenDisplay(NULL);
@@ -385,14 +383,18 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 		hints.flags = 2;
 		hints.decorations = 0;
 		property = XInternAtom(x11_display, "_MOTIF_WM_HINTS", True);
-		XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+		if (property != None) {
+			XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+		}
 	}
 
 	// make PID known to X11
 	{
 		const long pid = this->get_process_id();
 		Atom net_wm_pid = XInternAtom(x11_display, "_NET_WM_PID", False);
-		XChangeProperty(x11_display, x11_window, net_wm_pid, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1);
+		if (net_wm_pid != None) {
+			XChangeProperty(x11_display, x11_window, net_wm_pid, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1);
+		}
 	}
 
 	// disable resizable window
@@ -584,7 +586,9 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 	//Set Xdnd (drag & drop) support
 	Atom XdndAware = XInternAtom(x11_display, "XdndAware", False);
 	Atom version = 5;
-	XChangeProperty(x11_display, x11_window, XdndAware, XA_ATOM, 32, PropModeReplace, (unsigned char *)&version, 1);
+	if (XdndAware != None) {
+		XChangeProperty(x11_display, x11_window, XdndAware, XA_ATOM, 32, PropModeReplace, (unsigned char *)&version, 1);
+	}
 
 	xdnd_enter = XInternAtom(x11_display, "XdndEnter", False);
 	xdnd_position = XInternAtom(x11_display, "XdndPosition", False);
@@ -605,7 +609,6 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 #ifdef JOYDEV_ENABLED
 	joypad = memnew(JoypadLinux(input));
 #endif
-	_ensure_user_data_dir();
 
 	power_manager = memnew(PowerX11);
 
@@ -621,7 +624,7 @@ Error OS_X11::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 		}
 	}
 
-	events_thread = Thread::create(_poll_events_thread, this);
+	events_thread.start(_poll_events_thread, this);
 
 	update_real_mouse_position();
 
@@ -812,9 +815,7 @@ String OS_X11::get_unique_id() const {
 
 void OS_X11::finalize() {
 	events_thread_done = true;
-	Thread::wait_to_finish(events_thread);
-	memdelete(events_thread);
-	events_thread = NULL;
+	events_thread.wait_to_finish();
 
 	if (main_loop)
 		memdelete(main_loop);
@@ -873,8 +874,6 @@ void OS_X11::finalize() {
 	XCloseDisplay(x11_display);
 	if (xmbstring)
 		memfree(xmbstring);
-
-	memdelete(events_mutex);
 
 	args.clear();
 }
@@ -999,7 +998,9 @@ void OS_X11::set_window_title(const String &p_title) {
 
 	Atom _net_wm_name = XInternAtom(x11_display, "_NET_WM_NAME", false);
 	Atom utf8_string = XInternAtom(x11_display, "UTF8_STRING", false);
-	XChangeProperty(x11_display, x11_window, _net_wm_name, utf8_string, 8, PropModeReplace, (unsigned char *)p_title.utf8().get_data(), p_title.utf8().length());
+	if (_net_wm_name != None && utf8_string != None) {
+		XChangeProperty(x11_display, x11_window, _net_wm_name, utf8_string, 8, PropModeReplace, (unsigned char *)p_title.utf8().get_data(), p_title.utf8().length());
+	}
 }
 
 void OS_X11::set_window_mouse_passthrough(const PoolVector2Array &p_region) {
@@ -1047,7 +1048,9 @@ void OS_X11::set_wm_fullscreen(bool p_enabled) {
 		hints.flags = 2;
 		hints.decorations = 0;
 		property = XInternAtom(x11_display, "_MOTIF_WM_HINTS", True);
-		XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+		if (property != None) {
+			XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+		}
 	}
 
 	if (p_enabled && !is_window_resizable()) {
@@ -1079,7 +1082,9 @@ void OS_X11::set_wm_fullscreen(bool p_enabled) {
 	// set bypass compositor hint
 	Atom bypass_compositor = XInternAtom(x11_display, "_NET_WM_BYPASS_COMPOSITOR", False);
 	unsigned long compositing_disable_on = p_enabled ? 1 : 0;
-	XChangeProperty(x11_display, x11_window, bypass_compositor, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&compositing_disable_on, 1);
+	if (bypass_compositor != None) {
+		XChangeProperty(x11_display, x11_window, bypass_compositor, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&compositing_disable_on, 1);
+	}
 
 	XFlush(x11_display);
 
@@ -1116,7 +1121,9 @@ void OS_X11::set_wm_fullscreen(bool p_enabled) {
 		hints.flags = 2;
 		hints.decorations = current_videomode.borderless_window ? 0 : 1;
 		property = XInternAtom(x11_display, "_MOTIF_WM_HINTS", True);
-		XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+		if (property != None) {
+			XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+		}
 	}
 }
 
@@ -1552,6 +1559,9 @@ void OS_X11::set_window_minimized(bool p_enabled) {
 bool OS_X11::is_window_minimized() const {
 	// Using ICCCM -- Inter-Client Communication Conventions Manual
 	Atom property = XInternAtom(x11_display, "WM_STATE", True);
+	if (property == None) {
+		return false;
+	}
 	Atom type;
 	int format;
 	unsigned long len;
@@ -1630,6 +1640,10 @@ bool OS_X11::window_maximize_check(const char *p_atom_name) const {
 	unsigned long remaining;
 	unsigned char *data = NULL;
 	bool retval = false;
+
+	if (property == None) {
+		return false;
+	}
 
 	int result = XGetWindowProperty(
 			x11_display,
@@ -1716,7 +1730,9 @@ void OS_X11::set_borderless_window(bool p_borderless) {
 	hints.flags = 2;
 	hints.decorations = current_videomode.borderless_window ? 0 : 1;
 	property = XInternAtom(x11_display, "_MOTIF_WM_HINTS", True);
-	XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+	if (property != None) {
+		XChangeProperty(x11_display, x11_window, property, property, 32, PropModeReplace, (unsigned char *)&hints, 5);
+	}
 
 	// Preserve window size
 	set_window_size(Size2(current_videomode.width, current_videomode.height));
@@ -2150,27 +2166,29 @@ struct Property {
 
 static Property read_property(Display *p_display, Window p_window, Atom p_property) {
 
-	Atom actual_type;
-	int actual_format;
-	unsigned long nitems;
-	unsigned long bytes_after;
+	Atom actual_type = None;
+	int actual_format = 0;
+	unsigned long nitems = 0;
+	unsigned long bytes_after = 0;
 	unsigned char *ret = 0;
 
 	int read_bytes = 1024;
 
 	//Keep trying to read the property until there are no
 	//bytes unread.
-	do {
-		if (ret != 0)
-			XFree(ret);
+	if (p_property != None) {
+		do {
+			if (ret != 0)
+				XFree(ret);
 
-		XGetWindowProperty(p_display, p_window, p_property, 0, read_bytes, False, AnyPropertyType,
-				&actual_type, &actual_format, &nitems, &bytes_after,
-				&ret);
+			XGetWindowProperty(p_display, p_window, p_property, 0, read_bytes, False, AnyPropertyType,
+					&actual_type, &actual_format, &nitems, &bytes_after,
+					&ret);
 
-		read_bytes *= 2;
+			read_bytes *= 2;
 
-	} while (bytes_after != 0);
+		} while (bytes_after != 0);
+	}
 
 	Property p = { ret, actual_format, (int)nitems, actual_type };
 
@@ -3565,7 +3583,9 @@ void OS_X11::set_icon(const Ref<Image> &p_icon) {
 				pr += 4;
 			}
 
-			XChangeProperty(x11_display, x11_window, net_wm_icon, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)pd.ptr(), pd.size());
+			if (net_wm_icon != None) {
+				XChangeProperty(x11_display, x11_window, net_wm_icon, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)pd.ptr(), pd.size());
+			}
 
 			if (!g_set_icon_error)
 				break;

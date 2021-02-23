@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -433,6 +433,10 @@ void Control::_resize(const Size2 &p_size) {
 	_size_changed();
 }
 
+void Control::_clear_size_warning() {
+	data.size_warning = false;
+}
+
 //moved theme configuration here, so controls can set up even if still not inside active scene
 
 void Control::add_child_notify(Node *p_child) {
@@ -484,7 +488,9 @@ void Control::_notification(int p_notification) {
 		case NOTIFICATION_EXIT_TREE: {
 
 			get_viewport()->_gui_remove_control(this);
-
+		} break;
+		case NOTIFICATION_READY: {
+			connect("ready", this, "_clear_size_warning", varray(), CONNECT_DEFERRED | CONNECT_ONESHOT);
 		} break;
 
 		case NOTIFICATION_ENTER_CANVAS: {
@@ -754,7 +760,7 @@ bool Control::can_drop_data(const Point2 &p_point, const Variant &p_data) const 
 			return ret;
 	}
 
-	return Variant();
+	return false;
 }
 void Control::drop_data(const Point2 &p_point, const Variant &p_data) {
 
@@ -1829,6 +1835,11 @@ void Control::set_position(const Size2 &p_point, bool p_keep_margins) {
 }
 
 void Control::_set_size(const Size2 &p_size) {
+#ifdef DEBUG_ENABLED
+	if (data.size_warning) {
+		WARN_PRINT("Adjusting the size of Control nodes before they are fully initialized is unreliable. Consider deferring it with set_deferred().");
+	}
+#endif
 	set_size(p_size);
 }
 
@@ -2865,6 +2876,8 @@ void Control::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("has_focus"), &Control::has_focus);
 	ClassDB::bind_method(D_METHOD("grab_focus"), &Control::grab_focus);
 	ClassDB::bind_method(D_METHOD("release_focus"), &Control::release_focus);
+	ClassDB::bind_method(D_METHOD("find_prev_valid_focus"), &Control::find_prev_valid_focus);
+	ClassDB::bind_method(D_METHOD("find_next_valid_focus"), &Control::find_next_valid_focus);
 	ClassDB::bind_method(D_METHOD("get_focus_owner"), &Control::get_focus_owner);
 
 	ClassDB::bind_method(D_METHOD("set_h_size_flags", "flags"), &Control::set_h_size_flags);
@@ -2950,6 +2963,8 @@ void Control::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_theme_changed"), &Control::_theme_changed);
 
 	ClassDB::bind_method(D_METHOD("_override_changed"), &Control::_override_changed);
+
+	ClassDB::bind_method(D_METHOD("_clear_size_warning"), &Control::_clear_size_warning);
 
 	BIND_VMETHOD(MethodInfo("_gui_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	BIND_VMETHOD(MethodInfo(Variant::VECTOR2, "_get_minimum_size"));

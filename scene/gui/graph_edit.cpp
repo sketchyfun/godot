@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -155,6 +155,10 @@ Vector2 GraphEditMinimap::_convert_to_graph_position(const Vector2 &p_position) 
 }
 
 void GraphEditMinimap::_gui_input(const Ref<InputEvent> &p_ev) {
+	if (!ge->is_minimap_enabled()) {
+		return;
+	}
+
 	Ref<InputEventMouseButton> mb = p_ev;
 	Ref<InputEventMouseMotion> mm = p_ev;
 
@@ -392,6 +396,15 @@ void GraphEdit::_graph_node_moved(Node *p_gn) {
 	connections_layer->update();
 }
 
+void GraphEdit::_graph_node_slot_updated(int p_index, Node *p_gn) {
+	GraphNode *gn = Object::cast_to<GraphNode>(p_gn);
+	ERR_FAIL_COND(!gn);
+	top_layer->update();
+	minimap->update();
+	update();
+	connections_layer->update();
+}
+
 void GraphEdit::add_child_notify(Node *p_child) {
 
 	Control::add_child_notify(p_child);
@@ -402,6 +415,7 @@ void GraphEdit::add_child_notify(Node *p_child) {
 	if (gn) {
 		gn->set_scale(Vector2(zoom, zoom));
 		gn->connect("offset_changed", this, "_graph_node_moved", varray(gn));
+		gn->connect("slot_updated", this, "_graph_node_slot_updated", varray(gn));
 		gn->connect("raise_request", this, "_graph_node_raised", varray(gn));
 		gn->connect("item_rect_changed", connections_layer, "update");
 		gn->connect("item_rect_changed", minimap, "update");
@@ -414,16 +428,30 @@ void GraphEdit::remove_child_notify(Node *p_child) {
 
 	Control::remove_child_notify(p_child);
 
-	if (is_inside_tree()) {
+	if (p_child == top_layer) {
+		top_layer = nullptr;
+		minimap = nullptr;
+	} else if (p_child == connections_layer) {
+		connections_layer = nullptr;
+	}
+
+	if (top_layer != nullptr && is_inside_tree()) {
 		top_layer->call_deferred("raise"); // Top layer always on top!
 	}
 
 	GraphNode *gn = Object::cast_to<GraphNode>(p_child);
 	if (gn) {
 		gn->disconnect("offset_changed", this, "_graph_node_moved");
+		gn->disconnect("slot_updated", this, "_graph_node_slot_updated");
 		gn->disconnect("raise_request", this, "_graph_node_raised");
-		gn->disconnect("item_rect_changed", connections_layer, "update");
-		gn->disconnect("item_rect_changed", minimap, "update");
+
+		// In case of the whole GraphEdit being destroyed these references can already be freed.
+		if (connections_layer != nullptr && connections_layer->is_inside_tree()) {
+			gn->disconnect("item_rect_changed", connections_layer, "update");
+		}
+		if (minimap != nullptr && minimap->is_inside_tree()) {
+			gn->disconnect("item_rect_changed", minimap, "update");
+		}
 	}
 }
 
@@ -1642,6 +1670,7 @@ void GraphEdit::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_graph_node_moved"), &GraphEdit::_graph_node_moved);
 	ClassDB::bind_method(D_METHOD("_graph_node_raised"), &GraphEdit::_graph_node_raised);
+	ClassDB::bind_method(D_METHOD("_graph_node_slot_updated"), &GraphEdit::_graph_node_slot_updated);
 
 	ClassDB::bind_method(D_METHOD("_top_layer_input"), &GraphEdit::_top_layer_input);
 	ClassDB::bind_method(D_METHOD("_top_layer_draw"), &GraphEdit::_top_layer_draw);
@@ -1786,7 +1815,7 @@ GraphEdit::GraphEdit() {
 	top_layer->add_child(minimap);
 	minimap->set_name("_minimap");
 	minimap->set_modulate(Color(1, 1, 1, minimap_opacity));
-	minimap->set_mouse_filter(MOUSE_FILTER_STOP);
+	minimap->set_mouse_filter(MOUSE_FILTER_PASS);
 	minimap->set_custom_minimum_size(Vector2(50, 50));
 	minimap->set_size(minimap_size);
 	minimap->set_anchors_preset(Control::PRESET_BOTTOM_RIGHT);

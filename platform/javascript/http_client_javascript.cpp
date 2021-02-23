@@ -5,8 +5,8 @@
 /*                           GODOT ENGINE                                */
 /*                      https://godotengine.org                          */
 /*************************************************************************/
-/* Copyright (c) 2007-2020 Juan Linietsky, Ariel Manzur.                 */
-/* Copyright (c) 2014-2020 Godot Engine contributors (cf. AUTHORS.md).   */
+/* Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2014-2021 Godot Engine contributors (cf. AUTHORS.md).   */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -108,8 +108,12 @@ Error HTTPClient::request_raw(Method p_method, const String &p_url, const Vector
 	Error err = prepare_request(p_method, p_url, p_headers);
 	if (err != OK)
 		return err;
-	PoolByteArray::Read read = p_body.read();
-	godot_xhr_send_data(xhr_id, read.ptr(), p_body.size());
+	if (p_body.empty()) {
+		godot_xhr_send(xhr_id, nullptr, 0);
+	} else {
+		PoolByteArray::Read read = p_body.read();
+		godot_xhr_send(xhr_id, read.ptr(), p_body.size());
+	}
 	return OK;
 }
 
@@ -118,7 +122,12 @@ Error HTTPClient::request(Method p_method, const String &p_url, const Vector<Str
 	Error err = prepare_request(p_method, p_url, p_headers);
 	if (err != OK)
 		return err;
-	godot_xhr_send_string(xhr_id, p_body.utf8().get_data());
+	if (p_body.empty()) {
+		godot_xhr_send(xhr_id, nullptr, 0);
+	} else {
+		const CharString cs = p_body.utf8();
+		godot_xhr_send(xhr_id, cs.get_data(), cs.length());
+	}
 	return OK;
 }
 
