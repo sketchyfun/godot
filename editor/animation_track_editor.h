@@ -309,8 +309,10 @@ class AnimationTrackEditor : public VBoxContainer {
 	AnimationTimelineEdit *timeline;
 	HSlider *zoom;
 	EditorSpinSlider *step;
+	EditorSpinSlider *value_step;
 	TextureRect *zoom_icon;
 	ToolButton *snap;
+	Label *snap_value_label;
 	OptionButton *snap_mode;
 
 	Button *imported_anim_warning;
@@ -527,6 +529,7 @@ public:
 	MenuButton *get_edit_menu();
 	AnimationTrackEditor();
 	~AnimationTrackEditor();
+	float snap_value(float p_value);
 };
 
 #endif // ANIMATION_TRACK_EDITOR_H

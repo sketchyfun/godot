@@ -3283,6 +3283,7 @@ void AnimationTrackEditor::set_animation(const Ref<Animation> &p_anim) {
 		_update_step_spinbox();
 		step->set_block_signals(false);
 		step->set_read_only(false);
+		value_step->set_read_only(false);
 		snap->set_disabled(false);
 		snap_mode->set_disabled(false);
 
@@ -3301,6 +3302,7 @@ void AnimationTrackEditor::set_animation(const Ref<Animation> &p_anim) {
 		step->set_value(0);
 		step->set_block_signals(false);
 		step->set_read_only(true);
+		value_step->set_read_only(true);
 		snap->set_disabled(true);
 		snap_mode->set_disabled(true);
 	}
@@ -5161,6 +5163,8 @@ void AnimationTrackEditor::_scroll_input(const Ref<InputEvent> &p_event) {
 
 void AnimationTrackEditor::_cancel_bezier_edit() {
 	bezier_edit->hide();
+	value_step->hide();
+	snap_value_label->hide();
 	scroll->show();
 }
 
@@ -5171,6 +5175,8 @@ void AnimationTrackEditor::_bezier_edit(int p_for_track) {
 	bezier_edit->set_animation_and_track(animation, p_for_track);
 	scroll->hide();
 	bezier_edit->show();
+	value_step->show();
+	snap_value_label->show();
 	//search everything within the track and curve- edit it
 }
 
@@ -5707,6 +5713,20 @@ float AnimationTrackEditor::snap_time(float p_value, bool p_relative) {
 	return p_value;
 }
 
+float AnimationTrackEditor::snap_value(float p_value) {
+
+	if (is_snap_enabled()) {
+
+		double snap_increment;
+		snap_increment = value_step->get_value();
+
+		p_value = Math::stepify(p_value, snap_increment);
+
+	}
+
+	return p_value;
+}
+
 void AnimationTrackEditor::_show_imported_anim_warning() const {
 
 	// It looks terrible on a single line but the TTR extractor doesn't support line breaks yet.
@@ -5902,6 +5922,23 @@ AnimationTrackEditor::AnimationTrackEditor() {
 	bottom_hb->add_child(snap_mode);
 	snap_mode->connect("item_selected", this, "_snap_mode_changed");
 	snap_mode->set_disabled(true);
+
+	snap_value_label = memnew(Label);
+	snap_value_label->set_text(TTR("Value Snap:"));
+	bottom_hb->add_child(snap_value_label);
+	snap_value_label->hide();
+
+	value_step = memnew(EditorSpinSlider);
+	value_step->set_min(0);
+	value_step->set_max(1000000);
+	value_step->set_step(0.001);
+	value_step->set_hide_slider(true);
+	value_step->set_custom_minimum_size(Size2(100, 0) * EDSCALE);
+	value_step->set_tooltip(TTR("Animation step value."));
+	bottom_hb->add_child(value_step);
+	//value_step->connect("value_changed", this, "_update_value_step");
+	value_step->set_read_only(true);
+	value_step->show();
 
 	bottom_hb->add_child(memnew(VSeparator));
 

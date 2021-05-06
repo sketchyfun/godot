@@ -959,7 +959,7 @@ void AnimationBezierTrackEdit::_gui_input(const Ref<InputEvent> &p_event) {
 			select_single_attempt = -1;
 		}
 
-		float y = (get_size().height / 2 - mm->get_position().y) * v_zoom + v_scroll;
+		float y = editor->snap_value((get_size().height / 2 - mm->get_position().y) * v_zoom + v_scroll);
 		float x = editor->snap_time(((mm->get_position().x - timeline->get_name_limit()) / timeline->get_zoom_scale()) + timeline->get_value());
 
 		moving_selection_offset = Vector2(x - animation->track_get_key_time(track, moving_selection_from_key), y - animation->bezier_track_get_key_value(track, moving_selection_from_key));

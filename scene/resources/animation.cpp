@@ -2418,11 +2418,12 @@ float Animation::bezier_track_interpolate(int p_track, float p_time) const {
 		}
 	}
 
-	float t = Math::wrapf(p_time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0.0f, length);
+	float t = CLAMP(p_time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0.0f, length);
 
 	int iterations = 10;
 
 	float duration = Math::wrapf(bt->values[Math::wrapi(idx+1,0,bt->values.size())].time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0,length); // time duration between our two keyframes
+
 	float low = 0; // 0% of the current animation segment
 	float high = 1; // 100% of the current animation segment
 	float middle;
