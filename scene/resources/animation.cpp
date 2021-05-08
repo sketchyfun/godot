@@ -2405,54 +2405,48 @@ float Animation::bezier_track_interpolate(int p_track, float p_time) const {
 
 	ERR_FAIL_COND_V(idx == -2, 0);
 
-	//there really is no looping interpolation on bezier
-
-	if(!track->loop_wrap)
-	{
-		if (idx < 0) {
+	if (idx < 0) {
 			return bt->values[0].value.value;
 		}
 
 		if (idx >= bt->values.size() - 1) {
 			return bt->values[bt->values.size() - 1].value.value;
 		}
-	}
 
-	float t = CLAMP(p_time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0.0f, length);
+		float t = p_time - bt->values[idx].time;
 
-	int iterations = 10;
+		int iterations = 10;
 
-	float duration = Math::wrapf(bt->values[Math::wrapi(idx+1,0,bt->values.size())].time - bt->values[Math::wrapi(idx,0,bt->values.size())].time,0,length); // time duration between our two keyframes
+		float duration = bt->values[idx + 1].time - bt->values[idx].time; // time duration between our two keyframes
+		float low = 0; // 0% of the current animation segment
+		float high = 1; // 100% of the current animation segment
+		float middle;
 
-	float low = 0; // 0% of the current animation segment
-	float high = 1; // 100% of the current animation segment
-	float middle;
+		Vector2 start(0, bt->values[idx].value.value);
+		Vector2 start_out = start + bt->values[idx].value.out_handle;
+		Vector2 end(duration, bt->values[idx + 1].value.value);
+		Vector2 end_in = end + bt->values[idx + 1].value.in_handle;
 
-	Vector2 start(0, bt->values[Math::wrapi(idx,0,bt->values.size())].value.value);
-	Vector2 start_out = start + bt->values[Math::wrapi(idx,0,bt->values.size())].value.out_handle;
-	Vector2 end(duration, bt->values[Math::wrapi(idx+1,0,bt->values.size())].value.value);
-	Vector2 end_in = end + bt->values[Math::wrapi(idx+1,0,bt->values.size())].value.in_handle;
+		//narrow high and low as much as possible
+		for (int i = 0; i < iterations; i++) {
 
-	//narrow high and low as much as possible
-	for (int i = 0; i < iterations; i++) {
+			middle = (low + high) / 2;
 
-		middle = (low + high) / 2;
+			Vector2 interp = _bezier_interp(middle, start, start_out, end_in, end);
 
-		Vector2 interp = _bezier_interp(middle, start, start_out, end_in, end);
-
-		if (interp.x < t) {
-			low = middle;
-		} else {
-			high = middle;
+			if (interp.x < t) {
+				low = middle;
+			} else {
+				high = middle;
+			}
 		}
-	}
 
-	//interpolate the result:
-	Vector2 low_pos = _bezier_interp(low, start, start_out, end_in, end);
-	Vector2 high_pos = _bezier_interp(high, start, start_out, end_in, end);
-	float c = (t - low_pos.x) / (high_pos.x - low_pos.x);
+		//interpolate the result:
+		Vector2 low_pos = _bezier_interp(low, start, start_out, end_in, end);
+		Vector2 high_pos = _bezier_interp(high, start, start_out, end_in, end);
+		float c = (t - low_pos.x) / (high_pos.x - low_pos.x);
 
-	return low_pos.linear_interpolate(high_pos, c).y;
+		return low_pos.linear_interpolate(high_pos, c).y;
 }
 
 int Animation::audio_track_insert_key(int p_track, float p_time, const RES &p_stream, float p_start_offset, float p_end_offset) {
